@@ -1,0 +1,1783 @@
+% ============================================================
+%  Dispensa 02: Costruzione della Curva EIOPA Risk-Free Rate
+%               Il metodo Smith-Wilson e la pipeline regolamentare
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+%  Riferimento: EIOPA-BoS-25-599 (Technical Documentation, Dec 2025)
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor,colortbl}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{tcolorbox}
+\usepackage{titlesec}
+\usepackage{bm}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black,
+            citecolor=green!40!black}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
+\titleformat{\subsubsection}{\small\bfseries\itshape}{\thesubsubsection.}{0.5em}{}
+
+% --- ambienti teorema ---
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[section]
+\newtheorem{proposizione}[teorema]{Proposizione}
+\theoremstyle{definition}
+\newtheorem{definizione}[teorema]{Definizione}
+\newtheorem{esempio}[teorema]{Esempio}
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+\newtheorem*{attenzione}{Nota numerica}
+\newtheorem{esercizio}{Esercizio}[section]
+
+% --- box colorati ---
+\tcbset{
+  mybase/.style={
+    colback=gray!5, colframe=gray!40,
+    boxrule=0.4pt, arc=2pt,
+    left=7pt, right=7pt, top=5pt, bottom=5pt,
+    fonttitle=\small\bfseries,
+    breakable
+  }
+}
+\newtcolorbox{keybox}[1][Concetto chiave]{mybase,
+  colframe=blue!40!black, colback=blue!4, title=#1}
+\newtcolorbox{algobox}[1][Algoritmo]{mybase,
+  colframe=teal!50!black, colback=teal!4, title=#1}
+\newtcolorbox{warningbox}{mybase,
+  colframe=orange!70!black, colback=orange!5}
+\newtcolorbox{codebox}[1][Codice R]{mybase,
+  colframe=green!40!black, colback=green!3, title=#1}
+
+% --- colore righe tabella ---
+\definecolor{rowtint}{RGB}{243,247,253}
+
+% --- macro math ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\UFR}{\mathrm{UFR}}
+\newcommand{\LLP}{\mathrm{LLP}}
+\newcommand{\CP}{\mathrm{CP}}
+\newcommand{\CRA}{\mathrm{CRA}}
+\newcommand{\bfzeta}{\bm{\zeta}}
+\newcommand{\bfmu}{\bm{\mu}}
+\newcommand{\Wmat}{\mathbf{W}}
+\newcommand{\Hmat}{\mathbf{H}}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\defeq}{\coloneqq}
+
+% ============================================================
+\title{%
+  \textbf{Costruzione della Curva EIOPA Risk-Free Rate}\\[6pt]
+  \large Il Metodo Smith--Wilson: Sistema Lineare, Bisezione e\\[3pt]
+  Interpolazione--Estrapolazione della Struttura a Termine\\[4pt]
+  \normalsize Implementazione in R e Interpretazione Finanziaria
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introduzione e obiettivi}
+\label{sec:intro}
+% ============================================================
+
+\subsection{Il problema}
+
+Le compagnie di assicurazione vita assumono impegni che possono estendersi per
+50--80 anni nel futuro: rendite vitalizie, polizze Long-Term Care, fondi pensione.
+Per quantificarne il \emph{valore attuale}, occorre attualizzare i flussi di cassa
+futuri stimati, il che richiede una \textbf{curva dei tassi di interesse} valida su
+tutto l'orizzonte.
+
+Il nodo cruciale \`e che i mercati finanziari forniscono tassi osservabili e affidabili
+solo fino a una certa scadenza --- tipicamente 20 anni per l'euro. Oltre quel punto i
+dati sono illiquidi o inesistenti. Il metodo di costruzione della curva deve quindi
+risolvere due sotto-problemi simultaneamente:
+\begin{enumerate}
+  \item \textbf{Interpolazione}: ricostruire la curva tra i nodi di mercato osservati;
+  \item \textbf{Estrapolazione}: prolungare la curva fino a 150 anni con convergenza
+        a un tasso asintotico economicamente fondato (l'Ultimate Forward Rate).
+\end{enumerate}
+
+In questa dispensa mostriamo come l'intero problema si riduca a due passi numerici
+ben definiti, che analizziamo in dettaglio:
+
+\begin{enumerate}
+  \item \textbf{Calibrazione --- sistema lineare denso $\Hmat\bfzeta = \mathbf{b}$
+        (Sezione~\ref{sec:sistema}).}
+        Smith--Wilson costruisce la curva di sconto come somma di un termine
+        asintotico $e^{-\UFR_c t}$ e di $N$ funzioni ``kernel'' $W(t, u_j)$.
+        I pesi $\zeta_j$ --- uno per ciascun nodo di mercato --- si ottengono
+        imponendo che ogni swap par valga esattamente~1: questo genera un sistema
+        lineare $N\times N$ denso, risolto con la fattorizzazione LU,
+        costo $O(N^3)$.
+
+  \item \textbf{Velocità di convergenza --- radice di $g(\alpha)=0$
+        (Sezione~\ref{sec:alpha}).}
+        Il kernel dipende da un parametro $\alpha > 0$ che controlla
+        \emph{quanto velocemente} la curva converge verso l'UFR oltre il LLP.
+        Un $\alpha$ piccolo $\Rightarrow$ convergenza lenta (la curva impiega
+        molti anni prima di ``raggiungere'' l'UFR); un $\alpha$ grande
+        $\Rightarrow$ convergenza rapida ma potenzialmente poco fedele ai dati.
+        EIOPA fissa il criterio: $\alpha^*$ deve essere il \emph{minimo} valore
+        tale che il tasso forward al Convergence Point ($\CP = 60$ anni) disti
+        dall'UFR di meno di~1 bp, cioè
+        \[
+          g(\alpha) \defeq f(0, \CP;\, \alpha) - \UFR_c = 0\;\text{(a 1 bp)}.
+        \]
+        Trovare $\alpha^*$ equivale quindi a trovare la \textbf{radice} di
+        $g$, che dipende non linearmente da $\alpha$ (per ogni candidato
+        occorre risolvere nuovamente il sistema lineare). Si usa il metodo
+        di bisezione per la sua convergenza garantita.
+\end{enumerate}
+
+\begin{keybox}[Il filo rosso: da UFR a numeri a curva]
+\textbf{Passo 0 (dato economico)} Si parte dall'UFR --- il tasso forward di
+lungo periodo stima dai mercati ($3.30\%$ per EUR 2025).
+
+\textbf{Passo 1 (algebra lineare)} Dati i $N=12$ tassi OIS di mercato
+(corretto per il CRA), si risolve $\Hmat(\alpha)\bfzeta = \mathbf{1} - \bfmu_Q$:
+si ottengono i pesi $\zeta_j$ che ``incollano'' la curva ai dati.
+
+\textbf{Passo 2 (ricerca di zeri)} Si cerca $\alpha^*$ tale che la curva così
+calibrata converga all'UFR con la velocità prescritta da EIOPA. Ogni
+valutazione di $g(\alpha)$ richiede di rifare il Passo~1, quindi i due
+problemi sono intrinsecamente accoppiati.
+
+\textbf{Risultato} Un'unica formula analitica $P(t) = e^{-\UFR_c t} +
+\sum_j \zeta_j W(t,u_j)$ valida per $t \in [0,150]$, che interpola i dati,
+converge all'UFR e rispetta tutti i vincoli normativi.
+\end{keybox}
+
+\subsection{Finalit\`a didattiche}
+
+Questa dispensa illustra un caso reale in cui i metodi del calcolo numerico
+svolgono un ruolo diretto nel settore finanziario--assicurativo:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+\toprule
+\textbf{Metodo numerico} & \textbf{Applicazione EIOPA} & \textbf{Riferimento}\\
+\midrule
+Sistema lineare denso (LU) & Calibrazione Smith--Wilson & sez.~9.15\\
+Bisezione / ricerca di zeri & $\alpha^*$: velocità conv.\ curva $\to$ UFR & sez.~9.4\\
+Numero di condizionamento & Stabilit\`a della curva & analisi degli errori\\
+\emph{Confronto:} Thomas $O(N)$ & Spline cubica (alternativa) & de Boor~\cite{deBoor1978}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Il codice R di supporto \`e nel file \texttt{R/curva\_eiopa\_rfr\_CN.R} e produce
+tutti i grafici mostrati nella dispensa.
+
+\subsection{Il quadro normativo: Solvency~II e EIOPA}
+
+Il quadro normativo europeo \textbf{Solvency~II} (Direttiva 2009/138/CE~\cite{dir2009},
+art.~77e) richiede alle imprese assicurative di calcolare le riserve tecniche
+attualizzando con una curva risk-free ufficiale. L'\textbf{EIOPA}
+(European Insurance and Occupational Pensions Authority) pubblica questa struttura
+a termine \emph{mensilmente} per tutte le valute rilevanti.
+
+I principi guida (sez.~1--3 di \cite{eiopa2025}):
+\begin{itemize}
+  \item \textbf{Replicabilit\`a}: ogni impresa deve poter riprodurre la curva;
+  \item \textbf{Coerenza di mercato}: si usano solo dati da mercati DLT
+        (deep, liquid, transparent);
+  \item \textbf{Stabilit\`a}: la variazione dei parametri chiave \`e limitata.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{Struttura dei tassi di interesse: spot, forward e par}
+\label{sec:tassi-def}
+% ------------------------------------------------------------
+
+Per comprendere l'input e l'output del metodo Smith--Wilson occorre distinguere
+tre rappresentazioni diverse della struttura a termine, tutte derivabili dalla
+stessa funzione di sconto $P(t)$ ma utili in contesti diversi.
+
+\begin{definizione}[Funzione di sconto e tasso spot]
+La \textbf{funzione di sconto} $P(t)>0$ \`e il prezzo odierno di $1$~euro
+pagato con certezza all'istante $t \ge 0$.
+Il corrispondente \textbf{tasso spot} a capitalizzazione continua \`e:
+\[
+  r(0,t) \defeq -\frac{\ln P(t)}{t}, \qquad t > 0,
+\]
+ovvero $P(t) = e^{-r(0,t)\,t}$.
+La struttura a termine $t \mapsto r(0,t)$ per $t=1,\ldots,150$ anni \`e
+esattamente ci\`o che EIOPA pubblica nel foglio \texttt{RFR\_spot\_no\_VA}.
+\end{definizione}
+
+\begin{definizione}[Tasso forward istantaneo]
+Il \textbf{tasso forward istantaneo} alla scadenza $t$ \`e il rendimento
+marginale dell'investimento nell'intorno di $t$:
+\[
+  f(0,t) \defeq -\frac{\mathrm{d}}{\mathrm{d}t}\ln P(t)
+               = r(0,t) + t\,r'(0,t).
+\]
+Economicamente, $f(0,t)\,\mathrm{d}t$ \`e il rendimento di un impegno
+istantaneo concordato oggi per la finestra $[t,t+\mathrm{d}t]$.
+Il criterio di convergenza EIOPA \`e enunciato proprio in questi termini:
+si richiede che il tasso forward al punto di convergenza
+($\CP=60$ anni) disti dall'UFR di meno di 1~bp, cio\`e
+$|f(0,\CP;\,\alpha^*) - \UFR_c| < 0.0001$.
+\end{definizione}
+
+\begin{definizione}[Tasso par di uno swap]
+\label{def:tasso_par}
+Uno \textbf{swap su tassi} (interest rate swap) \`e un contratto in cui due
+controparti si scambiano periodicamente interessi calcolati sullo stesso
+nozionale (di norma non scambiato):
+\begin{itemize}
+  \item \textbf{gamba fissa}: paga un tasso costante $s$;
+  \item \textbf{gamba variabile}: paga un tasso indicizzato (qui overnight \texteuro{}STR composto).
+\end{itemize}
+Alla data iniziale si scambia solo il \emph{valore netto} delle due gambe.
+
+Siano $T_1 < T_2 < \cdots < T_n$ le date di pagamento di uno swap
+(tipicamente annuali, $\Delta_k \approx 1$).
+Qui $\Delta_k$ indica la \textbf{frazione d'anno} (year fraction) tra
+$T_{k-1}$ e $T_k$ secondo la day-count convention del contratto:
+\[
+  \Delta_k \defeq \text{YearFrac}(T_{k-1},T_k)
+  \approx T_k-T_{k-1}
+\]
+(in anni, se il tempo \`e gi\`a espresso in unit\`a annuali).
+Negli OIS annuali usati qui, tipicamente $\Delta_k \simeq 1$ per ogni $k$
+(cfr. Hull~\cite{hull2018}, cap.~7 e cap.~28).
+
+Il \textbf{tasso par} $s_n$ alla scadenza $T_n$ \`e il tasso fisso che
+rende nullo il valore netto iniziale del contratto:
+\begin{equation}
+  \label{eq:tasso_par}
+  s_n \cdot \sum_{k=1}^{n} \Delta_k\,P(T_k) + P(T_n) = 1
+  \quad\Longrightarrow\quad
+  s_n = \frac{1 - P(T_n)}{\displaystyle\sum_{k=1}^{n} \Delta_k\,P(T_k)}.
+\end{equation}
+Il numeratore $1-P(T_n)$ \`e il guadagno netto sulla gamba variabile;
+il denominatore \`e il valore attuale di una rendita unitaria.
+Il nome ``par'' deriva dal fatto che un titolo con cedola $s_n$ e rimborso
+del nozionale 1 alla scadenza $T_n$ vale esattamente 1 (``alla pari'') oggi.
+\end{definizione}
+
+\begin{keybox}[Perch\'e Smith--Wilson usa i tassi par e non quelli spot?]
+I tassi spot $r(0,t)$ \emph{non} sono osservabili direttamente sul mercato.
+Il metodo tradizionale per ricavarli \`e il \textbf{bootstrap}: risolvere
+la~\eqref{eq:tasso_par} sequenzialmente per $n=1,2,\ldots,N$, estraendo
+$P(T_n)$ a ogni passo. Il bootstrap introduce per\`o propagazione degli
+errori e richiede un'interpolazione aggiuntiva tra i nodi.
+
+Smith--Wilson elimina questo passaggio intermedio: usa \emph{direttamente}
+i tassi par osservati come vincoli di calibrazione e ricostruisce $P(t)$
+(e quindi $r(0,t)$ e $f(0,t)$) in forma chiusa tramite la
+formula~\eqref{eq:sw_main}.
+Questo \`e quanto afferma esplicitamente la sez.~9.1 di~\cite{eiopa2025}:
+\emph{``The Smith-Wilson method [\ldots] is applied directly to par swap rates''}.
+\end{keybox}
+
+\subsection{Origine dei dati}
+\label{sec:dati-origine}
+
+I dati di input per la curva EIOPA EUR provengono da due fonti:
+
+\paragraph{(a) Tassi OIS su \texteuro{}STR.}
+Gli \textbf{Overnight Index Swap (OIS)} riferiti a \texteuro{}STR
+(Euro Short-Term Rate, pubblicato da BCE alle 8:00 CET)
+sono il proxy standard del tasso privo di rischio per l'area euro.
+I provider di dati utilizzati da EIOPA sono \textbf{Bloomberg} (ticker: EESWE*)
+e \textbf{Refinitiv/LSEG}, come specificato nell'Annex~B di~\cite{eiopa2025}.
+
+Un OIS a scadenza $T$ \`e un contratto derivato in cui:
+\begin{itemize}
+  \item una parte paga il \textbf{tasso fisso} $s$ (tasso par);
+  \item l'altra parte paga il tasso overnight composto per la durata del contratto.
+\end{itemize}
+Non c'\`e scambio di capitale: il rischio di credito \`e quasi nullo
+(solo sul mark-to-market del derivato, non sul nozionale).
+
+\paragraph{(b) Pubblicazione mensile EIOPA.}
+EIOPA pubblica il file \emph{EIOPA\_RFR\_yyyymmdd.xlsx} il primo giorno lavorativo
+di ogni mese, scaricabile da
+\url{https://www.eiopa.europa.eu/tools-and-data/risk-free-interest-rate-term-structures}.
+Il file contiene:
+\begin{itemize}
+  \item foglio \texttt{RFR\_spot\_no\_VA}: curva spot senza Volatility Adjustment;
+  \item foglio \texttt{Spot\_NO\_VA\_shock\_UP/DOWN}: curve per SCR (stress);
+  \item parametri utilizzati ($\alpha^*$, UFR, LLP, CRA) nel foglio \texttt{Parameters}.
+\end{itemize}
+
+\paragraph{(c) Dati utilizzati in questa dispensa.}
+Per ragioni didattiche utilizziamo un set di 12 tassi OIS par illustrativi
+ma rappresentativi del livello di mercato EUR a maggio 2025. Le scadenze
+standard DLT per l'EUR sono:
+\[
+  T \in \{1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20\} \text{ anni}.
+\]
+Le scadenze 9, 11, 13, 14, 16--19 non sono incluse perch\'e non soddisfano
+i criteri di liquidit\`a (residual volume $<6\%$ del totale, sez.~3.7 EIOPA).
+
+\subsection{La pipeline EIOPA in cinque passi}
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{clp{7.5cm}}
+\toprule
+\textbf{Fase} & \textbf{Nome} & \textbf{Operazione} \\
+\midrule
+1 & Raccolta dati & Tassi OIS (\texteuro{}STR) da Bloomberg/Refinitiv \\
+2 & Valutazione DLT & Verifica liquidit\`a; determinazione del \textbf{LLP} \\
+3 & CRA & Sottrazione del Credit Risk Adjustment (10 bps per EUR 2025) \\
+4 & \textbf{Calibrazione SW} & Smith--Wilson applicato direttamente ai swap par: \\
+  & & risoluzione del sistema lineare $\Hmat\bfzeta = \mathbf{1}-\bfmu_Q$ \\
+5 & Parametro $\alpha$ & Ricerca della radice di $g(\alpha) = f(0,\CP;\alpha) - \UFR_c$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Il nucleo computazionale \`e interamente nelle fasi 4 e 5.
+
+\begin{warningbox}
+\textbf{Cosa NON fa EIOPA.}
+La sez.~9.1 di~\cite{eiopa2025} afferma esplicitamente:
+\emph{``The interpolation, where necessary, and extrapolation of interest rates
+have been developed applying the Smith-Wilson method.''}
+Non c'\`e alcun passo intermedio di bootstrap n\'e di spline cubiche nella
+pipeline ufficiale. Smith--Wilson viene applicato \emph{direttamente} ai tassi par
+degli swap (sez.~9.15).
+\end{warningbox}
+
+% ------------------------------------------------------------
+\subsection{Dati reali: fonti e procedura per ricostruire la curva EUR maggio 2026}
+\label{sec:dati_reali}
+% ------------------------------------------------------------
+
+Per ricostruire \emph{esattamente} la curva EIOPA EUR di un dato mese occorrono
+tre categorie di input. Di seguito indichiamo le fonti ufficiali e le alternative
+accessibili per il mese di \textbf{maggio 2026}.
+
+\begin{keybox}[Date di riferimento --- maggio 2026]
+\begin{itemize}
+  \item \textbf{Data di riferimento (valuation date)}: venerd\`i \textbf{29 maggio 2026}
+        (ultimo giorno lavorativo del mese; il 30~maggio \`e sabato).
+  \item \textbf{Data di pubblicazione}: luned\`i \textbf{1\textordmasculine{} giugno 2026}
+        (primo giorno lavorativo del mese successivo).
+  \item \textbf{Nome file atteso}: \texttt{EIOPA\_RFR\_20260529.xlsx}
+\end{itemize}
+\end{keybox}
+
+% ......................... FONTE A .........................
+\subsubsection*{Fonte~A --- File ufficiale EIOPA (per la verifica del risultato)}
+
+\noindent\textbf{URL:}
+\url{https://www.eiopa.europa.eu/tools-and-data/risk-free-interest-rate-term-structures\_en}
+
+\noindent Scaricare il file \texttt{EIOPA\_RFR\_20260529.xlsx}.
+I fogli rilevanti sono i seguenti:
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Foglio Excel} & \textbf{Contenuto} \\
+\midrule
+\texttt{RFR\_spot\_no\_VA}  & Tassi spot ufficiali per $T=1,\ldots,150$ anni (senza
+                               Volatility Adjustment). \textbf{Usare come confronto
+                               finale.} \\
+\texttt{Parameters}         & $\alpha^*$, UFR, LLP, CRA effettivamente usati da EIOPA
+                               per questo mese. \\
+\texttt{Spot\_NO\_VA\_shock\_UP} \newline
+\texttt{Spot\_NO\_VA\_shock\_DOWN} & Curve sotto stress istantaneo per il calcolo
+                               del Solvency Capital Requirement (SCR). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warningbox}
+Il file EIOPA contiene la curva \emph{risultato}, non i tassi OIS di input.
+Serve per \textbf{verificare} la ricostruzione ma non pu\`o sostituire i dati
+di mercato (Fonte~B) se si vuole replicare il calcolo dall'inizio.
+\end{warningbox}
+
+% ......................... FONTE B .........................
+\subsubsection*{Fonte~B --- Tassi OIS \texteuro{}STR par: 12 scadenze DLT}
+
+Questi sono i dati di mercato veri e propri, rilevati alla chiusura del
+29~maggio~2026. Occorrono i tassi par degli OIS (Overnight Index Swap)
+referenziati a \texteuro{}STR per le 12 scadenze DLT:
+$\{1,2,3,4,5,6,7,8,10,12,15,20\}$ anni.
+
+\paragraph{B1 --- Bloomberg Terminal (fonte primaria EIOPA, Annex~B di~\cite{eiopa2025}).}
+I ticker da interrogare con il comando \texttt{HP <GO>} (Historical Price)
+alla data 29/05/2026, campo \texttt{PX\_LAST}:
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{clcl}
+\toprule
+\textbf{Scadenza} & \textbf{Ticker Bloomberg} & \textbf{Scadenza} & \textbf{Ticker Bloomberg} \\
+\midrule
+1Y  & \texttt{EUSWEC1 BG Curncy}  & 8Y  & \texttt{EUSWEC8 BG Curncy}  \\
+2Y  & \texttt{EUSWEC2 BG Curncy}  & 10Y & \texttt{EUSWEC10 BG Curncy} \\
+3Y  & \texttt{EUSWEC3 BG Curncy}  & 12Y & \texttt{EUSWEC12 BG Curncy} \\
+4Y  & \texttt{EUSWEC4 BG Curncy}  & 15Y & \texttt{EUSWEC15 BG Curncy} \\
+5Y  & \texttt{EUSWEC5 BG Curncy}  & 20Y & \texttt{EUSWEC20 BG Curncy} \\
+6Y  & \texttt{EUSWEC6 BG Curncy}  &     &                              \\
+7Y  & \texttt{EUSWEC7 BG Curncy}  &     &                              \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Il prefisso \texttt{EUSWEC} sta per ``EUR Swap \texteuro{}STR Compounded''.
+La serie storica \`e disponibile dall'ottobre~2019 (avvio di \texteuro{}STR).
+Per il download massivo: \texttt{DAPI <GO>} $\to$ Excel Add-in, oppure
+direttamente \texttt{=BDH("EUSWEC1 BG Curncy","PX\_LAST","29/05/2026","29/05/2026")}.
+
+\paragraph{B2 --- Refinitiv Workspace / LSEG Eikon (fonte alternativa EIOPA).}
+I RIC (Reuters Instrument Code) corrispondenti sono:
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{clcl}
+\toprule
+\textbf{Scadenza} & \textbf{RIC Refinitiv} & \textbf{Scadenza} & \textbf{RIC Refinitiv} \\
+\midrule
+1Y  & \texttt{EURESTOIS1Y=}  & 8Y  & \texttt{EURESTOIS8Y=}  \\
+2Y  & \texttt{EURESTOIS2Y=}  & 10Y & \texttt{EURESTOIS10Y=} \\
+3Y  & \texttt{EURESTOIS3Y=}  & 12Y & \texttt{EURESTOIS12Y=} \\
+4Y  & \texttt{EURESTOIS4Y=}  & 15Y & \texttt{EURESTOIS15Y=} \\
+5Y  & \texttt{EURESTOIS5Y=}  & 20Y & \texttt{EURESTOIS20Y=} \\
+6Y  & \texttt{EURESTOIS6Y=}  &     &                        \\
+7Y  & \texttt{EURESTOIS7Y=}  &     &                        \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent In Eikon/Workspace: funzione \texttt{TR()} in Excel con campo \texttt{TR.FIXEDRATE}
+e parametro \texttt{SDate=2026-05-29}.
+
+\paragraph{B3 --- ECB Data Portal (fonte libera, parziale).}
+La BCE pubblica il tasso overnight \texteuro{}STR ma \emph{non} i tassi OIS
+par a termine. \`E tuttavia possibile accedere ai dati del \textbf{mercato
+monetario} (dataset \texttt{IVF}) e ai dati storici dell'OIS dalla pagina:
+\url{https://data.ecb.europa.eu} $\to$ ``Money Market Statistics''.
+Si tratta di dati complementari; per i tassi OIS par a termine (scadenze 1--20Y)
+rimane necessario Bloomberg o Refinitiv.
+
+\begin{attenzione}[Nota sul mercato OIS \texteuro{}STR]
+Prima di ottobre~2019 i tassi erano referenziati a EONIA. Da quella data
+\texteuro{}STR (\textit{Euro Short-Term Rate}) \`e il tasso overnight di
+riferimento BCE (art.~5 del Reg.~2019/1011). I ticker Bloomberg \texttt{EUSWEC*}
+coprono la transizione; per dati pre-2019 usare i ticker \texttt{EUSWE*}
+(EONIA-based) e verificare la sovrapposizione nel periodo di transizione.
+\end{attenzione}
+
+% ......................... FONTE C .........................
+\subsubsection*{Fonte~C --- Parametri EIOPA (UFR, LLP, CRA, $\alpha^*$)}
+
+\paragraph{C1 --- UFR per EUR 2026.}
+L'UFR viene rivisto annualmente da EIOPA (processo di cui alla sez.~9.3
+di~\cite{eiopa2025}). Il valore per il 2026 \`e pubblicato nel documento:
+\begin{itemize}
+  \item \textbf{Documento}: \emph{EIOPA Decision on the UFR for 2026}
+  \item \textbf{URL}: \url{https://www.eiopa.europa.eu/publications} $\to$
+        ricerca ``UFR 2026''
+\end{itemize}
+Il valore per EUR, storicamente stabile a $3.30\%$ dal 2023, va verificato
+ogni anno prima di procedere al calcolo.
+
+\paragraph{C2 --- LLP e CRA per EUR.}
+Pubblicati mensilmente nel \textbf{Technical Information} della BCE e nel
+foglio \texttt{Parameters} del file EIOPA:
+\begin{itemize}
+  \item LLP EUR: \textbf{20 anni} (stabile; dipende dall'analisi DLT semestrale)
+  \item CRA EUR: da verificare nel foglio \texttt{Parameters} ---
+        attualmente $\mathbf{10}$ bps (Situazione~1, sez.~7.3 di~\cite{eiopa2025})
+\end{itemize}
+
+\paragraph{C3 --- $\alpha^*$ calcolato vs pubblicato.}
+Il valore di $\alpha^*$ non viene fornito come input: si calcola con la bisezione
+(Sezione~\ref{sec:alpha}). Tuttavia il foglio \texttt{Parameters} del file EIOPA
+riporta il valore usato ufficialmente, utile come \textbf{verifica}.
+
+% ......................... TABELLA RACCOLTA .........................
+\subsubsection*{Tabella riepilogativa: dati da raccogliere per maggio 2026}
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{clp{4cm}l}
+\toprule
+\textbf{Input} & \textbf{Dato} & \textbf{Fonte} & \textbf{Valore da rilevare} \\
+\midrule
+$s_1$  & OIS 1Y  par & Bloomberg \texttt{EUSWEC1}  & \underline{\hspace{2cm}}\% \\
+$s_2$  & OIS 2Y  par & Bloomberg \texttt{EUSWEC2}  & \underline{\hspace{2cm}}\% \\
+$s_3$  & OIS 3Y  par & Bloomberg \texttt{EUSWEC3}  & \underline{\hspace{2cm}}\% \\
+$s_4$  & OIS 4Y  par & Bloomberg \texttt{EUSWEC4}  & \underline{\hspace{2cm}}\% \\
+$s_5$  & OIS 5Y  par & Bloomberg \texttt{EUSWEC5}  & \underline{\hspace{2cm}}\% \\
+$s_6$  & OIS 6Y  par & Bloomberg \texttt{EUSWEC6}  & \underline{\hspace{2cm}}\% \\
+$s_7$  & OIS 7Y  par & Bloomberg \texttt{EUSWEC7}  & \underline{\hspace{2cm}}\% \\
+$s_8$  & OIS 8Y  par & Bloomberg \texttt{EUSWEC8}  & \underline{\hspace{2cm}}\% \\
+$s_{10}$ & OIS 10Y par & Bloomberg \texttt{EUSWEC10} & \underline{\hspace{2cm}}\% \\
+$s_{12}$ & OIS 12Y par & Bloomberg \texttt{EUSWEC12} & \underline{\hspace{2cm}}\% \\
+$s_{15}$ & OIS 15Y par & Bloomberg \texttt{EUSWEC15} & \underline{\hspace{2cm}}\% \\
+$s_{20}$ & OIS 20Y par & Bloomberg \texttt{EUSWEC20} & \underline{\hspace{2cm}}\% \\
+\midrule
+$\UFR_{\rm ann}$ & UFR EUR 2026 & EIOPA Decision UFR 2026  & \underline{\hspace{2cm}}\% \\
+$\CRA$ & Credit Risk Adj. & EIOPA file, foglio \texttt{Parameters} & \underline{\hspace{2cm}} bps \\
+$\alpha^*_{\rm EIOPA}$ & Parametro $\alpha$ ufficiale & EIOPA file, foglio \texttt{Parameters} & \underline{\hspace{2cm}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ......................... VERIFICA .........................
+\subsubsection*{Procedura di verifica in R}
+
+Una volta raccolti i dati, la pipeline di verifica in R \`e:
+
+\begin{enumerate}
+  \item Inserire i 12 tassi $s_k$ (lordi) nel vettore \texttt{s\_mkt}.
+  \item Applicare il CRA: \texttt{r\_mkt <- s\_mkt - CRA}.
+  \item Eseguire \texttt{R/curva\_eiopa\_rfr\_CN.R} (Sezione~\ref{sec:codice}).
+  \item Confrontare \texttt{alpha\_star} calcolato con $\alpha^*_{\rm EIOPA}$ dal
+        foglio \texttt{Parameters}: la differenza deve essere $< 10^{-6}$.
+  \item Confrontare la curva spot $r(0,T)$ per $T=1,\ldots,150$ con il foglio
+        \texttt{RFR\_spot\_no\_VA}: l'errore massimo deve essere $< 0.1$ bps
+        (vedi Esercizio~5 per il codice di confronto).
+\end{enumerate}
+
+% ============================================================
+\section{Prerequisiti matematici}
+\label{sec:prerequisiti}
+% ============================================================
+
+In questa sezione presentiamo gli strumenti matematici necessari per comprendere
+l'algoritmo Smith--Wilson, organizzati attorno a due problemi fondamentali:
+
+\begin{keybox}[I due problemi fondamentali]
+\begin{enumerate}
+  \item \textbf{Sistema lineare}: data $\Hmat \in \R^{N\times N}$ densa, trovare
+        $\bfzeta$ tale che $\Hmat\bfzeta = \mathbf{b}$.
+  \item \textbf{Ricerca di zeri}: trovare $\alpha^* \in [a,b]$ tale che
+        $g(\alpha^*) \approx 0$.
+\end{enumerate}
+\end{keybox}
+
+La risposta al primo problema passa attraverso la fattorizzazione LU; la risposta
+al secondo attraverso il metodo di bisezione. Entrambi i metodi forniscono
+\emph{garanzie} sulla soluzione (esistenza, unicità, stabilità).
+
+% ------------------------------------------------------------
+\subsection{Sistemi lineari e fattorizzazione LU}
+\label{sec:lu}
+% ------------------------------------------------------------
+
+\begin{definizione}[Fattorizzazione LU]
+Data $A \in \R^{n\times n}$, una fattorizzazione LU consiste nel trovare una
+matrice triangolare inferiore $L$ (con $l_{ii}=1$) e una triangolare superiore $U$
+tali che $A = LU$. In generale, per garantire esistenza e stabilit\`a numerica si
+introduce una matrice di permutazione $P_\pi$:
+\[
+  P_\pi A = LU.
+\]
+\end{definizione}
+
+\begin{teorema}[Esistenza con pivoting parziale]
+\label{thm:lu}
+Per ogni matrice $A \in \R^{n\times n}$ non singolare, esiste una matrice di
+permutazione $P_\pi$ tale che $P_\pi A = LU$ con $L$ triangolare inferiore unitaria
+e $U$ triangolare superiore.
+\end{teorema}
+
+\paragraph{Algoritmo.}
+La fattorizzazione si ottiene con l'\textbf{eliminazione gaussiana con pivoting parziale}:
+ad ogni passo $k=1,\ldots,n-1$, si scambia la riga con il pivot di modulo massimo nella
+colonna $k$ (dalla riga $k$ in gi\`u), poi si eliminano gli elementi sotto-diagonali.
+
+\paragraph{Costo computazionale.}
+Il numero di operazioni floating-point per la fattorizzazione \`e:
+\begin{equation}
+  \label{eq:costo_lu}
+  C_{\text{LU}} = \frac{2}{3}n^3 + O(n^2).
+\end{equation}
+La risoluzione dei due sistemi triangolari ($Ly=Pb$, $Ux=y$) costa $O(n^2)$ ciascuno.
+Per $n=12$ (numero di nodi EIOPA EUR): $C \approx 1\,152$ operazioni.
+
+\begin{proposizione}[Stabilit\`a della fattorizzazione LU con pivoting]
+\label{prop:stab_lu}
+Sia $A\in\R^{n\times n}$ e sia $\hat{x}$ la soluzione calcolata in aritmetica
+floating-point con unit\`a di arrotondamento $u$. Allora:
+\[
+  \frac{\norm{x - \hat{x}}}{\norm{x}} \le c(n)\,\kappa(A)\,u,
+\]
+dove $\kappa(A) = \norm{A}\norm{A^{-1}}$ \`e il numero di condizionamento e
+$c(n)$ \`e una costante moderata (limitata dal fattore di crescita $\rho_n$,
+tipicamente $\rho_n \ll 2^{n-1}$ in pratica).
+\end{proposizione}
+
+% ------------------------------------------------------------
+\subsection{Scelta del metodo risolutivo: perch\`e LU?}
+\label{sec:scelta_metodo}
+% ------------------------------------------------------------
+
+Prima di procedere \`e utile motivare la scelta della fattorizzazione LU
+rispetto alle alternative classiche del calcolo numerico.
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{2.4cm}p{3.2cm}p{5.8cm}c}
+\toprule
+\textbf{Metodo} & \textbf{Requisiti} & \textbf{Limitazione per Smith--Wilson} & \textbf{OK?}\\
+\midrule
+\textbf{LU con pivoting} &
+  $A$ quadrata non singolare &
+  Nessuna &
+  \checkmark\\
+\addlinespace
+Cholesky &
+  $A$ simmetrica def.\ pos. &
+  $\Hmat$ \`e densa ma \textbf{non simmetrica}: righe $=$ swap per $T_i$, colonne $=$ nodi kernel $u_k$ &
+  $\times$\\
+\addlinespace
+QR (Householder) &
+  Qualsiasi $A$ &
+  Costo $\approx 2n^3$, il doppio di LU; la stabilit\`a aggiuntiva \`e superflua per $\kappa\approx 100$ &
+  $\sim$\\
+\addlinespace
+Metodi iterativi\newline(Jacobi, CG, GMRES) &
+  Matrici sparse o molto grandi &
+  Per $N=12$ il costo di setup supera il tempo di risoluzione; la convergenza richiede precondizionatori non banali &
+  $\times$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}[Regola pratica: LU per sistemi densi piccoli--medi]
+Per sistemi densi di dimensioni $N \lesssim 500$, LU con pivoting parziale \`e
+lo standard industriale: \`e la prima scelta di MATLAB (\texttt{\textbackslash}),
+R (\texttt{solve()}) e NumPy (\texttt{linalg.solve()}), tutti basati su
+LAPACK \texttt{dgesv}. I metodi iterativi diventano convenienti solo quando
+$N \gtrsim 10^3$ \emph{e} la matrice \`e \textbf{sparsa}. Smith--Wilson con
+$N=12$ \`e un caso emblematico: la robustezza e la semplicita\`a di LU
+sono pi\`u importanti dell'efficienza asintotica.
+\end{keybox}
+
+% ------------------------------------------------------------
+\subsection{Numero di condizionamento}
+\label{sec:condizionamento}
+% ------------------------------------------------------------
+
+\begin{definizione}[Numero di condizionamento]
+Il numero di condizionamento in norma 2 di una matrice $A$ non singolare \`e:
+\[
+  \kappa_2(A) = \norm{A}_2 \cdot \norm{A^{-1}}_2 = \frac{\sigma_{\max}(A)}{\sigma_{\min}(A)}.
+\]
+\end{definizione}
+
+Questo numero controlla l'amplificazione degli errori: una perturbazione relativa
+$\varepsilon$ nei dati pu\`o causare una perturbazione relativa fino a
+$\kappa_2(A)\cdot\varepsilon$ nella soluzione.
+
+\begin{keybox}[Condizionamento nel contesto EIOPA]
+Per la matrice $\Hmat$ di Smith--Wilson con 12 nodi EUR e $\alpha \approx 0.128$,
+si ha tipicamente $\kappa_2(\Hmat) \approx 10$--$100$: il sistema \`e
+\textbf{ben condizionato}. Ma per $\alpha \to 0.05$ (vicino al limite inferiore),
+le colonne di $\Hmat$ diventano quasi proporzionali e $\kappa_2$ pu\`o
+crescere di 1--2 ordini di grandezza (Figura~\ref{fig:cond}).
+
+\smallskip
+\textbf{Interpretazione pratica.}
+Con $\kappa_2(\Hmat) \approx 100$ e unit\`a di arrotondamento IEEE~754
+$u \approx 2.2\times 10^{-16}$ (doppia precisione), la
+Proposizione~\ref{prop:stab_lu} garantisce:
+\[
+  \frac{\norm{\bfzeta - \hat{\bfzeta}}}{\norm{\bfzeta}}
+  \;\lesssim\; \kappa_2(\Hmat)\cdot u
+  \;\approx\; 100 \times 10^{-16} = 10^{-14}.
+\]
+Questo \`e \textbf{10 ordini di grandezza} al di sotto della precisione
+richiesta da EIOPA ($1\,\mathrm{bp} = 10^{-4}$): il sistema lineare \`e
+risolto in modo praticamente esatto dalla fattorizzazione LU a doppia precisione.
+\end{keybox}
+
+% ------------------------------------------------------------
+\subsection{Il metodo di bisezione}
+\label{sec:bisezione}
+% ------------------------------------------------------------
+
+\begin{teorema}[Esistenza di zeri --- Bolzano]
+Sia $g: [a,b] \to \R$ continua con $g(a)\cdot g(b) < 0$. Allora esiste
+$\alpha^* \in (a,b)$ tale che $g(\alpha^*) = 0$.
+\end{teorema}
+
+\begin{definizione}[Metodo di bisezione]
+Dato un intervallo $[a,b]$ con $g(a)\cdot g(b) < 0$, il metodo di bisezione
+genera una successione di intervalli $[a_n, b_n]$ con:
+\[
+  m_n = \frac{a_n + b_n}{2}, \qquad
+  [a_{n+1}, b_{n+1}] = \begin{cases}
+    [a_n, m_n] & \text{se } g(a_n)\cdot g(m_n) < 0,\\
+    [m_n, b_n] & \text{altrimenti.}
+  \end{cases}
+\]
+\end{definizione}
+
+\begin{proposizione}[Convergenza della bisezione]
+\label{prop:bisez}
+Dopo $n$ iterazioni su un intervallo iniziale di ampiezza $\ell = b-a$:
+\begin{equation}
+  \label{eq:bisez_err}
+  \abs{\alpha^* - m_n} \le \frac{\ell}{2^{n+1}}.
+\end{equation}
+La convergenza \`e \textbf{lineare} con rapporto $1/2$. Per raggiungere una
+tolleranza $\varepsilon$ servono:
+\begin{equation}
+  \label{eq:bisez_iter}
+  n \ge \left\lceil \log_2\!\left(\frac{\ell}{\varepsilon}\right) \right\rceil
+  \text{ iterazioni.}
+\end{equation}
+\end{proposizione}
+
+\begin{attenzione}[Bisezione vs metodi pi\`u rapidi]
+La bisezione ha convergenza solo lineare ($O(1/2^n)$), ma \`e:
+\begin{itemize}
+  \item \textbf{globalmente convergente} (non richiede una buona stima iniziale);
+  \item \textbf{priva di derivate} (non serve $g'$);
+  \item \textbf{con costo prevedibile} (il numero di iterazioni \`e noto a priori).
+\end{itemize}
+Per il parametro $\alpha$ EIOPA queste propriet\`a sono decisive: la funzione
+$g(\alpha) = f(0,\CP;\alpha) - \UFR_c$ non ha derivata analitica semplice (dipende
+dalla soluzione di un sistema lineare) e 20 iterazioni sono pi\`u che sufficienti.
+\end{attenzione}
+
+\begin{keybox}[Perch\`e non Newton--Raphson?]
+Newton converge quadraticamente ($\sim c^{2^n}$, $c<1$) e potrebbe sembrare
+più rapido della bisezione. Per $g(\alpha)$ tuttavia la derivata $g'(\alpha)$
+non \`e disponibile analiticamente: differenziare $g$ rispetto ad $\alpha$
+equivale a differenziare la soluzione $\bfzeta(\alpha)$ del sistema lineare,
+il che richiede un ulteriore sistema di dimensione $N$.
+
+\noindent Con derivata \textbf{numerica centrata} ($h=10^{-4}$):
+\begin{center}\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Metodo} & \textbf{LU/iter.} & \textbf{Iterazioni} & \textbf{LU totali}\\
+\midrule
+Bisezione & 1 & $\approx 20$ & $\mathbf{20}$\\
+Newton (deriv.\ numerica) & 3\;(2 per $g'$, 1 per $g$) & $\approx 7$ & $\approx 21$\\
+\bottomrule
+\end{tabular}
+\end{center}
+I costi totali sono quasi identici, ma la bisezione offre convergenza
+\emph{garantita} senza bisogno di una stima iniziale vicina a $\alpha^*$.
+Per questo tipo di problema --- funzione liscia, intervallo noto, nessun costo
+aggiuntivo per iterazione --- la bisezione \`e la scelta ingegneristicamente
+corretta.
+\end{keybox}
+
+% ------------------------------------------------------------
+\subsection{Confronto: sistema tridiagonale e algoritmo di Thomas}
+\label{sec:thomas}
+% ------------------------------------------------------------
+
+Per le spline cubiche (presentate come confronto nella Sezione~\ref{sec:confronto})
+il sistema lineare ha una struttura speciale: la matrice \`e \textbf{tridiagonale}.
+
+\begin{definizione}[Matrice tridiagonale]
+$A \in \R^{n\times n}$ \`e tridiagonale se $a_{ij} = 0$ per $|i-j|>1$.
+\end{definizione}
+
+\begin{proposizione}[Algoritmo di Thomas --- costo $O(n)$]
+\label{prop:thomas}
+Se $A$ \`e tridiagonale e a dominanza diagonale stretta, la fattorizzazione LU
+(senza pivoting) esiste, \`e stabile e costa esattamente $O(n)$ operazioni
+(5 operazioni per riga: 2 per la fattorizzazione, 3 per la sostituzione).
+\end{proposizione}
+
+\begin{keybox}[Confronto dei costi]
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metodo} & \textbf{Struttura} & \textbf{Costo} \\
+\midrule
+LU con pivoting (SW) & Densa $N\times N$ & $O(N^3)$ \\
+Thomas (spline) & Tridiagonale $(N{-}1)\times(N{-}1)$ & $O(N)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Per $N=12$: LU $\approx 1\,152$ op., Thomas $\approx 55$ op.
+Entrambi trascurabili su un calcolatore moderno.
+\end{keybox}
+
+% ============================================================
+\section{Il metodo Smith--Wilson}
+\label{sec:sw}
+% ============================================================
+
+\subsection{Idea e struttura}
+
+Il metodo Smith--Wilson~\cite{smithwilson2001} costruisce la funzione di sconto
+$P(t)$ su $[0,\infty)$ come combinazione di un \textbf{termine asintotico} ---
+che garantisce la convergenza all'UFR --- e di $N$ \textbf{funzioni kernel},
+i cui pesi $\zeta_j$ sono determinati imponendo il passaggio esatto per i dati di mercato.
+
+\begin{keybox}[Funzione di sconto Smith--Wilson --- sez.~9.10 di \cite{eiopa2025}]
+\begin{equation}
+  \label{eq:sw_main}
+  P(t) = e^{-\UFR_c \cdot t} + \sum_{j=1}^{N}\zeta_j\,W(t,\,u_j),
+  \qquad t \ge 0,
+\end{equation}
+dove:
+\begin{itemize}
+  \item $\UFR_c = \ln(1 + \UFR_{\rm ann})$: UFR in intensit\`a continua;
+  \item $u_j \in \{T_1,\ldots,T_N\}$: scadenze dei nodi di mercato (nodi kernel);
+  \item $W(t,u)$: funzione kernel di Wilson (si annulla per $t\to\infty$);
+  \item $\bfzeta \in \R^N$: coefficienti da determinare risolvendo il sistema lineare.
+\end{itemize}
+\end{keybox}
+
+La formula vale \emph{sia} nella zona liquida ($t \le \LLP$) \emph{sia} nella zona
+estrapolata ($t > \LLP$): un'unica espressione $\mathcal{C}^\infty$ per tutto $[0, 150]$.
+
+\subsection{Funzione kernel di Wilson --- sez.~9.7 di \cite{eiopa2025}}
+
+\begin{definizione}[Kernel di Wilson]
+\begin{equation}
+  \label{eq:kernel}
+  W(t,u) = e^{-\UFR_c(t+u)}\Bigl[
+    \alpha\cdot\min(t,u)
+    - e^{-\alpha\max(t,u)}\sinh\!\bigl(\alpha\min(t,u)\bigr)
+  \Bigr].
+\end{equation}
+\end{definizione}
+
+\textbf{Propriet\`a} (sez.~9.9 di \cite{eiopa2025}):
+\begin{enumerate}
+  \item $W(t,u)=W(u,t)$ (simmetria);
+  \item $W(t,u)\to 0$ esponenzialmente per $t\to\infty$, quindi $P(t)\to e^{-\UFR_c t}$;
+  \item La matrice $\Wmat=[W(u_i,u_j)]$ \`e \textbf{simmetrica definita positiva}
+        (conseguenza del fatto che $W$ \`e un nucleo riproducente).
+\end{enumerate}
+
+La struttura di~\eqref{eq:sw_main} --- somma di un termine asintotico e di
+funzioni kernel centrate nei nodi di mercato --- non \`e una scelta arbitraria.
+Come mostreremo nella Sezione~\ref{sec:variazionale}, essa \`e la soluzione ottimale
+di un problema variazionale in uno spazio di Hilbert appropriato: il Teorema del
+Rappresentante (Representer Theorem) garantisce che la soluzione di minima norma
+ha \emph{sempre} questa forma, riducendo il problema di dimensione infinita a un
+sistema lineare $N \times N$.
+Lo stesso schema architetturale compare nella teoria delle
+\textbf{Radial Basis Functions (RBF)}, un metodo classico di interpolazione
+multidimensionale fondato sulla medesima teoria dei nuclei riproducenti.
+
+\begin{keybox}[Analogia con le funzioni a base radiale (RBF)]
+Le \textbf{RBF} (\emph{Radial Basis Functions}) costruiscono un interpolante della
+stessa forma: $f(x) = \sum_j \zeta_j\,\phi(\|x-x_j\|)$, dove $\phi$ dipende
+solo dalla \emph{distanza} (es.~Gaussiana $\phi(r)=e^{-r^2/\sigma^2}$, multiquadrica
+$\phi(r)=\sqrt{r^2+c^2}$). Il kernel di Wilson appartiene alla stessa famiglia
+concettuale (\emph{nuclei riproducenti}, RKHS), con due differenze chiave:
+\begin{center}\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lll}
+\toprule
+\textbf{Caratteristica} & \textbf{RBF classica} & \textbf{Kernel di Wilson}\\
+\midrule
+Dipendenza & Solo da $\|x-y\|$ (radiale) & Da $t$ e $u$ separatamente\\
+Termine asintotico & Assente & $e^{-\UFR_c t}$ strutturale\\
+Gram matrix & Simm.\ def.\ pos. & Simm.\ def.\ pos.\\
+Garanzia conv.\ all'asintoto & No (estrapolazione libera) & S\`i (verso UFR)\\
+\bottomrule
+\end{tabular}
+\end{center}
+Il fattore $e^{-\UFR_c(t+u)}$ rompe la radialit\`a: kernel con $t$ o $u$
+grandi sono automaticamente smorzati, forzando la curva verso l'UFR
+\emph{senza} imporre un vincolo asintotico aggiuntivo. La Figura~\ref{fig:kernel_W}
+mostra la matrice di Gram $\Wmat_{ij}=W(u_i,u_j)$: simmetrica e def.\ pos.,
+analogamente alla matrice di Gram RBF $[\phi(\|x_i-x_j\|)]$.
+\end{keybox}
+
+La Figura~\ref{fig:kernel} mostra $W(t,u_j)$ per diversi nodi $u_j$: il kernel
+raggiunge un picco vicino a $t \approx u_j$ e decade esponenzialmente per
+$t\to\infty$. Il parametro $\alpha$ controlla la velocit\`a del decadimento
+(Figure~\ref{fig:kernel_alpha} e~\ref{fig:kernel_W}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig02a_kernel_wilson.pdf}
+\caption{Kernel di Wilson $W(t,u_j)$ per quattro nodi rappresentativi
+$u \in \{1, 5, 10, 20\}$ anni, con $\alpha=0.128$ e $\UFR_c=\ln(1.033)$.
+Ogni curva si annulla per $t\to\infty$, garantendo la convergenza della
+funzione di sconto al termine asintotico $e^{-\UFR_c t}$.}
+\label{fig:kernel}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig02b_kernel_alpha_effetto.pdf}
+\caption{Effetto del parametro $\alpha$ sulla forma del kernel (nodo $u=10$ fisso).
+Un $\alpha$ piccolo produce un kernel pi\`u ampio e lento a decadere: la curva
+impiega pi\`u tempo a convergere verso l'UFR. Un $\alpha$ grande produce un
+kernel stretto e rapido.}
+\label{fig:kernel_alpha}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{grafici/curva_eiopa_rfr/fig02c_matrice_kernel_W.pdf}
+\caption{Matrice di Gram del kernel di Wilson: $\Wmat_{ij} = W(u_i,u_j)$ per le
+12 scadenze DLT EUR, con $\alpha=0.128$. La matrice \`e simmetrica e definita
+positiva (analoga alla matrice di Gram RBF): ci\`o garantisce l'unicit\`a della
+soluzione del sistema di calibrazione.}
+\label{fig:kernel_W}
+\end{figure}
+
+\subsection{Interpretazione variazionale --- sez.~9.6 di \cite{eiopa2025}}
+\label{sec:variazionale}
+
+La formula~\eqref{eq:sw_main} non \`e una scelta ad hoc: \`e la \textbf{soluzione
+unica} di un problema di minima norma in uno spazio di Hilbert a nucleo
+riproducente (RKHS, \emph{Reproducing Kernel Hilbert Space}).
+
+\subsubsection*{Lo spazio funzionale $\mathcal{H}$ e la norma}
+
+Fissiamo il ``prior'' asintotico $P_\infty(t)=e^{-\UFR_c t}$, che rappresenta
+il comportamento atteso della curva per $t\to\infty$.
+Consideriamo lo spazio $\mathcal{H}$ delle funzioni $g:[0,\infty)\to\R$
+dotato di un prodotto interno costruito in modo che il kernel di Wilson
+$W(t,u)$ ne sia il \textbf{nucleo riproducente}:
+\[
+  \langle W(\cdot,\, u),\; g \rangle_{\mathcal{H}} = g(u)
+  \qquad \text{per ogni } g \in \mathcal{H},\; u \ge 0.
+\]
+La norma $\|g\|_{\mathcal{H}}^2 = \langle g,g\rangle_{\mathcal{H}}$ penalizza
+le perturbazioni rispetto all'asintoto: una funzione ``vicina'' a $P_\infty$
+ha norma piccola, una con oscillazioni elevate ha norma grande.
+
+\subsubsection*{Il problema di minima norma con vincoli di mercato}
+
+I tassi par di mercato $s_j$ (corretti per il CRA) definiscono $N$ vincoli
+funzionali su $P$: il funzionale $\phi_j(P)$ restituisce il valore netto
+dello swap $j$ attualizzato con la funzione di sconto $P$
+(cfr.~eq.~\eqref{eq:tasso_par}), e deve valere 1 (swap alla pari).
+Il problema variazionale di Smith--Wilson \`e:
+\begin{equation}
+  \label{eq:variazionale}
+  \min_{P \in \mathcal{H}}\;\|P - P_\infty\|_{\mathcal{H}}^2
+  \qquad\text{soggetto a:}\qquad
+  \phi_j(P) = 1, \quad j=1,\ldots,N.
+\end{equation}
+Si minimizza la distanza da $P_\infty$ nello spazio $\mathcal{H}$ compatibilmente
+con i $N$ vincoli di mercato.
+
+\textbf{Interpretazione geometrica.}
+I vincoli $\phi_j(P)=1$ definiscono un sottospazio affine di $\mathcal{H}$:
+l'insieme di tutte le funzioni di sconto compatibili con i dati.
+La soluzione di~\eqref{eq:variazionale} \`e la \textbf{proiezione ortogonale}
+di $P_\infty$ su questo sottospazio --- la funzione del vincolo pi\`u vicina
+all'asintoto nella metrica di $\mathcal{H}$.
+
+\subsubsection*{Teorema del Rappresentante}
+
+Il seguente risultato --- versione del Representer Theorem per RKHS
+con vincoli funzionali lineari --- garantisce che la soluzione di~\eqref{eq:variazionale}
+ha sempre la forma di una combinazione finita di kernel:
+
+\begin{teorema}[Representer Theorem per Smith--Wilson]
+\label{thm:representer}
+La soluzione ottimale di~\eqref{eq:variazionale} \`e:
+\[
+  P^*(t) = P_\infty(t) + \sum_{j=1}^{N} \zeta_j\,W(t,\,u_j),
+\]
+dove i coefficienti $\bfzeta = (\zeta_1,\ldots,\zeta_N)^\top$ sono univocamente
+determinati dai vincoli di mercato.
+\end{teorema}
+
+Nonostante~\eqref{eq:variazionale} sia un problema in dimensione infinita,
+la soluzione risiede nel sottospazio finito-dimensionale generato dai kernel
+$\{W(\cdot,u_j)\}_{j=1}^N$: la complessit\`a si riduce a un sistema lineare $N\times N$.
+
+\subsubsection*{Dal problema variazionale al sistema lineare}
+
+Sostituendo $P^*(t)$ nel vincolo $\phi_j(P^*) = 1$ e sfruttando la
+linearit\`a di $\phi_j$:
+\[
+  \phi_j(P_\infty) + \sum_{k=1}^{N} \zeta_k\,\phi_j\!\bigl(W(\cdot,u_k)\bigr) = 1.
+\]
+Definendo $H_{jk} \defeq \phi_j(W(\cdot,u_k))$ e
+$\mu_{Q,j} \defeq \phi_j(P_\infty)$, si ottiene esattamente il sistema
+della Sezione~\ref{sec:sistema}:
+\[
+  \Hmat\,\bfzeta = \mathbf{1} - \bfmu_Q.
+\]
+La struttura del problema variazionale \`e quindi la \emph{radice matematica}
+del sistema lineare denso: ogni elemento $H_{jk}$ misura quanto il kernel
+nel nodo $u_k$ contribuisce al valore dello swap $j$.
+
+\begin{keybox}[Parallelo con la spline cubica naturale]
+La spline cubica naturale risolve:
+\[
+  \min_{S \in C^2[a,b]}\;\int_a^b \bigl[S''(t)\bigr]^2\,\mathrm{d}t
+  \quad\text{s.t.}\quad S(t_i) = y_i,\quad i=1,\ldots,n.
+\]
+Smith--Wilson \`e il diretto analogo con due varianti essenziali:
+\begin{enumerate}
+  \item La \textbf{norma} \`e quella di $\mathcal{H}$, definita dal kernel
+        $W(t,u)$ invece di $\int[S'']^2$: questo incorpora strutturalmente
+        la convergenza all'UFR, senza vincolo esplicito aggiuntivo.
+  \item I \textbf{vincoli} sono funzionali swap $\phi_j(P)=1$ invece di
+        valutazioni puntali $S(t_i)=y_i$: riflettono la struttura degli
+        strumenti osservabili sul mercato.
+\end{enumerate}
+In entrambi i casi il Representer Theorem garantisce che la soluzione ottimale
+\`e una combinazione lineare di kernel centrati nei nodi dei vincoli,
+i cui pesi si trovano risolvendo un sistema lineare $N\times N$.
+\end{keybox}
+
+\subsection{Parametri chiave per EUR 2025}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lll}
+\toprule
+\textbf{Parametro} & \textbf{Valore EUR 2025} & \textbf{Riferimento} \\
+\midrule
+$\UFR_{\rm ann}$ & $3.30\%$ (annuo composto) & sez.~9.3, Annex~E \\
+$\UFR_c$ & $\ln(1.033) \approx 3.2466\%$ (continuo) & conversione \\
+$\LLP$ & 20 anni & sez.~3.7 (residual volume) \\
+$\CP$ & $\max(\LLP+40,\,60) = 60$ anni & sez.~9.4 \\
+$\CRA$ & 10 bps & sez.~7.3, Situazione~1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warningbox}
+\textbf{Attenzione alla convenzione dell'UFR.}
+$\UFR_{\rm ann} = 3.30\%$ \`e in convenzione annua composta ($1+r$), \emph{non}
+in capitalizzazione continua ($e^r$). Nelle formule Smith--Wilson si usa
+sempre l'intensit\`a continua:
+\[
+  \UFR_c = \ln(1 + 0.033) \approx 0.032466 \ne 0.0330.
+\]
+L'errore di usare $0.0330$ al posto di $0.032466$ produce uno scostamento
+di $\sim 5$ bps sulla curva a lungo termine --- significativo nel contesto
+regolamentare.
+\end{warningbox}
+
+% ============================================================
+\section{Il sistema lineare: calibrazione su swap par}
+\label{sec:sistema}
+% ============================================================
+
+\subsection{Dati di input: OIS e CRA}
+
+Per l'euro, EIOPA utilizza come input i tassi par degli OIS su \texteuro{}STR
+(sez.~5.3, Annex~B di~\cite{eiopa2025}). Un OIS par a scadenza $T_k$ con cedola
+annua e nominale 1 vale esattamente 1 sul mercato:
+\begin{equation}
+  \label{eq:ois_par}
+  s_k \sum_{j=1}^{T_k} P(0,j) + P(0,T_k) = 1,
+\end{equation}
+dove $P(0,t)$ \`e il fattore di sconto (incognita).
+
+Il \textbf{Credit Risk Adjustment} (sez.~7.3) viene sottratto prima della
+calibrazione: $r_k = s_k - \CRA$, con $\CRA = 10$ bps per EUR 2025.
+
+\begin{table}[H]
+\centering\small
+\caption{Tassi OIS \texteuro{}STR par (illustrativi, maggio 2025) e tassi after-CRA.}
+\label{tab:ois_eur}
+\begin{tabular}{ccccc}
+\toprule
+$T_k$ (anni) & $s_k$ (\%) & $r_k = s_k - 0.10$ (\%) & DLT & \\
+\midrule
+\rowcolor{rowtint}1  & 3.742 & 3.642 & \checkmark & \\
+2  & 2.851 & 2.751 & \checkmark & \\
+\rowcolor{rowtint}3  & 2.577 & 2.477 & \checkmark & \\
+4  & 2.468 & 2.368 & \checkmark & \\
+\rowcolor{rowtint}5  & 2.413 & 2.313 & \checkmark & \\
+6  & 2.398 & 2.298 & \checkmark & \\
+\rowcolor{rowtint}7  & 2.393 & 2.293 & \checkmark & \\
+8  & 2.400 & 2.300 & \checkmark & \\
+\rowcolor{rowtint}10 & 2.470 & 2.370 & \checkmark & \\
+12 & 2.510 & 2.410 & \checkmark & \\
+\rowcolor{rowtint}15 & 2.555 & 2.455 & \checkmark & \\
+20 & 2.581 & 2.481 & \checkmark & \textbf{LLP}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig01_input_ois_par.pdf}
+\caption{Tassi OIS \texteuro{}STR par (lordi) e after-CRA per le 12 scadenze DLT EUR.
+Il tasso a 1 anno \`e significativamente pi\`u alto: riflette la politica monetaria
+restrittiva corrente. La curva si appiattisce oltre i 5 anni.}
+\label{fig:input}
+\end{figure}
+
+\subsection{Derivazione del sistema --- sez.~9.15 di \cite{eiopa2025}}
+
+EIOPA applica Smith--Wilson \emph{direttamente} ai tassi par degli swap, senza
+alcun passo intermedio. Ogni swap par a scadenza $T_i$ con tasso $r_i$ ha
+valore di mercato 1 (condizione~\eqref{eq:ois_par}), con flussi di cassa:
+\[
+  c_{ij} = \begin{cases}
+    r_i & j = 1, \ldots, T_i - 1, \\
+    1 + r_i & j = T_i.
+  \end{cases}
+\]
+
+Sostituendo~\eqref{eq:sw_main} in $\sum_j c_{ij} P(j) = 1$ e separando
+i termini noti e incogniti:
+\[
+  \underbrace{\sum_{j=1}^{T_i} c_{ij}\,e^{-\UFR_c\,j}}_{\mu_{Q,i}}
+  + \sum_{k=1}^{N}\zeta_k \underbrace{\sum_{j=1}^{T_i} c_{ij}\,W(j,\,u_k)}_{H_{ik}}
+  = 1.
+\]
+
+\begin{keybox}[Sistema lineare di calibrazione EIOPA --- sez.~9.15]
+\begin{equation}
+  \label{eq:H_system}
+  \Hmat\,\bfzeta = \mathbf{1} - \bfmu_Q,
+\end{equation}
+con:
+\begin{align}
+  \mu_{Q,i} &= \sum_{j=1}^{T_i} c_{ij}\,e^{-\UFR_c\,j}
+               \quad\text{(contributo del termine asintotico)},
+               \label{eq:mu_Q}\\
+  H_{ik}    &= \sum_{j=1}^{T_i} c_{ij}\,W(j,\,u_k)
+               \quad\text{(matrice $N\times N$ densa)}.
+               \label{eq:H_ik}
+\end{align}
+\end{keybox}
+
+\begin{esempio}[Riga $H_{ik}$ per $T_i = 3$, $r_i = 2.477\%$]
+I flussi sono $c_{i1}=0.02477$, $c_{i2}=0.02477$, $c_{i3}=1.02477$.
+\[
+  H_{ik} = 0.02477\,W(1,u_k) + 0.02477\,W(2,u_k) + 1.02477\,W(3,u_k).
+\]
+Ogni riga \`e la somma pesata (con pesi dati dai flussi cedola) dei valori
+del kernel. La matrice $\Hmat$ \`e \textbf{densa} e in generale \textbf{non simmetrica}
+(a differenza della matrice $\Wmat$ pura).
+\end{esempio}
+
+\subsection{Risoluzione: LU con pivoting parziale}
+
+Il sistema~\eqref{eq:H_system} si risolve con la fattorizzazione LU presentata
+nella Sezione~\ref{sec:lu}:
+\[
+  P_\pi \Hmat = LU, \qquad
+  Ly = P_\pi(\mathbf{1}-\bfmu_Q), \qquad
+  U\bfzeta = y.
+\]
+Costo: $\frac{2}{3}N^3 + O(N^2) \approx 1\,152$ operazioni per $N=12$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{grafici/curva_eiopa_rfr/fig03a_matrice_H.pdf}
+\caption{Struttura della matrice $\Hmat$ (heatmap): densa, non simmetrica.
+Le righe corrispondono alle scadenze $T_i$ degli swap, le colonne ai nodi kernel $u_k$.}
+\label{fig:matrice_H}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{grafici/curva_eiopa_rfr/fig03b_coefficienti_zeta.pdf}
+\caption{Coefficienti $\zeta_k$ ottenuti dalla risoluzione del sistema
+$\Hmat\bfzeta = \mathbf{b}$ con $\alpha=0.128$. I $\zeta_k$ traducono i vincoli
+di mercato in ``correzioni'' alla curva asintotica $e^{-\UFR_c t}$.}
+\label{fig:zeta}
+\end{figure}
+
+\subsection{Condizionamento della matrice $\Hmat$}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{grafici/curva_eiopa_rfr/fig03c_condizionamento_vs_alpha.pdf}
+\caption{Numero di condizionamento $\kappa_2(\Hmat)$ in funzione di $\alpha$.
+Per $\alpha$ piccolo le colonne di $\Hmat$ diventano quasi proporzionali
+(il kernel $W(j,u_k)$ dipende poco da $u_k$), aumentando $\kappa_2$.
+Per $\alpha \in [0.10, 0.50]$ il sistema \`e ben condizionato.}
+\label{fig:cond}
+\end{figure}
+
+\subsection{Valutazione della curva}
+
+Una volta risolto~\eqref{eq:H_system} e ottenuto $\bfzeta$, la formula~\eqref{eq:sw_main}
+fornisce $P(t)$ per ogni $t \ge 0$:
+\begin{align}
+  r(0,t) &= -\frac{\ln P(t)}{t}
+             \quad\text{(tasso spot continuo)},
+             \label{eq:spot_sw}\\[4pt]
+  f(0,t) &= -\frac{\mathrm{d}}{\mathrm{d}t}\ln P(t)
+           = \UFR_c - \frac{\displaystyle\sum_{j=1}^{N}\zeta_j\,\partial_t W(t,u_j)}{P(t)}
+             \quad\text{(tasso forward istantaneo)}.
+             \label{eq:fwd_sw}
+\end{align}
+
+Per $t\to\infty$ il numeratore di~\eqref{eq:fwd_sw} va a zero (i kernel
+si annullano esponenzialmente), quindi $f(0,t)\to\UFR_c$: la convergenza
+\`e \textbf{strutturale}, incorporata nella formula.
+
+% ============================================================
+\section{Determinazione del parametro $\alpha$}
+\label{sec:alpha}
+% ============================================================
+
+\subsection{L'Ultimate Forward Rate}
+
+L'UFR \`e il tasso forward di lungo periodo stimato come somma di
+tasso reale atteso e inflazione attesa (sez.~9.3, Annex~E di~\cite{eiopa2025}):
+\[
+  \UFR_{\rm ann} = r_{\rm reale}^{\rm att} + \pi^{\rm att}
+  \approx 1.30\% + 2.00\% = 3.30\%.
+\]
+
+\subsection{Criterio EIOPA per $\alpha$ --- sez.~9.4}
+
+La velocit\`a di convergenza verso l'UFR \`e controllata da $\alpha$.
+Il criterio: $\alpha^*$ \`e il \emph{minimo} valore in $[0.05, 1.0]$
+tale che il forward al Convergence Point si discosti dall'UFR di meno di 1 bp:
+\begin{equation}
+  \label{eq:alpha_crit}
+  g(\alpha) \;\defeq\; f(0,\CP;\,\alpha) - \UFR_c, \qquad
+  \abs{g(\alpha^*)} \le 10^{-4}.
+\end{equation}
+
+La funzione $g(\alpha)$ dipende da $\alpha$ in modo non lineare: per ogni valore
+di $\alpha$ occorre risolvere il sistema $\Hmat(\alpha)\bfzeta = \mathbf{b}$ e
+poi valutare il forward al CP.
+
+\begin{proposizione}[Monotonia e applicabilit\`a della bisezione]
+$g(\alpha)$ \`e strettamente monotona decrescente (in valore assoluto) su
+$[0.05, 1.0]$: al crescere di $\alpha$, la convergenza verso l'UFR \`e pi\`u
+rapida e il forward al CP \`e pi\`u vicino all'UFR. Il metodo di bisezione
+della Sezione~\ref{sec:bisezione} \`e applicabile con convergenza garantita.
+\end{proposizione}
+
+\subsection{Algoritmo: bisezione per $\alpha^*$}
+
+\begin{algorithm}[H]
+\caption{Bisezione per $\alpha^*$ (alternativa alla scanning procedure EIOPA)}
+\label{alg:alpha}
+\DontPrintSemicolon
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+\Input{$\{T_k\}$, $\{r_k\}$, $\UFR_c$, $\CP$, $\varepsilon_\alpha=10^{-6}$, $n_{\max}=60$}
+\Output{$\alpha^*$ = valore minimo che soddisfa~\eqref{eq:alpha_crit}}
+$a\leftarrow 0.05$;\quad $b\leftarrow 1.0$\;
+\For{$k=1,\ldots,n_{\max}$}{
+  $\alpha_{\rm mid}\leftarrow (a+b)/2$\;
+  Risolvi $\Hmat(\alpha_{\rm mid})\bfzeta = \mathbf{b}$ $\longrightarrow$ $\bfzeta$\;
+  Calcola $f_{\rm mid} = f(0,\CP;\alpha_{\rm mid})$ da~\eqref{eq:fwd_sw}\;
+  \eIf{$\abs{f_{\rm mid}-\UFR_c}\le 10^{-4}$}{
+    $b\leftarrow\alpha_{\rm mid}$ \tcp*{soddisfatto: cercare $\alpha$ pi\`u piccolo}
+  }{
+    $a\leftarrow\alpha_{\rm mid}$ \tcp*{non soddisfatto: $\alpha$ troppo piccolo}
+  }
+  \If{$b-a<\varepsilon_\alpha$}{\textbf{break}\;}
+}
+\Return{$b$}\;
+\end{algorithm}
+
+\paragraph{Analisi dell'errore.} Applicando~\eqref{eq:bisez_err} all'intervallo
+$[0.05,\,1.0]$ (ampiezza $\ell = 0.95$):
+\[
+  \abs{\alpha^* - \alpha_n} \le \frac{0.95}{2^n}.
+\]
+Per $\varepsilon_\alpha = 10^{-6}$: $n \ge \lceil\log_2(0.95/10^{-6})\rceil = 20$
+iterazioni. Per EUR 2025: $\alpha^* \approx 0.128$.
+
+\paragraph{Confronto con la scanning procedure EIOPA.}
+EIOPA usa una griglia densa con passo $10^{-6}$ su $[0.05, 1.0]$:
+circa $950\,000$ valutazioni di $g$. La bisezione ne richiede $\approx 20$.
+La bisezione \`e $\sim 47\,000$ volte pi\`u efficiente.
+
+\paragraph{Costo totale.} Ogni valutazione di $g$ richiede la risoluzione di
+$\Hmat\bfzeta = \mathbf{b}$: costo $O(N^3)$. Totale bisezione:
+$20 \times 12^3 \approx 34\,560$ operazioni.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig04b_funzione_g_alpha.pdf}
+\caption{La funzione $g(\alpha) = f(0,\CP;\alpha) - \UFR_c$ in bps.
+La zona verde indica la regione $|g|\le 1$ bp dove il criterio EIOPA \`e soddisfatto.
+$\alpha^*$ \`e il minimo valore in questa zona.}
+\label{fig:g_alpha}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig04a_bisezione_convergenza.pdf}
+\caption{Convergenza della bisezione: ampiezza dell'intervallo $[a_n, b_n]$
+in funzione dell'iterazione (scala logaritmica). La convergenza \`e
+esponenziale: ogni iterazione dimezza l'intervallo.}
+\label{fig:bisez_conv}
+\end{figure}
+
+\begin{keybox}[Bilancio computazionale: pipeline completa]
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Fase} & \textbf{LU calls} & \textbf{Op.\ floating-point} & \textbf{Nota}\\
+\midrule
+Bisezione ($n=20$ iter.) & 20 & $20\times 1\,152 \approx 23\,000$ & $\frac{2}{3}N^3$, $N=12$\\
+Valutazione $P(t)$, $f(t)$ & 0 & $O(N\cdot M)\approx 2\,400$ & $M=200$ punti\\
+\midrule
+\textbf{Totale pipeline} & 20 & $\sim 25\,000$ & $\sim 25\,\mu$s su CPU moderna\\
+\midrule
+Scanning EIOPA (passo $10^{-6}$) & $950\,000$ & $\sim 10^9$ & $\approx\!50\,000\times$ pi\`u lento\\
+\bottomrule
+\end{tabular}
+\end{center}
+La differenza \`e irrilevante per un singolo calcolo mensile, ma diventa
+sostanziale quando la curva viene ricalcolata su migliaia di scenari Monte
+Carlo (stress test SCR, ORSA): la bisezione permette di mantenere il calcolo
+nel dominio del tempo reale.
+\end{keybox}
+
+% ============================================================
+\section{Risultati: la curva EIOPA completa}
+\label{sec:risultati}
+% ============================================================
+
+\subsection{Curva spot e forward}
+
+Eseguendo la pipeline completa con $\alpha^*$ trovato dalla bisezione si
+ottiene la curva $P(t)$ per $t \in [0, 150]$, da cui spot e forward.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{grafici/curva_eiopa_rfr/fig05a_curva_spot_forward.pdf}
+\caption{Curva EIOPA EUR completa: tasso spot $r(0,T)$ (blu continuo) e forward
+istantaneo $f(0,T)$ (rosso tratteggiato). I punti neri sono gli spot ai nodi
+di mercato. Le linee verticali indicano LLP~(20a) e CP~(60a). Oltre il CP,
+il forward converge all'UFR~$=3.30\%$.}
+\label{fig:curva_completa}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{grafici/curva_eiopa_rfr/fig05b_convergenza_ufr.pdf}
+\caption{Distanza $|f(0,T) - \UFR_c|$ in bps (scala logaritmica).
+Al Convergence Point ($T=60$) il forward \`e per costruzione entro 1~bp dall'UFR.
+La convergenza \`e esponenziale, governata dal termine $e^{-\alpha T}$ del kernel.}
+\label{fig:conv_ufr}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{grafici/curva_eiopa_rfr/fig05c_fattori_sconto.pdf}
+\caption{Fattori di sconto $P(0,T)$ per $T=1,\ldots,100$ anni.
+La curva puntinata viola \`e il limite asintotico $e^{-\UFR_c T}$: per
+$T$ grande, $P(T)$ converge a questa curva (i kernel si annullano).}
+\label{fig:discount}
+\end{figure}
+
+\subsection{Verifica: replica dei par swap}
+
+La calibrazione \`e corretta se i fattori di sconto ottenuti replicano
+esattamente i par swap di input. Per ogni strumento $i$:
+\[
+  r_i \sum_{j=1}^{T_i} P(0,j) + P(0,T_i) \stackrel{?}{=} 1.
+\]
+Con il codice R si verifica che l'errore massimo \`e dell'ordine di $10^{-15}$
+(precisione macchina), confermando la correttezza della risoluzione del sistema.
+
+% ============================================================
+\section{Confronto: spline cubiche vs Smith--Wilson}
+\label{sec:confronto}
+% ============================================================
+
+Le spline cubiche non sono nella pipeline EIOPA (sez.~9.1 di~\cite{eiopa2025}),
+ma il loro confronto con Smith--Wilson \`e illuminante per il calcolo numerico:
+i due metodi risolvono lo stesso problema di interpolazione con strutture
+algebriche molto diverse.
+
+\subsection{Sistema tridiagonale per le spline}
+
+Data la funzione $\phi(T) = -\ln P(0,T)$ ai nodi $T_0 < \cdots < T_N$
+con passi $h_j = T_{j+1}-T_j$, le derivate seconde $M_j = S''(T_j)$ soddisfano
+il sistema tridiagonale:
+\begin{equation}
+  \label{eq:spline_sys}
+  h_{j-1}M_{j-1} + 2(h_{j-1}+h_j)M_j + h_j M_{j+1}
+  = 6\!\left(\frac{\phi_{j+1}-\phi_j}{h_j} - \frac{\phi_j-\phi_{j-1}}{h_{j-1}}\right).
+\end{equation}
+
+In forma matriciale $\mathbf{A}\mathbf{M} = \mathbf{d}$ con $\mathbf{A}$
+tridiagonale, simmetrica, a dominanza diagonale stretta. Si risolve con
+l'algoritmo di Thomas (Proposizione~\ref{prop:thomas}) in $O(N)$.
+
+\subsection{Confronto strutturale e limiti della spline}
+
+\paragraph{Perch\`e il sistema SW \`e denso e quello delle spline \`e tridiagonale?}
+La risposta sta nella \emph{localit\`a} delle funzioni base:
+\begin{itemize}
+  \item Le spline cubiche usano polinomi a \textbf{supporto locale}: il tratto
+        su $[T_j, T_{j+1}]$ dipende solo dai nodi adiacenti. Ogni condizione di
+        raccordo coinvolge al pi\`u 3 nodi consecutivi $\Rightarrow$ matrice
+        \textbf{tridiagonale}, algoritmo di Thomas $O(N)$.
+  \item Il kernel di Wilson $W(t,u_k)$ ha \textbf{supporto globale}: ogni nodo
+        $u_k$ influenza la curva su tutto $[0,\infty)$. Ogni condizione di
+        mercato coinvolge \emph{tutti} i nodi kernel contemporaneamente
+        $\Rightarrow$ matrice $\Hmat$ \textbf{densa}, fattorizzazione LU $O(N^3)$.
+\end{itemize}
+Il prezzo della garanzia strutturale di convergenza all'UFR (kernel globale)
+\`e una matrice densa. Le spline, non avendo questo requisito, sfruttano la
+struttura locale e ottengono un sistema tridiagonale molto pi\`u economico.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig06_confronto_spline_sw.pdf}
+\caption{Confronto interpolazione/estrapolazione: spline cubica naturale vs
+Smith--Wilson. Nella zona liquida ($T\le 20$) entrambe passano per i nodi.
+Oltre il LLP la spline estrapolizza linearmente (senza convergenza a UFR),
+mentre SW converge strutturalmente.}
+\label{fig:confronto}
+\end{figure}
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Propriet\`a} & \textbf{Spline cubica} & \textbf{Smith--Wilson} \\
+\midrule
+Struttura del sistema & Tridiagonale $\mathbf{A}$ ($N-1$ variabili) & Densa $\Hmat$ ($N$ variabili) \\
+Algoritmo di soluzione & Thomas: $O(N)$ & LU: $O(N^3)$ \\
+Interpolazione & \checkmark & \checkmark \\
+Estrapolazione con conv.\ a UFR & $\times$ & \checkmark \\
+Formula unica $[0,\infty)$ & $\times$ & \checkmark \\
+Regolarit\`a globale & $\mathcal{C}^2$ & $\mathcal{C}^\infty$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{Analisi di sensitivit\`a}
+\label{sec:sensitivita}
+% ============================================================
+
+\subsection{Sensitivit\`a all'UFR}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig07a_sensitivita_ufr.pdf}
+\caption{Curva spot per tre valori dell'UFR: 3.15\%, 3.30\%, 3.45\%.
+Nella zona liquida ($T\le 20$) le curve sono indistinguibili;
+oltre il LLP divergono verso il rispettivo UFR.}
+\label{fig:sens_ufr}
+\end{figure}
+
+\subsection{Sensitivit\`a al parametro $\alpha$}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig07b_sensitivita_alpha.pdf}
+\caption{Forward istantaneo per tre valori di $\alpha$ (UFR fisso a 3.30\%).
+Un $\alpha$ pi\`u grande produce una convergenza pi\`u rapida verso l'UFR,
+con la curva forward che ``raggiunge'' l'asintoto prima.}
+\label{fig:sens_alpha}
+\end{figure}
+
+% ============================================================
+\section{Implementazione in R}
+\label{sec:codice}
+% ============================================================
+
+Il codice completo \`e nel file \texttt{R/curva\_eiopa\_rfr\_CN.R}.
+Qui presentiamo le funzioni principali con commenti dettagliati.
+
+\subsection{Setup e dati}
+
+\begin{codebox}[Parametri EIOPA e dati di input]
+\begin{Verbatim}[fontsize=\small]
+# Parametri EIOPA EUR 2025 (sez. 9.3, 9.4)
+UFR_ann <- 0.0330                   # 3.30% annuo composto
+UFR_c   <- log(1 + UFR_ann)        # intensità continua ~ 3.2466%
+LLP     <- 20                       # Last Liquid Point EUR
+CP      <- max(LLP + 40, 60)       # Convergence Point = 60 anni
+CRA     <- 0.0010                   # 10 bps
+
+# Scadenze DLT e tassi par OIS €STR (illustrativi, maggio 2025)
+T_mkt <- c(1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20)
+s_mkt <- c(3.742, 2.851, 2.577, 2.468, 2.413, 2.398,
+           2.393, 2.400, 2.470, 2.510, 2.555, 2.581) / 100
+r_mkt <- s_mkt - CRA   # tassi after-CRA
+\end{Verbatim}
+\end{codebox}
+
+\subsection{Kernel di Wilson}
+
+\begin{codebox}[Implementazione del kernel --- eq.~\eqref{eq:kernel}]
+\begin{Verbatim}[fontsize=\small]
+W_kernel <- function(t, u, ufr, alpha) {
+  tmin <- pmin(t, u)
+  tmax <- pmax(t, u)
+  exp(-ufr * (t + u)) * (alpha * tmin
+    - exp(-alpha * tmax) * sinh(alpha * tmin))
+}
+\end{Verbatim}
+\end{codebox}
+
+\subsection{Costruzione della matrice $\Hmat$ e calibrazione}
+
+\begin{codebox}[Calibrazione SW su swap par --- sez.~9.15 EIOPA]
+\begin{Verbatim}[fontsize=\small]
+sw_calibrate <- function(maturities, par_rates, ufr, alpha) {
+  N <- length(maturities)
+  H    <- matrix(0, N, N)
+  mu_Q <- numeric(N)
+  
+  for (i in seq_len(N)) {
+    Ti <- maturities[i]; ri <- par_rates[i]
+    for (j in seq_len(Ti)) {
+      c_ij <- if (j < Ti) ri else (1 + ri)
+      mu_Q[i] <- mu_Q[i] + c_ij * exp(-ufr * j)
+      for (k in seq_len(N))
+        H[i, k] <- H[i, k] + c_ij * W_kernel(j, maturities[k], ufr, alpha)
+    }
+  }
+  # Sistema lineare denso: LU con pivoting (LAPACK dgesv via R)
+  zeta <- solve(H, 1 - mu_Q)
+  list(zeta = zeta, H = H, b = 1 - mu_Q, mu_Q = mu_Q)
+}
+\end{Verbatim}
+\end{codebox}
+
+\begin{osservazione}
+La funzione \texttt{solve()} di R invoca la routine LAPACK \texttt{dgesv}:
+fattorizzazione LU con pivoting parziale, esattamente il metodo della
+Sezione~\ref{sec:lu}. Il costo per $N=12$ \`e trascurabile ($\sim 1\,\mu$s).
+\end{osservazione}
+
+\subsection{Bisezione per $\alpha^*$}
+
+\begin{codebox}[Bisezione --- Algoritmo~\ref{alg:alpha} in R]
+\begin{Verbatim}[fontsize=\small]
+find_alpha <- function(maturities, par_rates, ufr, llp,
+                       tol_fwd = 1e-4, tol_alpha = 1e-6, n_max = 60) {
+  cp <- max(llp + 40, 60)
+  a <- 0.05; b <- 1.0
+  
+  for (k in seq_len(n_max)) {
+    am <- 0.5 * (a + b)
+    cal <- sw_calibrate(maturities, par_rates, ufr, am)
+    fwd_cp <- sw_forward(cp, maturities, cal$zeta, ufr, am)
+    
+    if (abs(fwd_cp - ufr) <= tol_fwd) {
+      b <- am   # soddisfatto: cercare alpha più piccolo
+    } else {
+      a <- am   # non soddisfatto
+    }
+    if ((b - a) < tol_alpha) break
+  }
+  b
+}
+\end{Verbatim}
+\end{codebox}
+
+\subsection{Valutazione della curva}
+
+\begin{codebox}[Fattore di sconto e forward]
+\begin{Verbatim}[fontsize=\small]
+sw_discount <- function(t, maturities, zeta, ufr, alpha) {
+  P <- exp(-ufr * t)
+  for (k in seq_along(maturities))
+    P <- P + zeta[k] * W_kernel(t, maturities[k], ufr, alpha)
+  P
+}
+
+sw_forward <- function(t, maturities, zeta, ufr, alpha, h = 1e-7) {
+  Pp <- sw_discount(t + h, maturities, zeta, ufr, alpha)
+  Pm <- sw_discount(t - h, maturities, zeta, ufr, alpha)
+  -(log(Pp) - log(Pm)) / (2 * h)
+}
+\end{Verbatim}
+\end{codebox}
+
+\begin{osservazione}
+Il forward \`e calcolato con una \textbf{derivata centrata}
+($h = 10^{-7}$). L'errore di troncamento \`e $O(h^2) \approx 10^{-14}$,
+ben sotto la precisione richiesta (1~bp $= 10^{-4}$). In alternativa,
+si pu\`o usare la derivata analitica $\partial_t W(t,u)$ fornita nella sez.~9.12
+di~\cite{eiopa2025}.
+\end{osservazione}
+
+% ============================================================
+\section*{Riepilogo degli algoritmi}
+\addcontentsline{toc}{section}{Riepilogo degli algoritmi}
+% ============================================================
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{llllc}
+\toprule
+\textbf{Fase} &
+\textbf{Problema numerico} &
+\textbf{Algoritmo} &
+\textbf{Costo} &
+\textbf{Rif.\ EIOPA}\\
+\midrule
+Calibrazione SW &
+$\Hmat\bfzeta = \mathbf{b}$ (densa, $N\times N$) &
+LU con pivoting &
+$O(2N^3/3)$ &
+sez.~9.15\\
+Parametro $\alpha$ &
+$g(\alpha^*)=0$ (non lineare) &
+Bisezione &
+$O(n\cdot N^3)$ &
+sez.~9.4\\
+\midrule
+\emph{Confronto:} Spline &
+$\mathbf{A}\mathbf{M}=\mathbf{d}$ (tridiag.) &
+Thomas &
+$O(N)$ &
+---\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{Esercizi}
+\label{sec:esercizi}
+% ============================================================
+
+\begin{esercizio}[Costruzione della matrice $\Hmat$ a mano]
+Considerare $N=3$ swap par a scadenze $T=(1,2,3)$ anni con tassi
+$r=(3.50,\, 3.00,\, 2.75)\%$ after-CRA, $\UFR_c=\ln(1.033)$, $\alpha=0.15$.
+\begin{enumerate}[label=(\alph*)]
+  \item Scrivete esplicitamente i flussi $c_{ij}$ per ciascuno swap.
+  \item Calcolate $\mu_{Q,i}$ per $i=1,2,3$.
+  \item Calcolate $W(j, u_k)$ per $j,k \in \{1,2,3\}$ con la formula~\eqref{eq:kernel}.
+  \item Costruite $\Hmat_{3\times 3}$ e il vettore $\mathbf{1}-\bfmu_Q$.
+  \item Risolvete il sistema con eliminazione gaussiana e trovate $\bfzeta$.
+  \item Verificate: $P(0,1),P(0,2),P(0,3)$ soddisfano la condizione~\eqref{eq:ois_par}?
+\end{enumerate}
+\end{esercizio}
+
+\begin{esercizio}[Numero di condizionamento e stabilit\`a]
+Usare i dati della Tabella~\ref{tab:ois_eur} con $\alpha=0.128$.
+\begin{enumerate}[label=(\alph*)]
+  \item Calcolate $\kappa_2(\Hmat)$ con R (\texttt{kappa(H, exact=TRUE)}).
+  \item Perturbate il tasso $r_{20}$ di $\pm 5$ bps. Di quanto cambia $\bfzeta$?
+        La stima $\|\Delta\bfzeta\| \le \kappa_2(\Hmat)\|\Delta\mathbf{b}\|/\|\mathbf{b}\|$
+        \`e soddisfatta?
+  \item Ripetete con $\alpha=0.05$ e $\alpha=0.50$. Come cambia $\kappa_2$?
+  \item Tracciate $\kappa_2(\Hmat(\alpha))$ per $\alpha \in [0.05, 0.50]$ e confrontate
+        con la Figura~\ref{fig:cond}.
+\end{enumerate}
+\end{esercizio}
+
+\begin{esercizio}[Bisezione per $\alpha$]
+$\LLP=20$, $\UFR_c=\ln(1.033)$, $\CP=60$.
+\begin{enumerate}[label=(\alph*)]
+  \item Implementate $g(\alpha) = f(0,60;\alpha) - \UFR_c$ e tracciate il grafico
+        per $\alpha \in [0.05, 0.50]$. Confrontate con la Figura~\ref{fig:g_alpha}.
+  \item Applicate la bisezione su $[0.05, 1.0]$ con $\varepsilon=10^{-6}$.
+        Quante iterazioni servono? Confrontate con la stima~\eqref{eq:bisez_iter}.
+  \item Implementate Newton--Raphson con derivata numerica centrata
+        ($h=10^{-4}$). Quante iterazioni? Confrontate con la bisezione.
+  \item (Facoltativo) Implementate la scanning procedure EIOPA (griglia con passo $10^{-6}$).
+        Quante valutazioni di $g$ richiede? Confrontate i tempi con \texttt{system.time()}.
+\end{enumerate}
+\end{esercizio}
+
+\begin{esercizio}[Convergenza verso l'UFR]
+Con $\alpha^*$ trovato nell'esercizio precedente:
+\begin{enumerate}[label=(\alph*)]
+  \item Calcolate $f(0,T)$ per $T=20,30,40,50,60,70,80,100,150$.
+  \item In quale anno $T^*$ si ha $|f(0,T^*) - \UFR_c| < 0.1$ bps per la prima volta?
+  \item Ripetete con $\alpha = \alpha^* - 0.05$ e $\alpha = \alpha^* + 0.05$.
+        Come cambia il profilo di convergenza?
+  \item Spiegate perch\'e ridurre $\alpha$ richiede $T$ pi\`u grandi per
+        raggiungere $\UFR_c$, usando la formula del kernel~\eqref{eq:kernel}.
+\end{enumerate}
+\end{esercizio}
+
+\begin{esercizio}[Progetto: replica della curva EIOPA EUR]
+\begin{enumerate}[label=(\alph*)]
+  \item Eseguite la pipeline completa con i dati della Tabella~\ref{tab:ois_eur}
+        e producete la curva spot 1--150 anni.
+  \item Producete un grafico con: spot, forward istantaneo, nodi di mercato, LLP, CP, UFR.
+  \item Sensitivit\`a: variate $\UFR_{\rm ann} \in \{3.15\%,\,3.30\%,\,3.45\%\}$ e
+        confrontate le curve.
+  \item Sensitivit\`a: variate $\alpha \in \{\alpha^*-0.02,\,\alpha^*,\,\alpha^*+0.02\}$
+        e confrontate.
+  \item \emph{Sfida}: scaricate il file Excel mensile EIOPA da
+        \url{https://www.eiopa.europa.eu/tools-and-data} e confrontate
+        la vostra curva spot con quella pubblicata. L'errore massimo deve essere
+        $<0.1$ bps.
+\end{enumerate}
+\end{esercizio}
+
+% ============================================================
+\renewcommand{\refname}{Riferimenti bibliografici}
+\begin{thebibliography}{9}
+
+\bibitem{eiopa2025}
+EIOPA (2025).
+\textit{Technical Documentation of the Methodology to Derive EIOPA's
+Risk-Free Interest Rate Term Structures}.
+EIOPA-BoS-25-599, Dicembre 2025.
+\url{https://www.eiopa.europa.eu}
+
+\bibitem{eiopa2025b}
+EIOPA (2025).
+\textit{Updated Technical RFR Documentation Applicable as of 30 June 2025}.
+EIOPA-BoS-25-47.
+
+\bibitem{dir2009}
+Parlamento Europeo e Consiglio UE (2009).
+\textit{Direttiva 2009/138/CE (Solvency~II)}.
+
+\bibitem{smithwilson2001}
+Smith, A. e Wilson, T. (2001).
+\textit{Fitting Yield Curves with Long-Term Constraints}.
+Research Note, Bacon \& Woodrow.
+
+\bibitem{deBoor1978}
+de Boor, C. (1978).
+\textit{A Practical Guide to Splines}.
+Springer-Verlag.
+
+\bibitem{quarteroni2014}
+Quarteroni, A., Saleri, F. e Gervasio, P. (2014).
+\textit{Calcolo Scientifico}, 6\textsuperscript{a} ed., Springer.
+
+\bibitem{stoer2002}
+Stoer, J. e Bulirsch, R. (2002).
+\textit{Introduction to Numerical Analysis}, 3\textsuperscript{rd} ed., Springer.
+
+\bibitem{hull2018}
+Hull, J. C. (2018).
+\textit{Options, Futures, and Other Derivatives}, 10\textsuperscript{th} ed., Pearson.
+
+\end{thebibliography}
+
+\end{document}

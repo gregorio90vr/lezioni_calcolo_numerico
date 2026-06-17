@@ -1,0 +1,1024 @@
+﻿% ============================================================
+%  Dispensa 01b: PCA sulle Curve dei Tassi ECB
+%               Versione con variazioni MENSILI
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{tcolorbox}
+\usepackage{titlesec}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
+\titleformat{\subsubsection}{\small\bfseries\itshape}{\thesubsubsection.}{0.5em}{}
+
+%--- ambienti teorema
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[section]
+\newtheorem{proposizione}[teorema]{Proposizione}
+\theoremstyle{definition}
+\newtheorem{definizione}[teorema]{Definizione}
+\newtheorem{esempio}[teorema]{Esempio}
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+\newtheorem*{attenzione}{Nota numerica}
+
+%--- box colorati
+\tcbset{
+  mybase/.style={
+    colback=gray!5, colframe=gray!40,
+    boxrule=0.4pt, arc=2pt,
+    left=7pt, right=7pt, top=5pt, bottom=5pt,
+    fonttitle=\small\bfseries
+  }
+}
+\newtcolorbox{keybox}[1][Concetto chiave]{mybase,
+  colframe=blue!40!black, colback=blue!4, title=#1}
+\newtcolorbox{algobox}[1][Algoritmo]{mybase,
+  colframe=teal!50!black, colback=teal!4, title=#1}
+\newtcolorbox{warningbox}{mybase,
+  colframe=orange!70!black, colback=orange!5}
+\newtcolorbox{codebox}[1][Codice R]{mybase,
+  colframe=green!40!black, colback=green!3, title=#1}
+
+% ============================================================
+\title{%
+  \textbf{PCA sulle Curve dei Tassi di Interesse (ECB)}\\[6pt]
+  \large Teoria, Implementazione in R e Interpretazione Economica\\[4pt]
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introduzione e obiettivi}
+% ============================================================
+
+\subsection{Il problema}
+
+La \textbf{curva dei tassi di interesse} (o struttura a termine) associa a ogni
+scadenza $T$ un tasso di rendimento $r(T)$ per titoli privi di rischio. La curva
+cambia ogni giorno in risposta a decisioni di politica monetaria, aspettative di
+inflazione e fattori macroeconomici.
+
+In questa dispensa analizziamo i dati mensili della curva dei tassi governativi dell'area Euro, pubblicati dalla Banca Centrale Europea (ECB), considerando le scadenze da 1 a 20 anni. L'obiettivo è comprendere e sintetizzare i principali movimenti osservati nella curva nel corso del tempo.
+
+Monitorare direttamente tutte le scadenze della curva richiederebbe di gestire almeno 20 variabili (una per ogni maturity) e, in contesti come quello attuariale questo numero può salire a 40 o 50. Analizzare e interpretare così tante variabili è complesso e poco pratico.
+
+Per questo motivo, è utile cercare una rappresentazione più compatta, ovvero individuare i \emph{movimenti fondamentali} della curva che, combinati tra loro, spiegano la maggior parte delle variazioni osservate. 
+
+In questa dispensa presentiamo la \textbf{Principal Component Analysis (PCA)}, implementata tramite la \textbf{Singular Value Decomposition (SVD)}, che permette di identificare e quantificare le principali variazioni della curva dei tassi. Vedremo come, grazie a questa tecnica, sia possibile descrivere l'evoluzione della curva nel tempo utilizzando solo poche componenti principali, facilitando l'analisi e l'interpretazione dei dati.
+
+Nella dispensa è inoltre riportato il codice utilizzato per l’elaborazione dei dati. A tal fine è stato impiegato il software statistico R, una piattaforma gratuita che mette a disposizione numerosi pacchetti specifici per l’analisi dei dati e la trattazione di queste tematiche.
+
+\subsection{Perché variazioni mensili?}
+\label{sec:motivazione-mensile}
+
+Dal punto di vista dell’analisi economica, l’obiettivo non è quello di catturare movimenti
+di brevissimo periodo o dinamiche di microstruttura, bensì di descrivere l’evoluzione della
+curva dei rendimenti su orizzonti temporali più ampi, rilevanti per analisi prospettiche e
+di scenario. In questo contesto, l’utilizzo di variazioni giornaliere risulta più adatto ad
+applicazioni di trading o gestione operativa ad alta frequenza, mentre offre un contenuto
+informativo limitato per un’analisi strutturale dei fattori della curva.
+
+Ci concentriamo dunque sull'analisi delle osservazioni mensili, che permettono di cogliere chiaramente i principali eventi
+macro-finanziari, quali la crisi di Lehman Brothers (2008), il “whatever it takes” di
+2
+Draghi (2012), il Quantitative Easing della BCE (2015), lo shock pandemico (2020) e
+il ciclo di rialzi dei tassi del 2022.
+
+\subsection{Origine dei dati}
+
+I dati provengono dall'\textbf{ECB Data Portal}%
+\footnote{\url{https://data.ecb.europa.eu}, dataset \emph{YC -- Euro area yield curves}.}
+e rappresentano la \textbf{spot rate curve} stimata dalla Banca Centrale Europea
+su un campione di titoli di Stato dell'area Euro con \textbf{rating AAA}
+(Germania, Paesi Bassi, Finlandia, ecc.). 
+
+Con il termine \emph{spot rate} si intende, per ciascuna scadenza $T$, il tasso
+di interesse implicito nel prezzo di uno zero-coupon bond che paga un'unità di
+valuta al tempo $T$. Formalmente, indicando con $P(0,T)$ il prezzo oggi di tale
+titolo, lo spot rate $r(T)$ in capitalizzazione continua è definito da
+\[
+P(0,T) = e^{-r(T) \, T}.
+\]
+La curva degli spot rate rappresenta quindi la struttura a termine dei tassi
+di interesse priva di arbitraggio, dalla quale è possibile ricavare sia i prezzi
+di qualsiasi flusso cash-flow deterministico sia i tassi forward impliciti.
+
+Poiché sul mercato non sono disponibili zero-coupon bond per tutte le scadenze,
+la curva viene ottenuta tramite una procedura di stima. In particolare, la BCE
+utilizza il \textbf{modello di Svensson}, una parametrizzazione flessibile della
+curva dei rendimenti che consente di interpolare e lisciare i dati osservati.
+I tassi sono espressi in capitalizzazione continua, in percentuale annua.
+
+\subsection{Dataset}
+
+I dati grezzi sono forniti nel file \texttt{pca\_input\_curves\_1Y\_20Y.xlsx}
+(foglio \texttt{PCA\_Input}) con frequenza giornaliera. Per l'analisi PCA,
+i dati vengono aggregati a frequenza mensile selezionando l'ultima osservazione
+di ogni mese (dettagli e codice R nella Sezione~\ref{sec:aggregazione}).
+
+% ============================================================
+\section{Prerequisiti matematici: SVD e approssimazione ottimale}
+% ============================================================
+
+In questa sezione presentiamo gli strumenti matematici necessari per la PCA,
+organizzati attorno a una domanda centrale:
+
+\begin{keybox}[Il problema fondamentale]
+Data una matrice $X \in \mathbb{R}^{m \times n}$ (ad esempio le variazioni
+mensili della curva dei tassi), come possiamo rappresentarla in modo
+\emph{compatto} usando solo $k \ll n$ ``direzioni'' fondamentali, perdendo
+la minima quantità possibile di informazione?
+\end{keybox}
+
+La risposta a questa domanda passa attraverso tre risultati:
+\begin{enumerate}
+  \item la \textbf{SVD} fattorizza qualsiasi matrice in componenti ordinate
+        per importanza;
+  \item il teorema di \textbf{Eckart--Young--Mirsky} garantisce che troncare
+        la SVD alle prime $k$ componenti dà la migliore approssimazione
+        possibile di rango $k$;
+  \item la \textbf{norma di Frobenius} usata in questo teorema coincide
+        (a meno di costanti) con la \emph{varianza totale}, quindi
+        ``miglior approssimazione'' significa ``massima varianza spiegata''.
+\end{enumerate}
+
+\medskip
+
+% ------------------------------------------------------------
+\subsection{Decomposizione ai Valori Singolari (SVD)}
+% ------------------------------------------------------------
+
+\begin{teorema}[Esistenza e unicità della SVD]
+\label{thm:svd}
+Per ogni matrice $A \in \mathbb{R}^{m \times n}$ esistono:
+\begin{itemize}
+  \item una matrice ortogonale $U \in \mathbb{R}^{m \times m}$ (colonne = \textbf{vettori singolari sinistri});
+  \item una matrice ortogonale $V \in \mathbb{R}^{n \times n}$ (colonne = \textbf{vettori singolari destri});
+  \item una matrice diagonale $\Sigma \in \mathbb{R}^{m \times n}$ con elementi
+        $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_{\min(m,n)} \geq 0$
+        (\textbf{valori singolari});
+\end{itemize}
+tali che $A = U \Sigma V^T$. I valori singolari sono unici; i vettori singolari
+sono unici a meno di segno quando i $\sigma_i$ sono distinti.
+\end{teorema}
+
+\paragraph{Interpretazione geometrica.}
+La SVD scompone l'azione di $A$ in tre passi:
+\[
+  \mathbf{x} \;\xrightarrow{V^T}\; \text{rotazione}
+  \;\xrightarrow{\Sigma}\; \text{scaling per asse}
+  \;\xrightarrow{U}\; \text{rotazione}.
+\]
+I valori singolari $\sigma_i$ misurano quanto $A$ ``allunga'' lungo ciascun asse
+principale: $\sigma_1$ è la direzione di massimo allungamento, $\sigma_n$ quella
+di minimo. Nel contesto PCA:
+\begin{itemize}
+  \item le colonne di $V$ sono le \textbf{direzioni principali} (loadings);
+  \item le colonne di $U$, scalate per $\sigma_i$, danno gli \textbf{scores};
+  \item $\sigma_i^2$ è proporzionale alla \textbf{varianza} lungo la $i$-esima direzione.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{La norma di Frobenius}
+% ------------------------------------------------------------
+
+Definiiamo la norma di \textbf{norma di Frobenius} come segue:
+\[
+  \|A\|_F = \sqrt{\sum_{i,j} a_{ij}^2} = \sqrt{\operatorname{tr}(A^T A)}.
+\] \label{eq:frob_metrica}
+
+\begin{proposizione}[Frobenius e valori singolari]
+\label{prop:frob}
+Per ogni matrice $A$ con valori singolari $\sigma_1, \ldots, \sigma_r$ (dove
+$r = \operatorname{rk}(A)$):
+\begin{equation}
+  \|A\|_F^2 = \sigma_1^2 + \sigma_2^2 + \cdots + \sigma_r^2.
+  \label{eq:frob_svd}
+\end{equation}
+\end{proposizione}
+
+
+%\begin{warningbox}
+%\textbf{Perché Frobenius e non altre norme?}
+%Esistono altre norme matriciali (spettrale, nucleare, %ecc.), ma solo Frobenius
+%ha questa proprietà: minimizzare $\|A - B\|_F$ equivale %a minimizzare la
+%varianza non spiegata. Qualsiasi altra norma darebbe %un'approssimazione ottimale
+%in un senso diverso, \emph{non} collegato alla varianza %statistica.
+%\end{warningbox}
+
+% ------------------------------------------------------------
+\subsection{Il teorema di Eckart--Young--Mirsky: ottimalità della SVD troncata}
+% ------------------------------------------------------------
+
+\begin{teorema}[Eckart--Young--Mirsky, 1936]
+\label{thm:ey}
+Sia $A = U \Sigma V^T$ la SVD di $A$, e sia
+\[
+  A_k = \sum_{i=1}^{k} \sigma_i \, \mathbf{u}_i \mathbf{v}_i^T
+  = U_k \Sigma_k V_k^T
+\]
+la \textbf{SVD troncata} alle prime $k$ componenti. Allora $A_k$ è la
+\textbf{miglior approssimazione di rango $k$} in norma di Frobenius:
+\[
+  A_k = \operatorname*{argmin}_{\operatorname{rk}(B) \leq k} \|A - B\|_F.
+\]
+Inoltre, l'errore di approssimazione è:
+\begin{equation}
+  \|A - A_k\|_F^2 = \sigma_{k+1}^2 + \cdots + \sigma_r^2.
+  \label{eq:ey_errore}
+\end{equation}
+\end{teorema}
+
+%Questo teorema ci conferma che \emph{non esiste} una rappresentazione con $k$ componenti che spieghi più varianza di quella ottenuta dalla SVD troncata nella norma di Frobenius. 
+
+%Infine combinando~\eqref{eq:frob_svd} e~\eqref{eq:ey_errore}, possiamo definire quanto segue:
+
+%\begin{keybox}[Quota di varianza spiegata]
+%La \textbf{quota di varianza spiegata} dalle prime $k$ componenti è:
+%\begin{equation}
+%  \eta_k = \frac{\sigma_1^2 + \cdots + \sigma_k^2}{\sigma_1^2 + \cdots + \sigma_n^2}
+%  = 1 - \frac{\|A - A_k\|_F^2}{\|A\|_F^2}
+%  \;\in\; [0,1].
+%  \label{eq:eta_k}
+%\end{equation}
+%\end{keybox}
+
+
+% ------------------------------------------------------------
+\subsection{PCA come SVD della matrice centrata}
+% ------------------------------------------------------------
+
+Consideriamo ora un dataset dove applicare la nostra SVD ed analisi.
+
+
+\begin{definizione}[Matrice centrata]
+Data $X \in \mathbb{R}^{m \times n}$ (righe = osservazioni, colonne = variabili),
+la \textbf{matrice centrata} è:
+\[
+  \tilde{X} = X - \mathbf{1}_m \bar{\mathbf{x}}^T,
+\]
+dove $\bar{\mathbf{x}} \in \mathbb{R}^n$ è il vettore delle medie per colonna.
+\end{definizione}
+
+La varianza campionaria di $\tilde{X}$, è definita come:
+\begin{equation}
+      \text{Var}_{\text{tot}} = \frac{1}{m-1} \sum_{i,j} \tilde{x}_{ij}^2
+  = \frac{\|\tilde{X}\|_F^2}{m-1}. \label{eq:var1}
+\end{equation}
+
+
+Quindi $\|\tilde{X}\|_F^2 = (m{-}1) \cdot \text{Var}_{\text{tot}}$, da ~\eqref{eq:frob_svd} segue che la norma di
+Frobenius rappresenta la varianza totale, a meno di una costante.
+
+Possiamo ora definire la Principal Component Analysis (PCA) calcolata sul set di osservazioni  $\tilde{X}$.
+
+\begin{teorema}[Princpal component Analysis]
+\label{thm:pca}
+Sia $\tilde{X} = U \Sigma V^T$ la SVD della matrice centrata. Allora:
+\begin{enumerate}
+  \item I \textbf{loadings} (direzioni principali) sono le colonne di $V$:
+        $\mathbf{v}_1, \mathbf{v}_2, \ldots$
+  \item Gli \textbf{scores} (coordinate nelle nuove direzioni) sono le righe
+        di $U\Sigma$, cioè $\tilde{X} V$.
+  \item La varianza spiegata dalla componente $i$ è
+        $\sigma_i^2 / \sum_j \sigma_j^2$.
+\end{enumerate}
+\end{teorema}
+
+Considerando $k < n$ componenti principali, il teorema 
+Per il Teorema~\ref{thm:ey} (Eckart--Young), $\tilde{X}_k$ è la miglior
+approssimazione di rango $k$ di $\tilde{X}$ in norma di Frobenius, con
+errore residuo:
+\begin{equation}
+  \|\tilde{X} - \tilde{X}_k\|_F^2
+  = \sigma_{k+1}^2 + \cdots + \sigma_n^2.
+  \label{eq:errore_troncamento}
+\end{equation}
+Combinando (\ref{eq:var1}) e \eqref{eq:errore_troncamento}, possiamo definire la \textbf{quota di
+varianza spiegata} dalle prime $k$ componenti come:
+\begin{equation}
+  \eta_k
+  = \frac{\|\tilde{X}_k\|_F^2}{\|\tilde{X}\|_F^2}
+  = \frac{\sigma_1^2 + \cdots + \sigma_k^2}{\sigma_1^2 + \cdots + \sigma_n^2}
+  = 1 - \frac{\sigma_{k+1}^2 + \cdots + \sigma_n^2}{\sigma_1^2 + \cdots + \sigma_n^2}
+  \;\in\; [0,1].
+  \label{eq:varianza_spiegata}
+\end{equation}
+
+
+La $s$-esima riga di $\tilde{X}_k$ fornisce l'approssimazione centrata
+della variazione del mese $s$ con sole $k$ componenti:
+\begin{equation}
+  \hat{\tilde{\mathbf{x}}}_s^{(k)}
+  = \sum_{i=1}^{k} \alpha_{s,i}\,\mathbf{v}_i
+  = V_k\,\boldsymbol{\alpha}_{s,k}
+  \;\in\; \mathbb{R}^n,
+  \qquad
+  \alpha_{s,i} = \sigma_i\,u_{s,i} = (U\Sigma)_{s,i}.
+  \label{eq:ric_mese_centrata}
+\end{equation}
+Aggiungendo il vettore delle variazioni medie $\bar{\boldsymbol{\delta}} \in \mathbb{R}^n$,
+sottratto prima della decomposizione SVD, si ottiene la variazione ricostruita nella scala originale:
+\begin{equation}
+  \widehat{\Delta\mathbf{r}}_s^{(k)}
+  = \bar{\boldsymbol{\delta}}
+  + \sum_{i=1}^{k} \alpha_{s,i}\,\mathbf{v}_i
+  = \bar{\boldsymbol{\delta}} + V_k\,\boldsymbol{\alpha}_{s,k}.
+  \label{eq:ric_mese_originale}
+\end{equation}
+
+
+% ------------------------------------------------------------
+\subsection{Nota numerica: perché usare la SVD diretta}
+% ------------------------------------------------------------
+
+\begin{attenzione}[Condizionamento e stabilità]
+Un'alternativa alla SVD è calcolare gli autovalori della matrice di covarianza
+$C = \frac{1}{m-1}\tilde{X}^T \tilde{X}$. Tuttavia:
+\begin{itemize}
+  \item Il \textbf{numero di condizionamento} di $C$ è il \emph{quadrato} di
+        quello di $\tilde{X}$:
+        $\kappa(C) = \kappa(\tilde{X})^2$.
+  \item Per dati reali di tassi, $\kappa(\tilde{X}) \sim 10^2$--$10^3$, quindi
+        $\kappa(C) \sim 10^4$--$10^6$.
+  \item Un alto condizionamento significa che gli autovettori associati ai
+        piccoli autovalori sono calcolati con scarsa precisione.
+\end{itemize}
+La \textbf{SVD diretta di $\tilde{X}$} evita questo problema: fornisce gli
+stessi loadings e scores, ma con stabilità numerica ottimale. In R, la funzione
+\texttt{svd()} implementa questa strategia.
+\end{attenzione}
+
+% ============================================================
+\section{Applicazione della PCA e SVD ai tassi di interesse ECB}
+% ============================================================
+
+In questa sezione applichiamo la teoria sviluppata nella sezione precedente alla
+curva dei tassi ECB. Il percorso si articola in quattro fasi: preparazione dei dati
+e analisi esplorativa, decomposizione tramite SVD, interpretazione economica dei
+fattori e ricostruzione della curva, infine un riepilogo dell'algoritmo completo
+con una panoramica delle principali applicazioni pratiche.
+
+% ------------------------------------------------------------
+\subsection{Dati, aggregazione mensile e analisi esplorativa}
+% ------------------------------------------------------------
+
+\subsubsection{Lettura, pulizia e aggregazione mensile}
+\label{sec:aggregazione}
+
+Il codice seguente carica i dati giornalieri, li pulisce e li riduce all'ultima
+osservazione di ogni mese. Formalmente, la matrice mensile è:
+\[
+R^{\text{mens}}_{s,j} = R_{t^*(s),j}, \qquad
+t^*(s) = \max\{t : t \in \text{mese}\; s\},
+\]
+dove $s$ indicizza i mesi e $j \in \{1,\ldots,20\}$ le scadenze.
+La matrice risultante è $R^{\text{mens}} \in \mathbb{R}^{M \times 20}$
+con $M \approx 260$ mesi. 
+
+\begin{codebox}[Lettura e aggregazione mensile (lezione\_pca\_mensile.R)]
+\begin{Verbatim}[fontsize=\small]
+library(data.table); library(openxlsx); library(lubridate); library(ggplot2)
+
+curve_df <- as.data.table(
+  read.xlsx("pca_input_curves_1Y_20Y.xlsx", sheet = "PCA_Input"))
+
+# ... parsing date e interpolazione NA (invariati rispetto alla versione giornaliera)
+
+# ---- Aggregazione mensile ----------------------------------------
+# floor_date("2022-10-17", "month") restituisce "2022-10-01"
+# .SD[.N] seleziona l'ultima riga di ogni gruppo → fine mese effettivo
+curve_df[, YM := floor_date(TIME_PERIOD, "month")]
+monthly_dt <- curve_df[, .SD[.N], by = YM,
+                        .SDcols = c("TIME_PERIOD", maturity_cols)]
+setorder(monthly_dt, YM)
+
+# ---- Matrici di lavoro -------------------------------------------
+R_mat_m       <- as.matrix(monthly_dt[, ..maturity_cols])  # M x n
+dates_m       <- monthly_dt$YM                             # date mese (M)
+Delta_R_m     <- diff(R_mat_m)                             # (M-1) x n
+dates_delta_m <- dates_m[-1]
+\end{Verbatim}
+\end{codebox}
+
+\begin{osservazione}
+La scelta di prendere l'\emph{ultima} osservazione (e non la media mensile) \`e
+standard nella gestione del rischio di tasso: riflette il prezzo al quale si
+chiude il mese e sul quale si calcolano i P\&L mensili dei portafogli obbligazionari.
+\end{osservazione}
+
+\subsubsection{Struttura del dataset mensile}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Colonna & Contenuto \\
+\midrule
+\texttt{YM} & Primo giorno del mese (es.\ \texttt{2022-10-01}) \\
+\texttt{TIME\_PERIOD} & Data effettiva di fine mese (ultima giornata BCE) \\
+\texttt{1Y}, \dots, \texttt{20Y} & Tasso (\%) alla scadenza corrispondente \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{Grafico dei livelli mensili}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step1_curve_livelli_m.pdf}
+\caption{Curve dei tassi ECB in tre mesi rappresentativi del campione. L'asse $x$
+indica la scadenza in anni, l'asse $y$ il tasso in \%. }
+\end{figure}
+
+\subsubsection{Variazioni mensili: la matrice \texorpdfstring{$\Delta R^{\text{mens}}$}{Delta R mensile}}
+
+La PCA si applica alle \emph{variazioni} della curva, non ai livelli:
+\[
+(\Delta R^{\text{mens}})_{s,j} = R^{\text{mens}}_{s,j} - R^{\text{mens}}_{s-1,j},
+\quad s = 2,\ldots,M,\; j = 1,\ldots,n.
+\]
+
+%\begin{osservazione}
+%\textbf{Convenzione notazionale.} Nel seguito si usa la lettera maiuscola $R$ (o $\Delta R$) per indicare \emph{matrici} con tutte le scadenze e tutti i mesi, e la lettera minuscola $r$ (o $\Delta r_s$) per indicare il \emph{vettore} relativo a un singolo mese $s$.
+%\end{osservazione}
+
+\medskip
+Applicare la PCA ai livelli $R^{\text{mens}}$ sarebbe tecnicamente possibile, ma
+produrrebbe risultati statisticamente non affidabili per tre ragioni:
+
+\begin{enumerate}
+  \item \textbf{Non stazionarietà.}
+        I tassi di interesse sono spesso modellati come moti browniani con drift e dunque applicare la PCA a una serie
+        non stazionaria significa decomporre la varianza di un processo che
+        non ha media e varianza costanti nel tempo: i loadings ottenuti
+        dipenderebbero fortemente dal periodo campionario e non sarebbero
+        generalizzabili. Le variazioni $\Delta R$ sono invece stazionarie
+        (o quasi-stazionarie), e la PCA è uno strumento progettato per dati
+        stazionari~\cite{litterman1991}.
+
+  \item \textbf{Dominanza del livello medio.}
+        Se si applica la PCA ai livelli, la prima componente cattura quasi
+        interamente la traiettoria storica media dei tassi (la discesa dal 1995
+        al 2020 e la risalita del 2022): non un \emph{movimento} della curva,
+        ma la sua \emph{tendenza secolare}. Questo non è informativo per la
+        gestione del rischio, che si preoccupa di quanto può muoversi la curva
+        nel prossimo mese, non di dove si trovava vent'anni fa.
+
+  \item \textbf{Interpretazione in termini di rischio.}
+        Nella gestione di portafoglio e nel calcolo del VaR, l'input naturale
+        è la variazione di valore (P\&L), che dipende dalle variazioni dei tassi
+        $\Delta r(T)$, non dai loro livelli. I tre fattori PCA estratti da
+        $\Delta R$ --- livello, pendenza, curvatura --- hanno quindi un
+        significato operativo diretto: uno shock di $+1$ sull'i-esimo score
+        corrisponde a una deformazione specifica e quantificata della curva,
+        direttamente raccordabile con uno scenario di stress~\cite{rebonato2004}.
+\end{enumerate}
+
+\begin{warningbox}
+\textbf{Nota pratica.} In letteratura si trovano a volte PCA sui livelli (es.\ per
+costruire curve parametriche sintetiche). In quel contesto l'obiettivo è diverso:
+si vuole approssimare la \emph{forma} della curva, non i suoi movimenti. Per
+l'analisi del rischio e per la scomposizione fattoriale del P\&L, la PCA sulle
+variazioni è lo standard consolidato fin da Litterman \& Scheinkman~\cite{litterman1991}.
+\end{warningbox}
+
+\medskip
+Le variazioni mensili hanno un range tipico di \textbf{20--80 punti base}
+nei periodi normali, e fino a \textbf{150--200 pb} negli episodi di shock monetario.
+Questo ordine di grandezza le rende direttamente interpretabili e confrontabili
+con le decisioni di politica monetaria BCE (ad es.\ rialzo di 75~pb a ottobre 2022).
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{grafici/PCA_mensile/step1_delta_mensili.pdf}
+\caption{\textbf{Distribuzione delle variazioni mensili} $\Delta R^{\text{mens}}(T_j)$
+per ciascuna scadenza, espressa in punti base (1~pb $= 0.01\%$). Rispetto alla
+versione giornaliera, le distribuzioni sono nettamente più informative: le mediane
+si discostano visibilmente da zero nei periodi di trend (es.\ 2022), gli IQR
+catturano la volatilità ciclica tipica di ogni scadenza, e la struttura del segnale
+domina il rumore. La variabilit\`a \`e maggiore alle scadenze intermedie--lunghe,
+indice del fatto che i movimenti di curvatura e pendenza si manifestano
+principalmente sul tratto 2--10 anni.}
+\end{figure}
+
+\subsubsection{Matrice di correlazione mensile}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\includegraphics[width=\textwidth]{grafici/PCA_mensile/step1_heatmap_correlazioni_m.pdf}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\includegraphics[width=\textwidth]{grafici/PCA_mensile/step1_correlazioni_3d_barre_m.pdf}
+\end{minipage}
+\caption{Correlazione tra variazioni mensili visualizzata in due modi complementari:
+heatmap (sinistra) e superficie a barre 3D (destra). %La struttura \`e simile a quella giornaliera ma le correlazioni sono lievemente pi\`u basse perché le variazioni mensili contengono meno correlazione ``di persistenza'' artificiale:il segnale economico \`e pi\`u netto e i movimenti idiosincratici di breve periodo vengono mediati.
+}
+
+\end{figure}
+
+%\begin{keybox}
+%Anche con dati mensili, la correlazione rimane molto alta tra scadenze vicine e
+%decade gradualmente. Questo \`e il segnale che la struttura a 3 fattori PCA
+%(livello, pendenza, curvatura) \`e robusta alla scelta della frequenza.
+%\end{keybox}
+
+% ------------------------------------------------------------
+\subsection{PCA tramite SVD}
+% ------------------------------------------------------------
+
+\subsubsection{Costruzione della matrice centrata e SVD}
+
+Applicando il Teorema~\ref{thm:pca} alla matrice mensile:
+
+\begin{codebox}[Centraggio e SVD su dati mensili]
+\begin{Verbatim}[fontsize=\small]
+X_m      <- scale(Delta_R_m, center = TRUE, scale = FALSE)
+sv_m     <- svd(X_m)
+
+sing_vals <- sv_m$d
+expl_var  <- sing_vals^2 / sum(sing_vals^2)
+cum_var   <- cumsum(expl_var)
+k_star    <- which(cum_var >= 0.95)[1]  # componenti per 95%
+\end{Verbatim}
+\end{codebox}
+
+%\subsubsection{Scree plot e varianza spiegata}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step2_varianza_spiegata_m.pdf}
+\caption{Varianza per componente e varianza cumulata. Barre blu: varianza individuale per componente;
+linea rossa: varianza cumulata; tratteggio grigio: soglia 95\%. Il numero $k^*$ di
+componenti necessarie per il 95\% \`e tipicamente 2 o 3.}
+\end{figure}
+
+Nel seguito, in linea con la prassi consolidata in letteratura
+(si veda la Sezione~\ref{sec:interpretazione}), si adotta $k^* = 3$:
+le prime tre componenti principali spiegano il
+$\eta_3 = 99.51\%$ della varianza totale del campione,
+una quota che rende trascurabile il contributo delle componenti residue.
+%Con dati mensili la distribuzione della varianza spiegata riflette meglio la struttura \emph{economica} della curva: le prime tre componenti corrispondono a movimenti macroeconomici distinti (vedi Sezione~\ref{sec:interpretazione}).%,non a correlazioni artificiali di breve periodo.
+
+%\IfFileExists{grafici/PCA_mensile/pca_summary_for_tex_m.tex}{%
+%\begin{keybox}[Risultati numerici (generati da %\texttt{lezione\_pca\_mensile.R})]
+%\input{grafici/PCA_mensile/pca_summary_for_tex_m.tex}
+%\end{keybox}
+%}{%
+%\begin{warningbox}
+%Eseguire prima lo script \texttt{R/lezione\_pca\_mensile.R} per generare il file
+%\texttt{output/pca\_summary\_for\_tex\_m.tex} con i risultati %numerici reali.
+%\end{warningbox}
+%}
+
+% ------------------------------------------------------------
+\subsection{Interpretazione e ricostruzione}
+\label{sec:interpretazione}
+% ------------------------------------------------------------
+
+\subsubsection{I loadings: forma dei fattori sulla curva}
+
+I loadings $\mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3 \in \mathbb{R}^n$ rappresentano le direzioni principali rispetto cui decomporre la variazione mensile dei tassi di interesse.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step3_loadings_pc1_pc3_m.pdf}
+\caption{Loadings delle prime tre componenti in funzione della scadenza (anni).PC1 piatta
+(livello), PC2 monotona (pendenza), PC3 a gobba (curvatura).}
+\end{figure}
+
+\subsubsection{Interpretazione economica dei tre fattori}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{>{\bfseries}p{2.2cm} p{2.0cm} p{4.3cm} p{4.5cm} r}
+\toprule
+Fattore & Tipo & Forma del loading & Interpretazione & Var.\ tipica \\
+\midrule
+PC1 & Livello & Stesso segno e valore simile per tutte le scadenze &
+Shift parallelo: tutti i tassi salgono o scendono insieme &
+$70$--$80\%$ \\[4pt]
+
+PC2 & Pendenza & Un cambio di segno: negativo (breve) / positivo (lungo) &
+Rotazione: tassi brevi e lunghi in direzioni opposte &
+$10$--$15\%$ \\[4pt]
+
+PC3 & Curvatura & Due cambi di segno: positivo agli estremi, negativo al centro &
+Butterfly: il ventre si muove in senso opposto agli estremi &
+$3$--$7\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{Gli scores mensili: la storia della politica monetaria BCE}
+
+
+Dopo la decomposizione $\tilde X = U\Sigma V^T$, la matrice degli \textbf{scores}
+è $A = U\Sigma \in \mathbb{R}^{(M-1)\times n}$, con $A_{s,i} = \sigma_i\, u_{s,i}$.
+Lo score $\alpha_{s,i}$ misura \emph{di quanto} la curva si è mossa nel mese $s$
+nella direzione del loading $\mathbf{v}_i$: un valore grande (in modulo) indica
+che quel fattore ha dominato il movimento; un valore vicino a zero indica che
+il fattore era inattivo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.97\textwidth]{grafici/PCA_mensile/step3_scores_mensili_m.pdf}
+\caption{Scores mensili PC1, PC2, PC3 con marcatura degli eventi macroeconomici
+principali (linee tratteggiate grigie).}
+\label{fig:scores_mensili}
+\end{figure}
+
+\noindent La Figura~\ref{fig:scores_mensili} riporta l'evoluzione temporale dei tre scores.
+\textbf{PC1 (livello):} i picchi negativi corrispondono a crisi in cui tutti i tassi
+scendono in blocco (Lehman 2008, COVID 2020); il picco positivo del 2022 \`e il pi\`u
+grande del campione e riflette il ciclo di rialzi BCE da luglio~2022 a settembre~2023,
+il pi\`u aggressivo dalla creazione dell'euro.
+\textbf{PC2 (pendenza):} cattura i cambi di forma; nel 2022 la curva si \emph{invertiva}
+(breve sopra lungo) mentre i tassi salivano --- PC2 segnala la rotazione indipendentemente
+dal livello.
+\textbf{PC3 (curvatura):} movimenti pi\`u piccoli ma identificabili; il QE BCE
+(2015--2018) ha prodotto una curvatura distintiva comprimendo il ventre della curva.
+Con dati giornalieri tutti questi segnali sarebbero sepolti nel rumore.
+
+
+
+%\subsubsection{Collegamento con Nelson-Siegel}
+
+%La corrispondenza tra i tre fattori PCA e i parametri del modello parametrico
+%Nelson-Siegel \`e robusta alla frequenza:
+%\[
+%  r(T) = \beta_0 + \beta_1 \frac{1-e^{-T/\lambda}}{T/\lambda}
+%  + \beta_2\!\left(\frac{1-e^{-T/\lambda}}{T/\lambda} - e^{-T/\lambda}\right).
+%\]
+%$\beta_0$ \`e il livello (PC1), $\beta_1$ la pendenza (PC2), $\beta_2$ la curvatura (PC3).
+
+%\begin{figure}[H]
+%\centering
+%\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step3_nelson_siegel_confronto_m.pdf}
+%\caption{Confronto tra la curva dei tassi mensile osservata (blu continuo) e il
+%fit di Nelson-Siegel con $\lambda=1.5$ (rosso tratteggiato) per tre mesi
+%rappresentativi (inizio campione, picco dei tassi 2022-2023, recente). L'asse $y$
+%\`e in \%. La corrispondenza conferma che tre parametri bastano a descrivere
+%la forma della curva, in accordo con i tre fattori PCA estratti dalla SVD.}
+%\end{figure}
+
+\subsubsection{Ricostruzione della curva}
+\label{sec:ricostruzione}
+
+La variazione mensile del mese $s$ si ricostruisce come combinazione lineare
+dei loadings, pesati dagli scores:
+\begin{equation}
+  \hat{\Delta r}^{(k)}_s
+  = \underbrace{\bar\delta}_{\text{media}}
+  + \underbrace{\alpha_{s,1}\,\mathbf{v}_1}_{\text{livello}}
+  + \underbrace{\alpha_{s,2}\,\mathbf{v}_2}_{\text{pendenza}}
+  + \cdots
+  + \alpha_{s,k}\,\mathbf{v}_k
+  \label{eq:ricostruzione}
+\end{equation}
+dove $\bar\delta \in \mathbb{R}^n$ è il vettore delle variazioni medie
+(sottratto prima della decomposizione SVD e aggiunto per riportare nella scala originale),
+$\alpha_{s,i} = (U\Sigma)_{s,i}$ è lo score, e $\mathbf{v}_i$ il loading.
+\newline 
+Consideriamo ora come esmpio, tre mesi: Ottobre 2004 (primo mese), Maggio 2015 (centrale) e
+Dicembre 2025 (ultimo) per verificare la qualità della ricostruzione
+su periodi diversi del campione.
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{grafici/PCA_mensile/step3_confronto_ricostruzione_m.pdf}
+\caption{Variazione mensile reale vs.\ ricostruita con $k=3$ componenti
+nei tre mesi selezionati (primo, centrale, ultimo). L'asse $y$ è in punti base.}
+\label{fig:confronto_ric}
+\end{figure}
+
+\noindent In ciascun pannello della Figura~\ref{fig:confronto_ric}, la curva osservata
+e quella ricostruita sono molto vicine: la PCA a 3 fattori cattura i movimenti
+principali della curva su tutta la storia del campione. Le discrepanze residue
+sono associate alle componenti dalla quarta in poi, che spiegano una quota
+limitata della varianza totale.
+
+Per capire il contributo di ciascuna componente, è utile osservare come la curva
+si ricostruisce aggiungendo un fattore alla volta. Come esempio concreto utilizziamo \textbf{maggio 2025}: un mese recente in cui la
+curva BCE ha mostrato un movimento non banale, con una componente di pendenza
+apprezzabile oltre al consueto shift parallelo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.97\textwidth]{grafici/PCA_mensile/step3_ricostruzione_progressiva_m.pdf}
+\caption{Ricostruzione progressiva della variazione mensile della curva BCE per
+maggio 2025, aggiungendo una componente alla volta. La curva nera è la variazione
+reale osservata (in punti base).}
+\label{fig:ric_progressiva}
+\end{figure}
+
+\noindent La Figura~\ref{fig:ric_progressiva} mostra come ogni fattore contribuisce alla
+ricostruzione.
+\textbf{$k=1$ (+livello):} aggiunge lo shift parallelo dominante --- già la maggior
+parte del movimento viene spiegata.
+\textbf{$k=2$ (+pendenza):} corregge la rotazione breve-lungo, catturando la
+differenza di movimento tra scadenze corte e lunghe.
+\textbf{$k=3$ (+curvatura):} affina il profilo del ventre, riducendo ulteriormente
+il residuo. La percentuale tra parentesi in legenda è la varianza cumulata spiegata
+sull'intero campione da quella componente.
+
+
+
+\subsubsection{Codice R: ricostruzione e selezione dei mesi rappresentativi}
+
+\begin{codebox}[Selezione automatica dei mesi: primo, centrale, ultimo]
+\begin{Verbatim}[fontsize=\small]
+k_rec    <- 3L
+scores_k_m   <- sv_m$u[, 1:k_rec] %*% diag(sv_m$d[1:k_rec], nrow=k_rec)
+loadings_k_m <- sv_m$v[, 1:k_rec]
+X_hat_m      <- scores_k_m %*% t(loadings_k_m)
+rmse_m   <- sqrt(mean((X_m - X_hat_m)^2))
+
+# Mesi selezionati: primo, centrale, ultimo
+sel_month_idx <- c(1L, ceiling(nrow(Delta_R_m) / 2), nrow(Delta_R_m))
+sel_month_ym  <- dates_delta_m[sel_month_idx]
+
+# Confronto reale vs ricostruita sui 3 mesi
+mean_delta_m <- attr(X_m, "scaled:center")
+delta_reale  <- Delta_R_m[sel_month_idx, ]
+delta_rec    <- X_hat_m[sel_month_idx, ] +
+                matrix(mean_delta_m, nrow =   
+                        length(sel_month_idx), 
+                        ncol = ncol(X_m), 
+                        byrow = TRUE)
+\end{Verbatim}
+\end{codebox}
+
+% ------------------------------------------------------------
+\subsection{Riepilogo dell'algoritmo completo}
+% ------------------------------------------------------------
+
+\begin{algobox}[PCA mensile della curva dei tassi BCE (in R)]
+\begin{Verbatim}[fontsize=\small]
+# INPUT: curve_df con colonne TIME_PERIOD, 1Y, ..., 20Y
+
+# 1. Aggregazione mensile (ultima osservazione di ogni mese)
+curve_df[, YM := floor_date(TIME_PERIOD, "month")]
+monthly_dt <- curve_df[, .SD[.N], by = YM, .SDcols = c("TIME_PERIOD", maturity_cols)]
+
+# 2. Matrice dei livelli e variazioni mensili
+R_mat_m   <- as.matrix(monthly_dt[, ..maturity_cols])   # M x n
+Delta_R_m <- diff(R_mat_m)                               # (M-1) x n
+
+# 3. Centraggio per colonna
+X_m <- scale(Delta_R_m, center = TRUE, scale = FALSE)
+
+# 4. SVD della matrice centrata
+sv_m <- svd(X_m)      # sv_m$u, sv_m$d, sv_m$v
+
+# 5. Varianza spiegata
+expl_var <- sv_m$d^2 / sum(sv_m$d^2)
+cum_var  <- cumsum(expl_var)
+k_star   <- which(cum_var >= 0.95)[1]
+
+# 6. Loadings e scores
+V_m    <- sv_m$v
+scores_m <- sv_m$u[, 1:3] %*% diag(sv_m$d[1:3], nrow = 3)
+
+# 7. Ricostruzione sui mesi primo/centrale/ultimo
+X_hat_m      <- sv_m$u[, 1:3] %*% diag(sv_m$d[1:3], nrow=3) %*% t(sv_m$v[, 1:3])
+sel_month_idx <- c(1L, ceiling(nrow(Delta_R_m) / 2), nrow(Delta_R_m))
+\end{Verbatim}
+\end{algobox}
+
+
+% ============================================================
+% ============================================================
+\section{Calibrazione degli scores su una curva arbitraria}
+\label{sec:calibrazione}
+% ============================================================
+
+Una volta stimata la matrice dei loadings $V$ dalla PCA storica, è possibile
+\emph{proiettare} qualsiasi nuova curva dei tassi $\mathbf{y} \in \mathbb{R}^n$
+sullo spazio generato dalle prime $k$ componenti principali, ottenendo
+$k$ \textbf{pesi} (scores) e una \textbf{ricostruzione approssimata}.
+Con $k = n$ (base completa) la ricostruzione è esatta.
+
+% ------------------------------------------------------------
+\subsection{Proiezione ortogonale e pesi algebrici}
+% ------------------------------------------------------------
+
+Siano $\mathbf{v}_1, \ldots, \mathbf{v}_n \in \mathbb{R}^n$ i vettori colonna
+di $V$ --- le colonne ortonormali della SVD di $\tilde{X}$, cioè i
+\textbf{loadings PCA}. Essi formano una base ortonormale di $\mathbb{R}^n$:
+\[
+  V^T V = I_n, \qquad V \in \mathbb{R}^{n \times n}.
+\]
+
+Dati i primi $k \leq n$ loadings $V_k = [\mathbf{v}_1 \mid \cdots \mid \mathbf{v}_k]
+\in \mathbb{R}^{n \times k}$, la ricostruzione di $\mathbf{y}$ con $k$
+componenti si ottiene in due passi:
+
+\begin{keybox}[Proiezione su $k$ componenti principali]
+\textbf{Passo 1 --- Calcolo dei pesi (scores):} si proietta $\mathbf{y}$
+su ciascuna direzione principale:
+\[
+  \boldsymbol{\alpha}_k = V_k^T\,\mathbf{y}
+  = \begin{pmatrix} \mathbf{v}_1^T \mathbf{y} \\ \vdots \\ \mathbf{v}_k^T \mathbf{y} \end{pmatrix}
+  \;\in\; \mathbb{R}^k.
+\]
+Ogni componente $\alpha_i = \mathbf{v}_i^T \mathbf{y}$ è il prodotto scalare
+tra $\mathbf{y}$ e il loading $\mathbf{v}_i$: misura ``quanto'' di $\mathbf{y}$
+sta nella direzione $i$-esima.
+
+\medskip
+\textbf{Passo 2 --- Ricostruzione:} si combinano linearmente i loadings
+con i pesi appena calcolati:
+\[
+  \hat{\mathbf{y}}^{(k)} = V_k\,\boldsymbol{\alpha}_k
+  = \alpha_1\,\mathbf{v}_1 + \alpha_2\,\mathbf{v}_2 + \cdots + \alpha_k\,\mathbf{v}_k
+  \;\in\; \mathbb{R}^n.
+\]
+\end{keybox}
+
+\paragraph{Formula compatta.}
+Sostituendo $\boldsymbol{\alpha}_k = V_k^T \mathbf{y}$ nella ricostruzione:
+\[
+  \hat{\mathbf{y}}^{(k)} = V_k (V_k^T \mathbf{y}) = (V_k V_k^T)\,\mathbf{y}.
+\]
+La matrice $P_k = V_k V_k^T \in \mathbb{R}^{n \times n}$ è il \textbf{proiettore
+ortogonale} sullo spazio generato dalle prime $k$ colonne di $V$.
+
+\begin{osservazione}
+Per $k = n$ vale $V_n V_n^T = I_n$ (base completa), quindi
+$\hat{\mathbf{y}}^{(n)} = \mathbf{y}$ e l'errore di ricostruzione è zero.
+La curva viene recuperata \emph{esattamente} combinando tutti i loadings.
+\end{osservazione}
+
+% ------------------------------------------------------------
+\subsection{Applicazione: ricostruzione curva EIOPA Aprile 2026}
+% ------------------------------------------------------------
+
+Consideriamo la curva dei livelli EIOPA di Aprile 2026:
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{cr @{\hspace{2em}} cr}
+\toprule
+Scadenza & \multicolumn{1}{c}{Tasso (\%)} & Scadenza & \multicolumn{1}{c}{Tasso (\%)} \\
+\midrule
+ 1Y & 2.680 & 11Y & 3.025 \\
+ 2Y & 2.752 & 12Y & 3.072 \\
+ 3Y & 2.748 & 13Y & 3.106 \\
+ 4Y & 2.753 & 14Y & 3.134 \\
+ 5Y & 2.783 & 15Y & 3.166 \\
+ 6Y & 2.818 & 16Y & 3.186 \\
+ 7Y & 2.858 & 17Y & 3.195 \\
+ 8Y & 2.904 & 18Y & 3.197 \\
+ 9Y & 2.944 & 19Y & 3.195 \\
+10Y & 2.998 & 20Y & 3.192 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Calcoliamo i pesi $\boldsymbol{\alpha}_k = V_k^T\mathbf{y}$ per $k = 1, \ldots, 20$
+e le relative ricostruzioni.
+Calcoliamo i pesi $\boldsymbol{\alpha}_k = V_k^T\mathbf{y}$ per $k = 1, \ldots, 20$
+e le relative ricostruzioni.
+
+Il Grafico~A (Figura~\ref{fig:sez5_livelli}) confronta la curva originale
+con due ricostruzioni: $k = 3$ (approssimazione con i tre fattori economici)
+e $k = 20$ (base completa, ricostruzione esatta). Già con sole 3 componenti
+la forma della curva è catturata; con $k = 20$ la curva ricostruita
+coincide esattamente con l'originale.
+
+Il Grafico~B (Figura~\ref{fig:sez5_errore}) mostra l'errore $\varepsilon_k$
+in punti base su scala logaritmica, per $k = 1, \ldots, 19$. La scala log
+evidenzia il tasso di convergenza: l'errore decresce rapidamente nelle prime
+componenti e diventa trascurabile oltre $k = 10$. Per $k = 20$ l'errore è
+numericamente zero (non mostrato perché non rappresentabile in scala log).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\textwidth]{grafici/PCA_mensile/sez5_curva_ricostruzione.pdf}
+  \caption{\textbf{Grafico A — Ricostruzione della curva dei livelli.}
+    Curva nera con punti: originale. Curva arancio tratteggiata: ricostruzione
+    con $k = 3$ componenti. Curva verde
+    puntinata: ricostruzione con $k = 20$ (base completa).}
+  \label{fig:sez5_livelli}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\textwidth]{grafici/PCA_mensile/sez5_convergenza_errore.pdf}
+  \caption{\textbf{Grafico B — Convergenza dell'errore (scala logaritmica).}
+    Errore $\varepsilon_k = \|\hat{\mathbf{y}}^{(k)} - \mathbf{y}\|_2$ in punti
+    base per $k = 1, \ldots, 19$. I punti rossi annotati indicano l'errore
+    e la riduzione percentuale rispetto a $k = 1$ per $k = 3$ e $k = 10$.}
+  \label{fig:sez5_errore}
+\end{figure}
+
+\newpage
+% ------------------------------------------------------------
+\section{Applicazioni pratiche}
+% ------------------------------------------------------------
+
+\begin{enumerate}
+  \item \textbf{Compressione}: il dataset mensile (260 righe $\times$ 20 colonne)
+        si riduce a 3 serie temporali di scores con perdita di informazione
+        inferiore al 5\%.
+  \item \textbf{Scenari di stress mensili}: uno shock di $+\sigma_1$ sul fattore
+        livello simula una decisione BCE di rialzo di circa 25--50~pb; identifica
+        immediatamente la sensibilit\`a di un portafoglio obbligazionario.
+  \item \textbf{Hedging fattoriale}: invece di coprirsi contro 20 movimenti
+        indipendenti, si gestisce l'esposizione ai 3 fattori PCA mensili con
+        soli 3 strumenti (es.\ futures su 2Y, 10Y, 20Y).
+  \item \textbf{Previsione}: modelli VAR o ARIMA si applicano ai 3 scores mensili
+        anzich\'e alle 20 variabili originali, con stime pi\`u stabili e
+        interpretabili.
+\end{enumerate}
+
+% ============================================================
+\section{Conclusioni}
+% ============================================================
+
+\begin{itemize}
+  \item La PCA si applica alle \textbf{variazioni mensili centrate} $X$: la
+        frequenza mensile elimina il rumore di breve periodo e rende i
+        movimenti fattoriali visivamente inequivocabili.
+  \item Lo strumento matematico \`e la \textbf{SVD di $X$}: stabile, esatta,
+        interpretabile tramite il Teorema di Eckart-Young.
+  \item Le \textbf{prime 3 componenti} spiegano il 95--99\% della varianza
+        anche con dati mensili: il risultato \`e robusto alla scelta della
+        frequenza.
+  \item I \textbf{loadings} rappresentano movimenti ben interpretabili della curva su tutte le maturity (livello, pendenza, curvatura); gli \textbf{scores mensili} sono leggibili e
+        collegabili a eventi macroeconomici identificabili. Combinando questi valori opportunamente è possibile determinare la variazione storica della curva dei tassi, utilizzando al più tre componenti.
+\end{itemize}
+
+% ============================================================
+\renewcommand{\refname}{Riferimenti bibliografici}
+\begin{thebibliography}{9}
+
+\bibitem{quarteroni2017}
+  \textbf{Quarteroni, A., Saleri, F., Gervasio, P.} (2017).
+  \textit{Calcolo Scientifico}, 6a ed. Springer.
+  Capitolo~6 per SVD e PCA.
+
+\bibitem{burden2016}
+  \textbf{Burden, R.L., Faires, J.D.} (2016).
+  \textit{Numerical Analysis}, 10th ed. Cengage.
+
+\bibitem{fabozzi2012}
+  \textbf{Fabozzi, F.J.} (2012).
+  \textit{Fixed Income Mathematics}, 4th ed. McGraw-Hill.
+  Per il contesto obbligazionario dei fattori PCA.
+
+\bibitem{litterman1991}
+  \textbf{Litterman, R., Scheinkman, J.} (1991).
+  \textit{Common Factors Affecting Bond Returns}.
+  Journal of Fixed Income 1(1), 54--61.
+  Articolo originale che identifica i 3 fattori (livello, pendenza, curvatura)
+  nelle curve dei tassi USA.
+
+\bibitem{rebonato2004}
+  \textbf{Rebonato, R.} (2004).
+  \textit{Volatility and Correlation: The Perfect Hedger and the Fox},
+  2nd ed. Wiley Finance.
+  Capitolo~7: analisi fattoriale delle curve dei tassi e applicazioni al
+  risk management; motiva la PCA sui delta e non sui livelli per la
+  coerenza con il calcolo del P\&L.
+
+\bibitem{ecb}
+  \textbf{ECB Data Portal} --- \url{https://data.ecb.europa.eu}:
+  dataset \texttt{YC.B.U2.EUR.4F.G\_N\_A.SV\_C\_YM.SR\_nY}
+  per le spot rate BCE AAA.
+
+\end{thebibliography}
+
+\end{document}
