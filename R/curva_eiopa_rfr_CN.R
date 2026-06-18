@@ -550,6 +550,93 @@ save_fig("fig05c_fattori_sconto", p5c)
 
 
 # ==============================================================================
+# SEZ. 5bis — INTERPOLAZIONE CLASSICA: FALLIMENTO IN ESTRAPOLAZIONE
+# ==============================================================================
+#
+# Motivazione didattica (filo logico della dispensa):
+# costruire la curva e' un problema di interpolazione + estrapolazione di una
+# funzione nota solo in N nodi. I metodi classici interpolano bene ma NON sanno
+# estrapolare verso un asintoto economico (l'UFR):
+#   - polinomio globale di grado N-1: fenomeno di Runge, oscillazioni ai bordi
+#     ed esplosione fuori dall'intervallo dei nodi;
+#   - spline cubica naturale: interpola in modo regolare ma estrapola in modo
+#     lineare, senza alcuna convergenza all'UFR;
+#   - Smith-Wilson: converge strutturalmente all'UFR.
+# ==============================================================================
+
+cat("\n=== SEZ. 5bis: FALLIMENTO INTERPOLAZIONE CLASSICA ===\n")
+
+# Spot rate ai nodi di mercato (dalla curva SW calibrata con alpha*)
+spot_nodi_5bis <- sapply(T_mkt, function(t) {
+  P <- sw_discount(t, T_mkt, zeta_star, UFR_c, alpha_star)
+  -log(P) / t * 100
+})
+
+# Griglia di valutazione: interpolazione (1-20) + estrapolazione (20-60)
+T_eval <- seq(1, 60, by = 0.25)
+
+# (a) Interpolante polinomiale globale di grado N-1 = 11.
+#     poly(..., raw = FALSE) usa una base ortogonale numericamente stabile;
+#     predict() estende il polinomio anche fuori dall'intervallo dei nodi.
+poly_model <- lm(spot_nodi_5bis ~ poly(T_mkt, degree = N - 1))
+r_poly <- predict(poly_model, newdata = data.frame(T_mkt = T_eval))
+
+# (b) Spline cubica naturale (estrapola linearmente oltre l'ultimo nodo)
+spline_5bis <- splinefun(T_mkt, spot_nodi_5bis, method = "natural")
+r_spline_5bis <- spline_5bis(T_eval)
+
+# (c) Smith-Wilson (converge all'UFR)
+r_sw_5bis <- sapply(T_eval, function(t) {
+  P <- sw_discount(t, T_mkt, zeta_star, UFR_c, alpha_star)
+  -log(P) / t * 100
+})
+
+df_fail <- rbind(
+  data.frame(T = T_eval, Tasso = r_poly,        Metodo = "Polinomio globale (grado 11)"),
+  data.frame(T = T_eval, Tasso = r_spline_5bis, Metodo = "Spline cubica naturale"),
+  data.frame(T = T_eval, Tasso = r_sw_5bis,     Metodo = "Smith-Wilson (EIOPA)")
+)
+df_fail$Metodo <- factor(df_fail$Metodo,
+  levels = c("Polinomio globale (grado 11)", "Spline cubica naturale",
+             "Smith-Wilson (EIOPA)"))
+
+col_poly <- "#C0392B"  # rosso acceso — polinomio (Runge)
+
+p5bis <- ggplot(df_fail, aes(x = T, y = Tasso, color = Metodo, linetype = Metodo)) +
+  # regione di estrapolazione (oltre il LLP) evidenziata
+  annotate("rect", xmin = LLP, xmax = 60, ymin = -Inf, ymax = Inf,
+           fill = "gray85", alpha = 0.35) +
+  annotate("text", x = (LLP + 60) / 2, y = 5.4,
+           label = "Estrapolazione (T > LLP)", color = "gray40", size = 3.3) +
+  geom_line(linewidth = 1) +
+  geom_hline(yintercept = UFR_ann * 100, color = col_ufr,
+             linetype = "dotted", linewidth = 0.8) +
+  geom_vline(xintercept = LLP, color = "gray50", linetype = "dashed", linewidth = 0.5) +
+  geom_point(data = data.frame(T = T_mkt, Tasso = spot_nodi_5bis),
+             aes(x = T, y = Tasso), color = col_nodi, size = 2.2, shape = 16,
+             inherit.aes = FALSE) +
+  annotate("text", x = 50, y = UFR_ann * 100 + 0.12,
+           label = sprintf("UFR = %.2f%%", UFR_ann * 100), color = col_ufr, size = 3.2) +
+  scale_color_manual(values = c(
+    "Polinomio globale (grado 11)" = col_poly,
+    "Spline cubica naturale"       = col_spline,
+    "Smith-Wilson (EIOPA)"         = col_spot)) +
+  scale_linetype_manual(values = c(
+    "Polinomio globale (grado 11)" = "solid",
+    "Spline cubica naturale"       = "dashed",
+    "Smith-Wilson (EIOPA)"         = "solid")) +
+  coord_cartesian(ylim = c(1.5, 5.5)) +
+  labs(title = "Interpolazione classica e fallimento in estrapolazione",
+       subtitle = paste0("Il polinomio globale oscilla (Runge) ed esplode oltre i nodi; ",
+                         "la spline estrapola lineare; solo SW converge all'UFR"),
+       x = "Scadenza T (anni)", y = "Spot rate (%)",
+       color = NULL, linetype = NULL) +
+  scale_x_continuous(breaks = c(T_mkt, 30, 40, 50, 60)) +
+  theme_dispensa
+save_fig("fig00_interpolazione_fallimento", p5bis)
+
+
+# ==============================================================================
 # SEZ. 6 — CONFRONTO SPLINE CUBICHE vs SMITH-WILSON
 # ==============================================================================
 

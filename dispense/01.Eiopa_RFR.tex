@@ -22,6 +22,7 @@
 \usepackage{float}
 \usepackage{fancyvrb}
 \usepackage{tcolorbox}
+\tcbuselibrary{breakable}
 \usepackage{titlesec}
 \usepackage{bm}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
@@ -123,6 +124,12 @@ risolvere due sotto-problemi simultaneamente:
   \item \textbf{Estrapolazione}: prolungare la curva fino a 150 anni con convergenza
         a un tasso asintotico economicamente fondato (l'Ultimate Forward Rate).
 \end{enumerate}
+
+\`E naturale chiedersi perch\'e non si usino i metodi di interpolazione standard
+del calcolo numerico. La Sezione~\ref{sec:interpolazione} mostra che il polinomio
+interpolatore globale e la spline cubica risolvono bene l'interpolazione ma
+\emph{falliscono} l'estrapolazione --- ed \`e questo fallimento a condurre, per
+necessit\`a, al metodo Smith--Wilson.
 
 In questa dispensa mostriamo come l'intero problema si riduca a due passi numerici
 ben definiti, che analizziamo in dettaglio:
@@ -570,12 +577,147 @@ Una volta raccolti i dati, la pipeline di verifica in R \`e:
 \end{enumerate}
 
 % ============================================================
-\section{Prerequisiti matematici}
+\section{Interpolazione classica e il bisogno di estrapolazione}
+\label{sec:interpolazione}
+% ============================================================
+
+\begin{keybox}[Il problema in termini di calcolo numerico]
+Il mercato fornisce il valore di una funzione --- la curva di sconto $P(t)$,
+o equivalentemente lo spot $r(0,t)$ --- soltanto in $N$ nodi
+$T_1<\cdots<T_N$ (per l'EUR, $N=12$ scadenze fino al $\LLP=20$ anni).
+Ne servono i valori per \emph{ogni} $t\in[0,150]$. Il compito si scinde in due:
+\begin{description}[leftmargin=1.6cm,style=nextline,topsep=2pt]
+  \item[Interpolazione] ricostruire la curva \emph{tra} i nodi, $t\in[T_1,T_N]$;
+  \item[Estrapolazione] prolungarla \emph{oltre} l'ultimo nodo, $t>T_N$, dove
+        non esistono dati, fino a $150$ anni.
+\end{description}
+La tesi di questa dispensa: i metodi classici di interpolazione risolvono bene
+il primo compito ma \textbf{falliscono} sul secondo, ed \`e proprio questo
+fallimento a motivare il metodo Smith--Wilson.
+\end{keybox}
+
+L'interpolazione di una funzione nota su un insieme finito di nodi \`e il
+problema fondante del calcolo numerico (Quarteroni \emph{et al.}~\cite{quarteroni2014},
+de Boor~\cite{deBoor1978}). Esaminiamo i due candidati classici --- il polinomio
+interpolatore globale e la spline cubica --- per capire \emph{perch\'e} non
+bastano e quale propriet\`a manca loro.
+
+% ------------------------------------------------------------
+\subsection{Interpolazione polinomiale globale e il fenomeno di Runge}
+\label{sec:runge}
+% ------------------------------------------------------------
+
+Il primo candidato \`e l'unico polinomio $p_{N-1}$ di grado $N-1$ che passa per
+gli $N$ nodi. Esiste ed \`e unico, ma soffre di due patologie ben note:
+\begin{enumerate}
+  \item \textbf{Oscillazioni di Runge}: al crescere del grado, $p_{N-1}$ oscilla
+        sempre pi\`u violentemente verso gli estremi dell'intervallo, soprattutto
+        dove i nodi sono pi\`u radi (qui il tratto $10$--$20$ anni).
+  \item \textbf{Estrapolazione esplosiva}: oltre l'ultimo nodo un polinomio di
+        grado elevato diverge come $t^{\,N-1}$. Non esiste alcun controllo sul
+        comportamento asintotico: la curva \emph{esplode}, priva di senso finanziario.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{grafici/curva_eiopa_rfr/fig00_interpolazione_fallimento.pdf}
+\caption{Tre risposte allo stesso problema di interpolazione/estrapolazione sui
+$12$ nodi di mercato (punti neri). \textbf{Polinomio globale grado 11} (rosso):
+oscilla (Runge) nel tratto $12$--$15$ anni ed esce dal grafico oltre i nodi.
+\textbf{Spline cubica naturale} (verde tratteggiato): interpola in modo regolare
+ma nella zona di estrapolazione ($T>\LLP$, area grigia) prosegue \emph{lineare},
+senza alcuna tendenza verso l'UFR. \textbf{Smith--Wilson} (blu): interpola
+\emph{e} converge strutturalmente all'UFR $=3.30\%$ (linea viola punteggiata).}
+\label{fig:interp_fail}
+\end{figure}
+
+% ------------------------------------------------------------
+\subsection{Spline cubiche: interpolazione ottima, estrapolazione cieca}
+\label{sec:spline}
+% ------------------------------------------------------------
+
+La cura classica alle oscillazioni di Runge \`e abbandonare il polinomio unico
+globale a favore di un'interpolazione \emph{a tratti}: la \textbf{spline cubica}.
+Su ogni intervallo $[T_j,T_{j+1}]$ si usa un polinomio cubico, raccordando i
+tratti in modo che la funzione risultante sia $\mathcal{C}^2$.
+
+\begin{teorema}[Caratterizzazione variazionale della spline naturale]
+\label{thm:spline_var}
+Tra tutte le funzioni $S\in\mathcal{C}^2[T_1,T_N]$ che interpolano i dati
+($S(T_j)=y_j$), la spline cubica naturale \`e l'unica che minimizza l'energia
+di curvatura:
+\[
+  \min_{S}\;\int_{T_1}^{T_N}\bigl[S''(t)\bigr]^2\,\mathrm{d}t
+  \qquad\text{soggetto a}\qquad S(T_j)=y_j,\ \ j=1,\ldots,N.
+\]
+\end{teorema}
+
+\`E la curva interpolante ``pi\`u liscia'' possibile nel senso della curvatura
+integrale. Imporre le condizioni di raccordo $\mathcal{C}^2$ conduce a un sistema
+lineare per le derivate seconde $M_j=S''(T_j)$:
+\begin{equation}
+  \label{eq:spline_sys}
+  h_{j-1}M_{j-1} + 2(h_{j-1}+h_j)M_j + h_j M_{j+1}
+  = 6\!\left(\frac{y_{j+1}-y_j}{h_j} - \frac{y_j-y_{j-1}}{h_{j-1}}\right),
+\end{equation}
+con $h_j=T_{j+1}-T_j$. La matrice del sistema \`e \textbf{tridiagonale},
+simmetrica e a dominanza diagonale stretta.
+
+\begin{proposizione}[Algoritmo di Thomas --- costo $O(N)$]
+\label{prop:thomas}
+Se $A$ \`e tridiagonale e a dominanza diagonale stretta, la fattorizzazione LU
+(senza pivoting) esiste, \`e stabile e costa esattamente $O(N)$ operazioni
+(circa 5 per riga: 2 per la fattorizzazione, 3 per la sostituzione). \`E la
+specializzazione dell'eliminazione gaussiana al caso tridiagonale, nota come
+\textbf{algoritmo di Thomas}.
+\end{proposizione}
+
+La \textbf{localit\`a} del supporto --- ogni tratto cubico dipende solo dai nodi
+adiacenti --- \`e ci\`o che rende il sistema tridiagonale e l'algoritmo $O(N)$:
+torneremo su questo punto strutturale, contrapposto al supporto \emph{globale}
+del kernel di Smith--Wilson, nella Sezione~\ref{sec:confronto}.
+
+\paragraph{Il difetto fatale: l'estrapolazione.}
+La spline interpola magnificamente (niente Runge), ma il suo criterio di
+ottimalit\`a --- minima curvatura --- non dice \emph{nulla} su cosa accada oltre
+l'ultimo nodo. La spline \emph{naturale} impone $S''(T_1)=S''(T_N)=0$, dunque
+oltre $T_N$ prosegue come una \textbf{retta} (Figura~\ref{fig:interp_fail}):
+nessuna convergenza a un livello di lungo periodo, nessun ancoraggio economico.
+Per una rendita vitalizia a $80$ anni questo significa attualizzare con un tasso
+arbitrario, dettato dalla pendenza locale all'ultimo nodo e non dalla teoria.
+
+% ------------------------------------------------------------
+\subsection{La propriet\`a mancante: estrapolazione vincolata}
+\label{sec:proprieta_mancante}
+% ------------------------------------------------------------
+
+\begin{keybox}[Da cosa nasce Smith--Wilson]
+Polinomio e spline condividono lo stesso limite: \textbf{interpolano i dati ma
+non sanno verso cosa estrapolare}. Manca un \emph{vincolo asintotico}.
+La regolamentazione (Solvency~II) richiede invece che la curva, oltre il punto
+in cui i dati svaniscono, converga a un tasso forward di lungo periodo
+economicamente fondato --- l'\textbf{Ultimate Forward Rate} (UFR).
+
+\smallskip
+Serve dunque un metodo che, come la spline, nasca da un principio di minima norma
+(per ereditarne regolarit\`a e unicit\`a), ma la cui norma \emph{incorpori} il
+comportamento asintotico desiderato. \`E esattamente ci\`o che fa Smith--Wilson
+(Sezione~\ref{sec:sw}): sostituisce l'energia di curvatura $\int[S'']^2$ con una
+norma in uno spazio di Hilbert il cui nucleo riproducente forza la convergenza
+all'UFR. Il prezzo da pagare sar\`a un sistema lineare non pi\`u tridiagonale
+ma \textbf{denso}, da risolvere con la fattorizzazione LU della
+Sezione~\ref{sec:prerequisiti}.
+\end{keybox}
+
+% ============================================================
+\section{Prerequisiti numerici: sistemi lineari e ricerca di zeri}
 \label{sec:prerequisiti}
 % ============================================================
 
-In questa sezione presentiamo gli strumenti matematici necessari per comprendere
-l'algoritmo Smith--Wilson, organizzati attorno a due problemi fondamentali:
+Il metodo Smith--Wilson, come vedremo, riduce il problema di estrapolazione
+vincolata a due sotto-problemi numerici. In questa sezione prepariamo gli
+strumenti per risolverli, ciascuno con le proprie \emph{garanzie} (esistenza,
+unicit\`a, stabilit\`a):
 
 \begin{keybox}[I due problemi fondamentali]
 \begin{enumerate}
@@ -800,39 +942,6 @@ corretta.
 \end{keybox}
 
 % ------------------------------------------------------------
-\subsection{Confronto: sistema tridiagonale e algoritmo di Thomas}
-\label{sec:thomas}
-% ------------------------------------------------------------
-
-Per le spline cubiche (presentate come confronto nella Sezione~\ref{sec:confronto})
-il sistema lineare ha una struttura speciale: la matrice \`e \textbf{tridiagonale}.
-
-\begin{definizione}[Matrice tridiagonale]
-$A \in \R^{n\times n}$ \`e tridiagonale se $a_{ij} = 0$ per $|i-j|>1$.
-\end{definizione}
-
-\begin{proposizione}[Algoritmo di Thomas --- costo $O(n)$]
-\label{prop:thomas}
-Se $A$ \`e tridiagonale e a dominanza diagonale stretta, la fattorizzazione LU
-(senza pivoting) esiste, \`e stabile e costa esattamente $O(n)$ operazioni
-(5 operazioni per riga: 2 per la fattorizzazione, 3 per la sostituzione).
-\end{proposizione}
-
-\begin{keybox}[Confronto dei costi]
-\begin{center}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Metodo} & \textbf{Struttura} & \textbf{Costo} \\
-\midrule
-LU con pivoting (SW) & Densa $N\times N$ & $O(N^3)$ \\
-Thomas (spline) & Tridiagonale $(N{-}1)\times(N{-}1)$ & $O(N)$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-Per $N=12$: LU $\approx 1\,152$ op., Thomas $\approx 55$ op.
-Entrambi trascurabili su un calcolatore moderno.
-\end{keybox}
-
 % ============================================================
 \section{Il metodo Smith--Wilson}
 \label{sec:sw}
@@ -1038,12 +1147,11 @@ del sistema lineare denso: ogni elemento $H_{jk}$ misura quanto il kernel
 nel nodo $u_k$ contribuisce al valore dello swap $j$.
 
 \begin{keybox}[Parallelo con la spline cubica naturale]
-La spline cubica naturale risolve:
-\[
-  \min_{S \in C^2[a,b]}\;\int_a^b \bigl[S''(t)\bigr]^2\,\mathrm{d}t
-  \quad\text{s.t.}\quad S(t_i) = y_i,\quad i=1,\ldots,n.
-\]
-Smith--Wilson \`e il diretto analogo con due varianti essenziali:
+Ritroviamo qui, in forma compiuta, il filo aperto nella
+Sezione~\ref{sec:interpolazione}. La spline cubica naturale risolve il problema
+variazionale del Teorema~\ref{thm:spline_var},
+$\min_S \int [S'']^2$ con $S(T_j)=y_j$; Smith--Wilson \`e il diretto analogo,
+con due varianti essenziali:
 \begin{enumerate}
   \item La \textbf{norma} \`e quella di $\mathcal{H}$, definita dal kernel
         $W(t,u)$ invece di $\int[S'']^2$: questo incorpora strutturalmente
@@ -1311,14 +1419,10 @@ $[0.05,\,1.0]$ (ampiezza $\ell = 0.95$):
 Per $\varepsilon_\alpha = 10^{-6}$: $n \ge \lceil\log_2(0.95/10^{-6})\rceil = 20$
 iterazioni. Per EUR 2025: $\alpha^* \approx 0.128$.
 
-\paragraph{Confronto con la scanning procedure EIOPA.}
-EIOPA usa una griglia densa con passo $10^{-6}$ su $[0.05, 1.0]$:
-circa $950\,000$ valutazioni di $g$. La bisezione ne richiede $\approx 20$.
-La bisezione \`e $\sim 47\,000$ volte pi\`u efficiente.
-
-\paragraph{Costo totale.} Ogni valutazione di $g$ richiede la risoluzione di
-$\Hmat\bfzeta = \mathbf{b}$: costo $O(N^3)$. Totale bisezione:
-$20 \times 12^3 \approx 34\,560$ operazioni.
+Ogni valutazione di $g$ richiede la risoluzione del sistema
+$\Hmat\bfzeta = \mathbf{b}$ (costo $O(N^3)$); la bisezione ne richiede $\approx 20$,
+contro le circa $950\,000$ della scanning procedure EIOPA (griglia con passo
+$10^{-6}$). Il bilancio dettagliato \`e nel riquadro a fine sezione.
 
 \begin{figure}[H]
 \centering
@@ -1413,27 +1517,13 @@ Con il codice R si verifica che l'errore massimo \`e dell'ordine di $10^{-15}$
 \label{sec:confronto}
 % ============================================================
 
-Le spline cubiche non sono nella pipeline EIOPA (sez.~9.1 di~\cite{eiopa2025}),
-ma il loro confronto con Smith--Wilson \`e illuminante per il calcolo numerico:
-i due metodi risolvono lo stesso problema di interpolazione con strutture
-algebriche molto diverse.
-
-\subsection{Sistema tridiagonale per le spline}
-
-Data la funzione $\phi(T) = -\ln P(0,T)$ ai nodi $T_0 < \cdots < T_N$
-con passi $h_j = T_{j+1}-T_j$, le derivate seconde $M_j = S''(T_j)$ soddisfano
-il sistema tridiagonale:
-\begin{equation}
-  \label{eq:spline_sys}
-  h_{j-1}M_{j-1} + 2(h_{j-1}+h_j)M_j + h_j M_{j+1}
-  = 6\!\left(\frac{\phi_{j+1}-\phi_j}{h_j} - \frac{\phi_j-\phi_{j-1}}{h_{j-1}}\right).
-\end{equation}
-
-In forma matriciale $\mathbf{A}\mathbf{M} = \mathbf{d}$ con $\mathbf{A}$
-tridiagonale, simmetrica, a dominanza diagonale stretta. Si risolve con
-l'algoritmo di Thomas (Proposizione~\ref{prop:thomas}) in $O(N)$.
-
-\subsection{Confronto strutturale e limiti della spline}
+Avendo introdotto la spline cubica come motivazione nella
+Sezione~\ref{sec:interpolazione}, possiamo ora chiudere il cerchio: i due metodi
+risolvono lo stesso problema di interpolazione, ma con strutture algebriche
+opposte. Avevamo gi\`a visto (Figura~\ref{fig:interp_fail}) che la spline
+interpola bene ma estrapola in modo cieco; qui spieghiamo \emph{perch\'e} il
+sistema lineare di Smith--Wilson \`e denso e costoso, mentre quello delle spline
+\`e tridiagonale ed economico.
 
 \paragraph{Perch\`e il sistema SW \`e denso e quello delle spline \`e tridiagonale?}
 La risposta sta nella \emph{localit\`a} delle funzioni base:
@@ -1441,25 +1531,18 @@ La risposta sta nella \emph{localit\`a} delle funzioni base:
   \item Le spline cubiche usano polinomi a \textbf{supporto locale}: il tratto
         su $[T_j, T_{j+1}]$ dipende solo dai nodi adiacenti. Ogni condizione di
         raccordo coinvolge al pi\`u 3 nodi consecutivi $\Rightarrow$ matrice
-        \textbf{tridiagonale}, algoritmo di Thomas $O(N)$.
+        \textbf{tridiagonale}~\eqref{eq:spline_sys}, algoritmo di Thomas $O(N)$
+        (Proposizione~\ref{prop:thomas}).
   \item Il kernel di Wilson $W(t,u_k)$ ha \textbf{supporto globale}: ogni nodo
         $u_k$ influenza la curva su tutto $[0,\infty)$. Ogni condizione di
         mercato coinvolge \emph{tutti} i nodi kernel contemporaneamente
         $\Rightarrow$ matrice $\Hmat$ \textbf{densa}, fattorizzazione LU $O(N^3)$.
 \end{itemize}
-Il prezzo della garanzia strutturale di convergenza all'UFR (kernel globale)
-\`e una matrice densa. Le spline, non avendo questo requisito, sfruttano la
-struttura locale e ottengono un sistema tridiagonale molto pi\`u economico.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{grafici/curva_eiopa_rfr/fig06_confronto_spline_sw.pdf}
-\caption{Confronto interpolazione/estrapolazione: spline cubica naturale vs
-Smith--Wilson. Nella zona liquida ($T\le 20$) entrambe passano per i nodi.
-Oltre il LLP la spline estrapolizza linearmente (senza convergenza a UFR),
-mentre SW converge strutturalmente.}
-\label{fig:confronto}
-\end{figure}
+\`E il compromesso centrale della dispensa: il supporto globale del kernel
+\`e ci\`o che garantisce strutturalmente la convergenza all'UFR (estrapolazione
+vincolata), ma costa una matrice densa. Le spline, prive di tale requisito,
+sfruttano la localit\`a e pagano solo $O(N)$ --- al prezzo, per\`o, di non saper
+estrapolare.
 
 \begin{center}\small
 \renewcommand{\arraystretch}{1.25}
@@ -1667,6 +1750,24 @@ $O(N)$ &
 \section{Esercizi}
 \label{sec:esercizi}
 % ============================================================
+
+\begin{esercizio}[Interpolazione classica e fallimento in estrapolazione]
+Usare gli spot ai 12 nodi della Tabella~\ref{tab:ois_eur} (curva SW calibrata).
+\begin{enumerate}[label=(\alph*)]
+  \item Costruite l'interpolante polinomiale globale di grado $11$
+        (\texttt{lm(y \textasciitilde\ poly(T, 11))}) e valutatelo su
+        $T\in[1,60]$. Individuate l'intervallo in cui compaiono le oscillazioni
+        di Runge e descrivete il comportamento per $T>20$.
+  \item Costruite la spline cubica naturale
+        (\texttt{splinefun(..., method="natural")}) e valutatela su $[1,60]$.
+        Verificate numericamente che per $T>20$ il tratto \`e \emph{lineare}
+        (derivata seconda nulla).
+  \item Sovrapponete la curva Smith--Wilson e riproducete la
+        Figura~\ref{fig:interp_fail}. A quale tasso tende ciascun metodo per
+        $T\to 60$? Solo SW converge all'UFR: spiegate perch\'e, richiamando il
+        ruolo del termine asintotico $e^{-\UFR_c t}$ nella formula~\eqref{eq:sw_main}.
+\end{enumerate}
+\end{esercizio}
 
 \begin{esercizio}[Costruzione della matrice $\Hmat$ a mano]
 Considerare $N=3$ swap par a scadenze $T=(1,2,3)$ anni con tassi
