@@ -1,0 +1,71 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {section}{\numberline {1}Introduzione e obiettivi}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Il problema}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Finalit\`a didattiche}{4}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Il quadro normativo: Solvency~II e EIOPA}{4}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Struttura dei tassi di interesse: spot, forward e par}{4}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}Origine dei dati}{6}{subsection.1.5}%
+\contentsline {paragraph}{(a) Tassi OIS su \texteuro {}STR.}{6}{subsection.1.5}%
+\contentsline {paragraph}{(b) Pubblicazione mensile EIOPA.}{6}{subsection.1.5}%
+\contentsline {paragraph}{(c) Dati utilizzati in questa dispensa.}{6}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}La pipeline EIOPA in cinque passi}{6}{subsection.1.6}%
+\contentsline {subsection}{\numberline {1.7}Dati reali: fonti e procedura per ricostruire la curva EUR maggio 2026}{7}{subsection.1.7}%
+\contentsline {paragraph}{B1 --- Bloomberg Terminal (fonte primaria EIOPA, Annex~B di~\cite {eiopa2025}).}{7}{subsection.1.7}%
+\contentsline {paragraph}{B2 --- Refinitiv Workspace / LSEG Eikon (fonte alternativa EIOPA).}{8}{subsection.1.7}%
+\contentsline {paragraph}{B3 --- ECB Data Portal (fonte libera, parziale).}{8}{subsection.1.7}%
+\contentsline {paragraph}{C1 --- UFR per EUR 2026.}{8}{subsection.1.7}%
+\contentsline {paragraph}{C2 --- LLP e CRA per EUR.}{9}{subsection.1.7}%
+\contentsline {paragraph}{C3 --- $\alpha ^*$ calcolato vs pubblicato.}{9}{subsection.1.7}%
+\contentsline {section}{\numberline {2}Prerequisiti matematici}{10}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Sistemi lineari e fattorizzazione LU}{10}{subsection.2.1}%
+\contentsline {paragraph}{Algoritmo.}{10}{teorema.2.2}%
+\contentsline {paragraph}{Costo computazionale.}{10}{teorema.2.2}%
+\contentsline {subsection}{\numberline {2.2}Scelta del metodo risolutivo: perch\`e Cholesky?}{11}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Numero di condizionamento}{11}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Il metodo di bisezione}{12}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Confronto: sistema tridiagonale e algoritmo di Thomas}{12}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Il metodo Smith--Wilson}{13}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Idea e struttura}{13}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Funzione kernel di Wilson --- sez.~9.7 di \cite {eiopa2025}}{13}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Interpretazione variazionale (lettura didattica RKHS)}{16}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Parametri chiave per EUR (29/05/2026)}{17}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Il sistema lineare: calibrazione su swap par}{18}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Dati di input: OIS e CRA}{18}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Derivazione del sistema --- notazione matriciale di EIOPA (sez.~9.8--9.10)}{19}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Risoluzione: fattorizzazione di Cholesky}{20}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Condizionamento della matrice $\mathbf {Q}^{\mskip -1mu\top }\mathbf {H}\mathbf {Q}$}{21}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Dalla funzione di sconto ai tassi (prezzi $\to $ intensità $\to $ tassi)}{22}{subsection.4.5}%
+\contentsline {section}{\numberline {5}Determinazione del parametro $\alpha $}{22}{section.5}%
+\contentsline {subsection}{\numberline {5.1}L'Ultimate Forward Rate}{22}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Criterio EIOPA per $\alpha $ --- sez.~9.14}{22}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Algoritmo: ricerca di zeri per $\alpha $ (bisezione e Newton)}{23}{subsection.5.3}%
+\contentsline {paragraph}{Analisi dell'errore (bisezione).}{23}{AlgoLine.1.3}%
+\contentsline {section}{\numberline {6}Risultati: la curva EIOPA completa}{25}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Curva spot e forward}{25}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Verifica: replica dei par swap}{26}{subsection.6.2}%
+\contentsline {section}{\numberline {7}Validazione: ricostruzione multi-data e confronto con le curve ufficiali EIOPA}{27}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Dati e procedura}{27}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Confronto grafico}{28}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Risultati quantitativi}{29}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Diagnostica: da dove viene lo scarto di $\approx 25$ bps?}{29}{subsection.7.4}%
+\contentsline {section}{\numberline {8}Validazione (II): l'input corretto \`e l'IRS EURIBOR --- ricostruzione da \texttt {EUSA*}}{30}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Dati e procedura}{31}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Confronto grafico}{32}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Risultati quantitativi}{33}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Conferma diagnostica: \texttt {EUSA} riproduce i par rate EIOPA entro 2 bps}{33}{subsection.8.4}%
+\contentsline {section}{\numberline {9}Confronto: spline cubiche vs Smith--Wilson}{34}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Sistema tridiagonale per le spline}{35}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Confronto strutturale e limiti della spline}{35}{subsection.9.2}%
+\contentsline {paragraph}{Perch\`e il sistema SW \`e denso e quello delle spline \`e tridiagonale?}{35}{subsection.9.2}%
+\contentsline {section}{\numberline {10}Analisi di sensitivit\`a}{36}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Sensitivit\`a all'UFR}{36}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Sensitivit\`a al parametro $\alpha $}{37}{subsection.10.2}%
+\contentsline {section}{\numberline {11}Implementazione in R}{37}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Setup e dati}{37}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Kernel di Wilson (cuore $H$ e derivata $G$)}{38}{subsection.11.2}%
+\contentsline {subsection}{\numberline {11.3}Calibrazione: sistema SPD e Cholesky}{38}{subsection.11.3}%
+\contentsline {subsection}{\numberline {11.4}Valutazione: prezzi, intensità, tassi annui}{38}{subsection.11.4}%
+\contentsline {subsection}{\numberline {11.5}Determinazione di $\alpha $: ricerca di zeri}{39}{subsection.11.5}%
+\contentsline {section}{Riepilogo degli algoritmi}{39}{subsection.11.5}%
+\contentsline {section}{\numberline {12}Esercizi}{39}{section.12}%

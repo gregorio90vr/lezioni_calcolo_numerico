@@ -21,7 +21,11 @@
 \usepackage{float}
 \usepackage{fancyvrb}
 \usepackage{tcolorbox}
+\tcbuselibrary{breakable}
 \usepackage{titlesec}
+
+% le figure sono prodotte da R/lezione_pca_mensile.R in output/pca_mensile/
+\graphicspath{{}}
 
 \geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
 \setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
@@ -53,13 +57,13 @@
   }
 }
 \newtcolorbox{keybox}[1][Concetto chiave]{mybase,
-  colframe=blue!40!black, colback=blue!4, title=#1}
+  colframe=blue!40!black, colback=blue!4, title={#1}}
 \newtcolorbox{algobox}[1][Algoritmo]{mybase,
-  colframe=teal!50!black, colback=teal!4, title=#1}
+  colframe=teal!50!black, colback=teal!4, title={#1}}
 \newtcolorbox{warningbox}{mybase,
   colframe=orange!70!black, colback=orange!5}
 \newtcolorbox{codebox}[1][Codice R]{mybase,
-  colframe=green!40!black, colback=green!3, title=#1}
+  colframe=green!40!black, colback=green!3, title={#1}}
 
 % ============================================================
 \title{%
@@ -454,7 +458,7 @@ Colonna & Contenuto \\
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step1_curve_livelli_m.pdf}
+\includegraphics[width=0.92\textwidth]{../output/pca_mensile/step1_curve_livelli_m.pdf}
 \caption{Curve dei tassi ECB in tre mesi rappresentativi del campione. L'asse $x$
 indica la scadenza in anni, l'asse $y$ il tasso in \%. }
 \end{figure}
@@ -518,7 +522,7 @@ Questo ordine di grandezza le rende direttamente interpretabili e confrontabili
 con le decisioni di politica monetaria BCE (ad es.\ rialzo di 75~pb a ottobre 2022).
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{grafici/PCA_mensile/step1_delta_mensili.pdf}
+\includegraphics[width=0.95\textwidth]{../output/pca_mensile/step1_delta_mensili.pdf}
 \caption{\textbf{Distribuzione delle variazioni mensili} $\Delta R^{\text{mens}}(T_j)$
 per ciascuna scadenza, espressa in punti base (1~pb $= 0.01\%$). Rispetto alla
 versione giornaliera, le distribuzioni sono nettamente più informative: le mediane
@@ -535,11 +539,11 @@ principalmente sul tratto 2--10 anni.}
 \centering
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=\textwidth]{grafici/PCA_mensile/step1_heatmap_correlazioni_m.pdf}
+\includegraphics[width=\textwidth]{../output/pca_mensile/step1_heatmap_correlazioni_m.pdf}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=\textwidth]{grafici/PCA_mensile/step1_correlazioni_3d_barre_m.pdf}
+\includegraphics[width=\textwidth]{../output/pca_mensile/step1_correlazioni_3d_barre_m.pdf}
 \end{minipage}
 \caption{Correlazione tra variazioni mensili visualizzata in due modi complementari:
 heatmap (sinistra) e superficie a barre 3D (destra). %La struttura \`e simile a quella giornaliera ma le correlazioni sono lievemente pi\`u basse perché le variazioni mensili contengono meno correlazione ``di persistenza'' artificiale:il segnale economico \`e pi\`u netto e i movimenti idiosincratici di breve periodo vengono mediati.
@@ -577,7 +581,7 @@ k_star    <- which(cum_var >= 0.95)[1]  # componenti per 95%
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step2_varianza_spiegata_m.pdf}
+\includegraphics[width=0.92\textwidth]{../output/pca_mensile/step2_varianza_spiegata_m.pdf}
 \caption{Varianza per componente e varianza cumulata. Barre blu: varianza individuale per componente;
 linea rossa: varianza cumulata; tratteggio grigio: soglia 95\%. Il numero $k^*$ di
 componenti necessarie per il 95\% \`e tipicamente 2 o 3.}
@@ -590,9 +594,9 @@ $\eta_3 = 99.51\%$ della varianza totale del campione,
 una quota che rende trascurabile il contributo delle componenti residue.
 %Con dati mensili la distribuzione della varianza spiegata riflette meglio la struttura \emph{economica} della curva: le prime tre componenti corrispondono a movimenti macroeconomici distinti (vedi Sezione~\ref{sec:interpretazione}).%,non a correlazioni artificiali di breve periodo.
 
-%\IfFileExists{grafici/PCA_mensile/pca_summary_for_tex_m.tex}{%
+%\IfFileExists{output/pca_mensile/pca_summary_for_tex_m.tex}{%
 %\begin{keybox}[Risultati numerici (generati da %\texttt{lezione\_pca\_mensile.R})]
-%\input{grafici/PCA_mensile/pca_summary_for_tex_m.tex}
+%\input{pca_summary_for_tex_m.tex}
 %\end{keybox}
 %}{%
 %\begin{warningbox}
@@ -612,7 +616,7 @@ I loadings $\mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3 \in \mathbb{R}^n$ rappresen
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step3_loadings_pc1_pc3_m.pdf}
+\includegraphics[width=0.92\textwidth]{../output/pca_mensile/step3_loadings_pc1_pc3_m.pdf}
 \caption{Loadings delle prime tre componenti in funzione della scadenza (anni).PC1 piatta
 (livello), PC2 monotona (pendenza), PC3 a gobba (curvatura).}
 \end{figure}
@@ -652,7 +656,7 @@ il fattore era inattivo.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.97\textwidth]{grafici/PCA_mensile/step3_scores_mensili_m.pdf}
+\includegraphics[width=0.97\textwidth]{../output/pca_mensile/step3_scores_mensili_m.pdf}
 \caption{Scores mensili PC1, PC2, PC3 con marcatura degli eventi macroeconomici
 principali (linee tratteggiate grigie).}
 \label{fig:scores_mensili}
@@ -684,7 +688,7 @@ Con dati giornalieri tutti questi segnali sarebbero sepolti nel rumore.
 
 %\begin{figure}[H]
 %\centering
-%\includegraphics[width=0.92\textwidth]{grafici/PCA_mensile/step3_nelson_siegel_confronto_m.pdf}
+%\includegraphics[width=0.92\textwidth]{step3_nelson_siegel_confronto_m.pdf}
 %\caption{Confronto tra la curva dei tassi mensile osservata (blu continuo) e il
 %fit di Nelson-Siegel con $\lambda=1.5$ (rosso tratteggiato) per tre mesi
 %rappresentativi (inizio campione, picco dei tassi 2022-2023, recente). L'asse $y$
@@ -717,7 +721,7 @@ su periodi diversi del campione.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{grafici/PCA_mensile/step3_confronto_ricostruzione_m.pdf}
+\includegraphics[width=0.8\textwidth]{../output/pca_mensile/step3_confronto_ricostruzione_m.pdf}
 \caption{Variazione mensile reale vs.\ ricostruita con $k=3$ componenti
 nei tre mesi selezionati (primo, centrale, ultimo). L'asse $y$ è in punti base.}
 \label{fig:confronto_ric}
@@ -736,7 +740,7 @@ apprezzabile oltre al consueto shift parallelo.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.97\textwidth]{grafici/PCA_mensile/step3_ricostruzione_progressiva_m.pdf}
+\includegraphics[width=0.97\textwidth]{../output/pca_mensile/step3_ricostruzione_progressiva_m.pdf}
 \caption{Ricostruzione progressiva della variazione mensile della curva BCE per
 maggio 2025, aggiungendo una componente alla volta. La curva nera è la variazione
 reale osservata (in punti base).}
@@ -757,7 +761,7 @@ sull'intero campione da quella componente.
 
 \subsubsection{Codice R: ricostruzione e selezione dei mesi rappresentativi}
 
-\begin{codebox}[Selezione automatica dei mesi: primo, centrale, ultimo]
+\begin{codebox}[{Selezione automatica dei mesi: primo, centrale, ultimo}]
 \begin{Verbatim}[fontsize=\small]
 k_rec    <- 3L
 scores_k_m   <- sv_m$u[, 1:k_rec] %*% diag(sv_m$d[1:k_rec], nrow=k_rec)
@@ -926,7 +930,7 @@ numericamente zero (non mostrato perché non rappresentabile in scala log).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{grafici/PCA_mensile/sez5_curva_ricostruzione.pdf}
+  \includegraphics[width=0.88\textwidth]{../output/pca_mensile/sez5_curva_ricostruzione.pdf}
   \caption{\textbf{Grafico A — Ricostruzione della curva dei livelli.}
     Curva nera con punti: originale. Curva arancio tratteggiata: ricostruzione
     con $k = 3$ componenti. Curva verde
@@ -936,7 +940,7 @@ numericamente zero (non mostrato perché non rappresentabile in scala log).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{grafici/PCA_mensile/sez5_convergenza_errore.pdf}
+  \includegraphics[width=0.88\textwidth]{../output/pca_mensile/sez5_convergenza_errore.pdf}
   \caption{\textbf{Grafico B — Convergenza dell'errore (scala logaritmica).}
     Errore $\varepsilon_k = \|\hat{\mathbf{y}}^{(k)} - \mathbf{y}\|_2$ in punti
     base per $k = 1, \ldots, 19$. I punti rossi annotati indicano l'errore

@@ -40,7 +40,7 @@ ZIPs must be placed in `dati/eiopa_zips/`. Two filename formats are accepted: `E
 |--------|----------|
 | `prepare_pca_input.R` | `data.table`, `openxlsx` |
 | `lezione_pca_mensile.R` | `data.table`, `openxlsx`, `ggplot2`, `lubridate`, `scales`, `plot3D` (optional) |
-| `curva_eiopa_rfr_CN.R` | `ggplot2`, `reshape2` |
+| `curva_eiopa_rfr_CN.R` | `ggplot2`, `reshape2`, `openxlsx` |
 
 ## Data flow
 
@@ -55,12 +55,14 @@ dati/eiopa_zips/*.zip
         ↓ python/dowload_eiopa.py
 EIOPA_RFR_EUR_curves.xlsx
 
-(curva_eiopa_rfr_CN.R uses hardcoded illustrative data — no external input file needed)
+dati/EESWE.xlsx (par OIS €STR, ticker Bloomberg EESWE*)
+        ↓ curva_eiopa_rfr_CN.R
+output/curva_eiopa_rfr/*.pdf
 ```
 
 ## Key implementation notes
 
-**Smith-Wilson (`curva_eiopa_rfr_CN.R`):** Implements the full EIOPA EUR methodology per EIOPA-BoS-25-599. Parameters (UFR = 3.30%, LLP = 20y, CP = 60y, CRA = 10bps) are declared at the top of the file. `alpha*` is found via bisection on the convergence condition `|f(0,CP) − UFR_c| ≤ 1 bp`. The system matrix H is dense and non-symmetric; solved with `solve()` (LAPACK LU).
+**EIOPA RFR curve (`curva_eiopa_rfr_CN.R`):** Implements the *current* EIOPA EUR methodology per **EIOPA-BoS-26-198** (May 2026), which replaced Smith-Wilson following the Solvency II amendments (Dir (EU) 2025/2, Reg (EU) 2026/269). Pipeline: (1) **bootstrap** with the constant-forward assumption (Annex D) — consecutive tenors solved linearly, non-consecutive ("gap") tenors solved via **Newton-Raphson** with the analytic derivative from Annex D.6 (bisection provided as a robust comparison); (2) **extrapolation** beyond the First Smoothing Point (FSP=20y) toward the UFR via the closed-form weight `B(α,h)=(1−e^{−αh})/(αh)`, using the Last Liquid Forward Rate (LLFR). Parameters (UFR=3.30%, FSP=20y, CRA=10bps, α fixed at the regulatory value with phasing-in 20%→11%) are at the top of the file. Input par rates are read from `dati/EESWE.xlsx` (Bloomberg €STR ticker `EESWE*`, valuation date 29/05/2026) with a hardcoded fallback. Note: this is **no longer Smith-Wilson** — there is no dense H matrix, no LU solve, and α is not calibrated.
 
 **PCA (`lezione_pca_mensile.R`):** Uses SVD on *centred* (not scaled) monthly yield-curve changes. Monthly aggregation takes the last observation of each calendar month. Requires `prepare_pca_input.R` to have been run first; will error with a clear message if the xlsx is missing.
 

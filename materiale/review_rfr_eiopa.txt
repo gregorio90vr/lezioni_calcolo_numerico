@@ -1,0 +1,9 @@
+
+1. Riscrivere sezione 1.3 poco chiaro il discrso di frazione d'anno e link con quanto messo in precedenza.
+Il box
+
+2. sei scuro che non viene usato bootstrapping, trova riferimento nella documentazione eiopa
+
+3. dettagliare meglio il passaggio SW calcola i prezzi, P(t) poi passa ai tassi utilizzando la formula del tasso spot? corretto se si scriverlo in dettaglio.
+
+4. in generali i ifeimrnti alle sezioni del documento eiopa non mi risultano corrette.
