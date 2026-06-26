@@ -1,0 +1,38 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {section}{\numberline {1}Motivazioni economiche}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Il problema: valutare oggi impegni decennali}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Il problema dei dati: il mercato finisce a 20 anni}{2}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}L'ancora di lungo periodo: l'UFR}{2}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Eliminare il rischio di controparte: il CRA}{3}{subsection.1.4}%
+\contentsline {section}{\numberline {2}La curva dei tassi e i tassi forward}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Dalla capitalizzazione al fattore di sconto}{3}{subsection.2.1}%
+\contentsline {paragraph}{Capitalizzazione annua composta.}{3}{subsection.2.1}%
+\contentsline {paragraph}{Capitalizzazione $m$ volte l'anno.}{4}{subsection.2.1}%
+\contentsline {paragraph}{Limite continuo: $m \to \infty $.}{4}{subsection.2.1}%
+\contentsline {paragraph}{Il fattore di sconto: il problema inverso.}{4}{equation.1}%
+\contentsline {subsection}{\numberline {2.2}Tasso spot: leggere $P(0,t)$}{4}{subsection.2.2}%
+\contentsline {paragraph}{Perch\'e il logaritmo rende tutto pi\`u semplice.}{5}{equation.2}%
+\contentsline {paragraph}{Conversione con la capitalizzazione annua.}{5}{equation.2}%
+\contentsline {subsection}{\numberline {2.3}Tasso forward: dall'intervallo finito al limite istantaneo}{5}{subsection.2.3}%
+\contentsline {paragraph}{Forward su intervallo finito: assenza di arbitraggio.}{5}{subsection.2.3}%
+\contentsline {paragraph}{Forward istantaneo: limite per $t_2 \to t_1$.}{5}{equation.3}%
+\contentsline {subsection}{\numberline {2.4}La relazione che unifica tutto}{5}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Tassi par e dati di input}{6}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Perch\'e non bastano le spline: il problema dell'estrapolazione}{7}{section.3}%
+\contentsline {paragraph}{Dove la spline funziona e dove no.}{7}{section.3}%
+\contentsline {section}{\numberline {4}Struttura matematica del metodo Smith--Wilson}{8}{section.4}%
+\contentsline {subsection}{\numberline {4.1}La funzione di Wilson e la funzione di sconto}{9}{subsection.4.1}%
+\contentsline {paragraph}{Dalla funzione di Wilson al nucleo $H$.}{9}{figure.4}%
+\contentsline {subsection}{\numberline {4.2}Il problema di minima energia: dalla curva al sistema lineare}{10}{subsection.4.2}%
+\contentsline {paragraph}{La funzione da minimizzare: l'energia.}{10}{subsection.4.2}%
+\contentsline {paragraph}{I vincoli di mercato (affini in $\zeta $).}{11}{Item.5}%
+\contentsline {paragraph}{La soluzione: moltiplicatori di Lagrange.}{12}{equation.10}%
+\contentsline {subsection}{\numberline {4.3}Il sistema lineare di calibrazione}{13}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Calibrazione di $\alpha $: un problema di ricerca di zeri}{13}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Ricostruzione passo a passo: luglio~2025}{15}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Dati di input: par rate after-CRA}{15}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Costruzione degli oggetti del sistema}{16}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Calibrazione di $\alpha $ e soluzione del sistema}{16}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Curva calibrata e confronto con EIOPA}{17}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Conclusioni}{18}{section.6}%

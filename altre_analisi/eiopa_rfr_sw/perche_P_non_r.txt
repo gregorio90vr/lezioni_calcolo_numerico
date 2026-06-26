@@ -1,0 +1,84 @@
+Perché Smith-Wilson lavora su P(t) e non direttamente su r(t)?
+==============================================================
+
+Risposta breve: perché i vincoli di mercato sono LINEARI in P ma NONLINEARI in r.
+
+---
+
+La RAGIONE PRINCIPALE: linearità dei vincoli di mercato
+---------------------------------------------------------
+
+La condizione di tasso par per lo swap j (par rate s_j, scadenza T_j) è:
+
+    s_j * sum_{i=1}^{j} P(u_i) + P(u_j) = 1
+
+Questa è un'equazione LINEARE nelle incognite P(u_1), ..., P(u_m).
+
+Se invece si volesse lavorare direttamente in r(t), la stessa condizione diventa:
+
+    s_j * sum_{i=1}^{j} exp(-r(u_i)*u_i) + exp(-r(u_j)*u_j) = 1
+
+che è NONLINEARE in r(u_i). Per risolvere un sistema nonlineare servono metodi
+iterativi (Newton, gradiente coniugato, ecc.) con problemi di convergenza, costo
+computazionale elevato e, soprattutto, nessuna garanzia di unicità della soluzione.
+
+Lavorare in P trasforma il problema in un SISTEMA LINEARE SPD (simmetrico definito
+positivo), che si risolve in modo esatto, efficiente e stabile con la fattorizzazione
+di Cholesky. È questa semplicità algebrica la scelta tecnica fondamentale di
+Smith-Wilson.
+
+
+Ragioni secondarie
+------------------
+
+1. P(t) è l'oggetto primario della teoria dei tassi di interesse.
+   Il fattore di sconto P(t) è il prezzo oggi di €1 pagato in t: è la quantità
+   fondamentale da cui si derivano tutte le altre per semplice trasformazione:
+     - Tasso spot:   r(t) = -ln P(t) / t
+     - Tasso forward: f(t) = -d/dt ln P(t)
+   Lavorare in P è la scelta più naturale: r e f si calcolano da P, non viceversa.
+
+2. Il termine asintotico entra linearmente in P.
+   L'ansatz di Smith-Wilson è:
+     P(t) = exp(-omega*t) + sum_j zeta_j * psi_j(t)
+   dove exp(-omega*t) è il contributo dell'UFR e i termini psi_j sono le funzioni
+   di base (kernel di Wilson). Questa è una PERTURBAZIONE LINEARE attorno
+   all'asintoto. Scrivere lo stesso ansatz in r richiederebbe:
+     r(t) = omega - ln(1 + sum_j ...) / t
+   che non è più lineare nei coefficienti zeta_j.
+
+3. La matrice di Gram H = [H(u_i, u_j)] è SPD in P.
+   La matrice di Wilson H=[H(u_i,u_j)] è simmetrica definita positiva perché
+   H è un nucleo riproducente (kernel definito positivo). Questo implica che
+   l'energia zeta^T H zeta è una forma quadratica STRETTAMENTE CONVESSA:
+   il problema di minimo vincolato ammette una e una sola soluzione.
+   In r questa struttura si perderebbe.
+
+4. Regolarità ereditata.
+   Se P è C-infinito su [0, CP] (garantito dal kernel di Wilson), allora anche
+   r(t) = -ln P(t)/t è C-infinito per t > 0 (per composizione con funzioni regolari).
+   È più semplice imporre la regolarità su P e derivarla su r, piuttosto che
+   il contrario.
+
+
+Riepilogo (tabella)
+-------------------
+
+                    Lavorare in P(t)           Lavorare in r(t)
+                    ----------------           ----------------
+Vincoli di mercato  Lineari -> sistema SPD      Nonlineari -> metodi iterativi
+Soluzione           Unica (Cholesky)            Non garantita
+Termine asintotico  Lineare (exp(-omega*t))     Nonlineare
+Regolarità          C^inf dal kernel            Da verificare separatamente
+Complessità         O(n^3) con Cholesky         O(iterazioni x n^2)
+
+
+Conclusione
+-----------
+
+La scelta di lavorare in P non è arbitraria né solo "di convenienza": è la scelta
+che rende il problema trattabile con la sola algebra lineare (matrici SPD, Cholesky,
+prodotti scalari indotti da H), con garanzie di esistenza, unicità e stabilità della
+soluzione. Lavorare direttamente in r avrebbe richiesto tecniche nonlineari ben più
+pesanti, perdendo le proprietà strutturali che rendono Smith-Wilson elegante e
+robusto.

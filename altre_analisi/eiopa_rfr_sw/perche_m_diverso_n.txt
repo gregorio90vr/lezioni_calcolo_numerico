@@ -1,0 +1,86 @@
+Perché m ≠ n? Da dove viene m?
+================================
+
+Risposta breve: n conta le SCADENZE degli strumenti (15 per EUR DLT).
+m conta tutte le DATE DI PAGAMENTO DELLE CEDOLE di tutti gli strumenti messi insieme
+(20 per EUR DLT, una per ogni anno da 1 a 20). Queste sono due cose diverse.
+
+
+Il punto chiave: uno swap IRS non paga solo a scadenza
+-------------------------------------------------------
+Un IRS (Interest Rate Swap) con scadenza T anni non paga un solo flusso di cassa
+a T anni. Paga:
+  - una CEDOLA annuale s_T ogni anno: t=1, t=2, ..., t=T-1
+  - CEDOLA + RIMBORSO DEL NOZIONALE all'anno t=T
+
+Esempio: lo swap 20Y paga 20 flussi di cassa, uno per ogni anno da 1 a 20.
+Esempio: lo swap 15Y paga 15 flussi di cassa, uno per ogni anno da 1 a 15.
+
+Per RIPREZZARE uno swap — cioè per calcolare il suo valore teorico alla data odierna
+— occorre conoscere il fattore di sconto P(t) a TUTTE le sue date di pagamento,
+non solo alla scadenza.
+
+
+Dove nasce m: l'unione di tutte le date di pagamento
+-----------------------------------------------------
+I nodi u_1,...,u_m sono l'insieme di TUTTE le date di pagamento distinte di TUTTI
+gli strumenti in input. Per EUR DLT con maturità {1,...,13, 15, 20}:
+
+  - Lo swap 1Y  paga all'anno: {1}
+  - Lo swap 2Y  paga agli anni: {1, 2}
+  - Lo swap 3Y  paga agli anni: {1, 2, 3}
+  - ...
+  - Lo swap 13Y paga agli anni: {1, 2, ..., 13}
+  - Lo swap 15Y paga agli anni: {1, 2, ..., 14, 15}    ← introduce gli anni 14 e 15
+  - Lo swap 20Y paga agli anni: {1, 2, ..., 19, 20}    ← introduce gli anni 16,17,18,19,20
+
+Unione di tutte queste date = {1, 2, 3, ..., 20} → m = 20 = LLP.
+
+Risultato: n = 15 (strumenti = scadenze DLT),  m = 20 (nodi di pagamento = anni 1..20).
+
+
+Gli anni "mancanti" nel panel DLT: 14, 16, 17, 18, 19
+------------------------------------------------------
+Le scadenze 14, 16, 17, 18, 19 non sono nel panel DLT (non ci sono swap quotati a
+queste maturità). Eppure sono DATE DI PAGAMENTO reali:
+
+  - Anno 14: cedola dello swap 15Y e dello swap 20Y
+  - Anno 16: cedola dello swap 20Y
+  - Anno 17: cedola dello swap 20Y
+  - Anno 18: cedola dello swap 20Y
+  - Anno 19: cedola dello swap 20Y
+
+Per calcolare il prezzo dello swap 15Y occorre sapere P(1), P(2), ..., P(14), P(15).
+Ma non esiste nessuno strumento quotato a 14 anni → P(u_14) è INCOGNITO, e non
+si può ricavarlo direttamente dai dati di mercato.
+
+Questo è esattamente il motivo per cui:
+
+  (a) Il sistema C^T P = p ha n=15 equazioni e m=20 incognite P(u_1),...,P(u_20):
+      sistema SOTTOINDETERMINATO — infiniti vettori P soddisfano le condizioni.
+
+  (b) Il bootstrap puro NON funziona: nella sequenza
+        swap 1Y → P(1) ✓
+        swap 2Y → P(2) ✓
+        ...
+        swap 13Y → P(13) ✓
+        swap 15Y → P(14) e P(15) ???
+      al passo del swap 15Y occorre P(14) ma non c'è nessuno strumento che lo
+      fornisca direttamente: ci sono 2 incognite (P(14) e P(15)) per 1 sola equazione.
+      Il bootstrap si interrompe.
+
+  (c) Smith-Wilson risolve entrambi i problemi in un colpo solo: il principio di
+      minima energia (minimizza E(ζ) = ζᵀHζ vincolato al repricing) seleziona,
+      tra gli infiniti vettori P compatibili con i dati, quello che produce la
+      curva P(t) più regolare — interpolando implicitamente anche gli anni mancanti.
+
+
+Riepilogo
+---------
+  n = 15  =  numero di strumenti (scadenze DLT quotate sul mercato)
+  m = 20  =  numero di nodi di pagamento (tutti gli anni 1,...,20 coperti dai flussi)
+
+  n ≠ m perché gli strumenti pagano cedole ANNUALI a tutti gli anni fino alla loro
+  scadenza, non solo alla scadenza stessa. I 5 anni "mancanti" (14, 16, 17, 18, 19)
+  non sono scadenze di alcuno strumento DLT, ma sono date di pagamento degli swap
+  15Y e 20Y — quindi occorre comunque conoscere P in quei punti per riprezzarli.

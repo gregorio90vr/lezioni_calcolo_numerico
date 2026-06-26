@@ -1,0 +1,1049 @@
+% ============================================================
+%  Dispensa 03: Curva EIOPA Risk-Free — Metodo Smith-Wilson
+%               Approccio variazionale (struttura stile PCA)
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{titlesec}
+
+% le figure sono prodotte da R/eiopa_rfr_sw_variazionale.R in output/eiopa_rfr_sw_var/
+\graphicspath{{}}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
+\titleformat{\subsubsection}{\small\bfseries\itshape}{\thesubsubsection.}{0.5em}{}
+
+%--- ambienti teorema (solo enunciati, niente dimostrazioni)
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[section]
+\newtheorem{proposizione}[teorema]{Proposizione}
+\theoremstyle{definition}
+\newtheorem{definizione}[teorema]{Definizione}
+\newtheorem{esempio}[teorema]{Esempio}
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+\newtheorem*{attenzione}{Nota numerica}
+
+%--- macro acronimi (funzionano dentro e fuori math mode)
+\newcommand{\UFR}{\ensuremath{\mathrm{UFR}}}
+\newcommand{\LLP}{\ensuremath{\mathrm{LLP}}}
+\newcommand{\CP}{\ensuremath{\mathrm{CP}}}
+\newcommand{\CRA}{\ensuremath{\mathrm{CRA}}}
+\newcommand{\Qmat}{\mathbf{Q}}
+\newcommand{\Hmat}{\mathbf{H}}
+\newcommand{\transp}{^{\!\top}}
+
+%--- box colorati
+\tcbset{
+  mybase/.style={
+    colback=gray!5, colframe=gray!40,
+    boxrule=0.4pt, arc=2pt,
+    left=7pt, right=7pt, top=5pt, bottom=5pt,
+    fonttitle=\small\bfseries
+  }
+}
+\newtcolorbox{keybox}[1][Concetto chiave]{mybase,
+  colframe=blue!40!black, colback=blue!4, title={#1}}
+\newtcolorbox{algobox}[1][Algoritmo]{mybase,
+  colframe=teal!50!black, colback=teal!4, title={#1}}
+\newtcolorbox{warningbox}{mybase,
+  colframe=orange!70!black, colback=orange!5}
+\newtcolorbox{codebox}[1][Codice R]{mybase,
+  colframe=green!40!black, colback=green!3, title={#1}}
+
+% ============================================================
+\title{%
+  \textbf{Costruzione della Curva EIOPA Risk-Free}\\[6pt]
+  \large Il metodo Smith--Wilson: un approccio variazionale\\[4pt]
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Motivazioni economiche}
+% ============================================================
+
+\subsection{Il problema: valutare oggi impegni decennali}
+
+Una compagnia di assicurazione vita o un fondo pensione assume \textbf{obblighi di pagamento
+che si estendono per decenni}: una rendita vitalizia o una polizza possono generare uscite
+fino a 50--60 anni nel futuro.
+
+Il quadro regolamentare europeo \textbf{Solvency~II} chiede che ogni compagnia dimostri,
+\emph{oggi}, di avere risorse sufficienti per far fronte a tutti questi impegni futuri ---
+\`e il principio di \textbf{solvibilit\`a}. Per farlo occorre rispondere alla domanda:
+\emph{quanto valgono oggi quei pagamenti futuri?}
+
+La risposta dipende dal \textbf{valore temporale del denaro}: 100\,\texteuro{} ricevuti tra
+30 anni valgono \emph{meno} di 100\,\texteuro{} ricevuti oggi, perch\'e nel frattempo il
+denaro pu\`o essere investito e generare interessi. Quanto meno? Dipende dal
+\textbf{tasso di interesse} applicabile su quell'orizzonte temporale.
+
+Poich\'e le passivit\`a hanno scadenze diverse, serve conoscere un tasso di interesse per
+ogni orizzonte: 1 anno, 5 anni, 20 anni, 50 anni\ldots\ L'insieme di questi tassi al
+variare della scadenza $T$ \`e la \textbf{struttura a termine dei tassi di interesse}, o
+pi\`u brevemente \textbf{curva dei tassi}.
+
+Solvency~II impone che tutte le imprese europee usino la \textbf{stessa} curva, calcolata e
+pubblicata mensilmente da \textbf{EIOPA} (European Insurance and Occupational Pensions
+Authority). La metodologia ufficiale \`e descritta nel documento tecnico
+EIOPA-BoS-25-599~\cite{eiopa2025}.
+
+\subsection{Il problema dei dati: il mercato finisce a 20 anni}
+
+Il mercato finanziario fornisce quotazioni di tassi di interesse per molte scadenze tramite
+contratti standardizzati. Per l'euro questi contratti sono \textbf{attivamente scambiati e
+affidabili} fino a circa 20 anni di scadenza: questo orizzonte \`e detto
+\textbf{Last Liquid Point} ($\LLP = 20$ anni). Oltre tale soglia le quotazioni diventano
+sporadiche, poco rappresentative o del tutto assenti.
+
+Il problema \`e evidente: le passivit\`a assicurative si estendono ben oltre i 20 anni,
+ma i dati di mercato si esauriscono proprio l\`i. EIOPA deve comunque fornire una stima
+del tasso di interesse anche per le scadenze lunghe, fino al \textbf{Convergence Point}
+($\CP = 60$ anni).
+
+\begin{keybox}[Due problemi in uno]
+Costruire la curva EIOPA significa risolvere due problemi distinti:
+\begin{enumerate}
+  \item \textbf{Ricostruire} in modo regolare i tassi alle scadenze dove esistono
+        quotazioni di mercato ($T \le \LLP = 20$ anni);
+  \item \textbf{Estendere} la curva oltre il $\LLP$ fino al $\CP = 60$ anni in modo
+        stabile, coerente e non arbitrario.
+\end{enumerate}
+\end{keybox}
+
+\subsection{L'ancora di lungo periodo: l'UFR}
+
+Come estendere la curva oltre i 20 anni? L'idea ingenua --- prolungare l'ultimo tasso
+osservato ``a piatto'' --- \`e fragile: una piccola variazione nel tasso a 20 anni si
+propagherebbe su tutti gli anni da 21 a 60, amplificando le oscillazioni nei bilanci
+assicurativi.
+
+La scelta regolatoria (\cite{eiopa2025}, sez.~3.6--3.8) \`e di \textbf{agganciare la curva
+a un tasso di equilibrio di lungo periodo}: l'\textbf{Ultimate Forward Rate}
+($\UFR = 3{,}30\%$ per l'euro). L'$\UFR$ rappresenta la stima regolamentare del tasso
+reale di crescita economica di lungo periodo sommato all'inflazione attesa; cambia molto
+lentamente nel tempo ed \`e quindi un'\textbf{ancora stabile}.
+
+La curva viene costruita in modo che il tasso di interesse, superato il $\LLP$, converga
+\emph{gradualmente e in modo regolare} verso l'$\UFR$ entro il $\CP = 60$ anni.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/eiopa_rfr_sw_var/fig1_motivazione_estrapolazione.pdf}
+\caption{La curva EUR calcolata da EIOPA (dicembre~2025) fino al Convergence Point di 60 anni.
+Nella zona ombreggiata ($T > \LLP = 20$ anni) non esistono dati di mercato affidabili: la
+curva \`e costruita in modo che il tasso converga al valore di lungo periodo
+$\UFR = 3{,}30\%$. \`E questo l'obiettivo del metodo Smith--Wilson.}
+\label{fig:motivazione}
+\end{figure}
+
+\subsection{Eliminare il rischio di controparte: il CRA}
+\label{sec:cra}
+
+I contratti di mercato usati come sorgente dati (swap di tasso di interesse) includono un
+piccolo \textbf{premio per il rischio di controparte}: chi riceve i pagamenti sopporta il
+rischio che la controparte non onori il contratto. Questo premio non riflette il valore
+temporale del denaro in s\'e, e deve essere rimosso.
+
+Per ottenere un tasso \emph{privo di rischio} EIOPA sottrae un \textbf{Credit Risk
+Adjustment} ($\CRA = 10$ bps per l'euro, \cite{eiopa2025} sez.~3.5) dai tassi di mercato
+\emph{prima} di calibrare la curva. Tutti i tassi di input che useremo nella
+Sez.~\ref{sec:ricostruzione} sono gi\`a corretti di questi 10 punti base.
+
+% ============================================================
+\section{La curva dei tassi e i tassi forward}
+% ============================================================
+
+Tutte le nozioni di tasso --- spot, forward, par --- sono contenute in un unico oggetto:
+il \textbf{fattore di sconto} $P(0,t)$. Spot e forward sono semplicemente due modi diversi
+di ``leggere'' questa stessa funzione. Costruiamo la sua definizione partendo dalla
+capitalizzazione discreta e arrivando alla capitalizzazione continua come caso limite naturale.
+
+% ------------------------------------------------------------
+\subsection{Dalla capitalizzazione al fattore di sconto}
+% ------------------------------------------------------------
+
+\paragraph{Capitalizzazione annua composta.}
+\emph{Capitalizzare} significa trasformare un euro di oggi in pi\`u euro in futuro.
+Investendo $1$~\texteuro{} a tasso $r$ per $T$ anni si ottiene il
+\textbf{fattore di capitalizzazione}
+\[
+  C_{\rm ann}(r,T) = (1+r)^T.
+\]
+Ad esempio con $r=3\%$ e $T=10$ anni: $C = 1.03^{10} \approx 1.344$, cio\`e $1$~\texteuro{}
+cresce a $1.34$~\texteuro{}.
+
+\paragraph{Capitalizzazione $m$ volte l'anno.}
+Se la capitalizzazione avviene $m$ volte per anno al tasso nominale $r_m$ (rate $r_m/m$
+per periodo), il fattore di capitalizzazione diventa
+\[
+  C_m(r_m,T) = \left(1 + \frac{r_m}{m}\right)^{mT}.
+\]
+All'aumentare di $m$ la capitalizzazione diventa sempre pi\`u frequente: $m=12$ mensile,
+$m=365$ giornaliera, e cos\`i via.
+
+\paragraph{Limite continuo: $m \to \infty$.}
+Usando il limite fondamentale $\lim_{m\to\infty}(1+x/m)^m = e^x$ si ottiene il
+\textbf{fattore di capitalizzazione continua}:
+\begin{equation}
+  C_\infty(r,T) = \lim_{m\to\infty}\left(1+\frac{r_m}{m}\right)^{mT} = e^{r\,T}.
+  \label{eq:cap-cont}
+\end{equation}
+La capitalizzazione continua \`e lo standard della matematica finanziaria quantitativa
+perch\'e l'esponenziale rende i \emph{logaritmi} dei fattori additivi (invece che i fattori
+stessi moltiplicativi), aprendo la strada alla derivata che definisce il tasso forward.
+
+\paragraph{Il fattore di sconto: il problema inverso.}
+Finora abbiamo chiesto: \emph{``quanto vale in futuro un euro investito oggi?''} Il problema
+\emph{inverso} --- \emph{``quanto vale oggi un euro che riceveremo al tempo $t$?''} --- \`e
+il problema dello sconto. Il fattore di sconto \`e semplicemente il reciproco del fattore
+di capitalizzazione continua.
+
+\begin{definizione}[Fattore di sconto]
+\label{def:sconto}
+Il \textbf{fattore di sconto} $P(s,t)$ \`e il valore al tempo $s$ di $1$~\texteuro{}
+pagato al tempo $t \ge s$:
+\[
+  P(s,t) = \frac{1}{C_\infty(r,\,t-s)} = e^{-r(s,t)\,(t-s)}.
+\]
+Il primo argomento $s$ \`e la \textbf{data di osservazione} (quando valutiamo), il secondo
+$t$ \`e la \textbf{data di pagamento} (quando riceviamo l'euro). Nel seguito fissiamo
+$s = 0$ (oggi) e scriviamo semplicemente $P(0,t)$.
+
+Propriet\`a immediate:
+\begin{itemize}
+  \item $P(0,0) = 1$ (un euro pagato subito vale un euro);
+  \item $P(0,t)$ strettamente decrescente in $t$ se $r > 0$;
+  \item tutta la struttura a termine dei tassi \`e codificata in $P(0,\cdot)$.
+\end{itemize}
+\end{definizione}
+
+% ------------------------------------------------------------
+\subsection{Tasso spot: leggere $P(0,t)$}
+% ------------------------------------------------------------
+
+Dalla Definizione~\ref{def:sconto} il fattore di sconto ha la forma $P(0,t)=e^{-r(t)t}$.
+Invertendo si ricava il tasso che lo genera.
+
+\begin{definizione}[Tasso spot]
+\label{def:spot}
+Il \textbf{tasso spot} $r(t)$ \`e il tasso in capitalizzazione continua associato al
+fattore di sconto $P(0,t)$:
+\begin{equation}
+  r(t) = -\frac{\ln P(0,t)}{t}.
+  \label{eq:spot-inv}
+\end{equation}
+\`E la media logaritmica del costo del denaro sull'intero intervallo $[0,t]$.
+\end{definizione}
+
+\paragraph{Perch\'e il logaritmo rende tutto pi\`u semplice.}
+In capitalizzazione discreta i fattori di sconto si \emph{moltiplicano}: il fattore su
+$[0,t_1+t_2]$ \`e il prodotto di quello su $[0,t_1]$ e di quello su $[t_1,t_1+t_2]$,
+il che rende le composizioni scomode da derivare. In capitalizzazione continua, invece,
+$\ln P(0,t) = -r(t)\cdot t$ \`e \emph{additivo}: i log-fattori si sommano, e questo
+\`e il punto di ingresso naturale per la derivata che definisce il forward.
+
+\paragraph{Conversione con la capitalizzazione annua.}
+Il tasso annuo composto $r_{\rm ann}(t) = P(0,t)^{-1/t}-1$ \`e legato al tasso continuo da
+\[
+  r_{\rm ann}(t) = e^{r(t)} - 1, \qquad r(t) = \ln(1 + r_{\rm ann}(t)).
+\]
+EIOPA pubblica i risultati in capitalizzazione annua (i par swap pagano cedole annue),
+ma il metodo Smith--Wilson costruisce $P(0,t)$ internamente usando la capitalizzazione
+continua: la conversione $r_{\rm ann} = e^r - 1$ avviene solo all'output finale.
+
+% ------------------------------------------------------------
+\subsection{Tasso forward: dall'intervallo finito al limite istantaneo}
+% ------------------------------------------------------------
+
+\paragraph{Forward su intervallo finito: assenza di arbitraggio.}
+Il \textbf{tasso forward} $f(t_1, t_2)$ \`e il tasso ``bloccato oggi'' per il periodo
+futuro $[t_1, t_2]$. Per assenza di arbitraggio, investire fino a $t_2$ deve dare lo stesso
+risultato che investire fino a $t_1$ e poi reinvestire al tasso forward da $t_1$ a $t_2$:
+\[
+  P(0, t_2) = P(0, t_1) \cdot e^{-f(t_1,\,t_2)\,(t_2-t_1)},
+\]
+da cui, prendendo il logaritmo e isolando $f$:
+\begin{equation}
+  f(t_1, t_2) = \frac{\ln P(0,t_1) - \ln P(0,t_2)}{t_2 - t_1}.
+  \label{eq:fwd-finito}
+\end{equation}
+Geometricamente, $f(t_1,t_2)$ \`e il \textbf{rapporto incrementale} (con segno) di
+$\ln P(0,\cdot)$ sull'intervallo $[t_1,t_2]$: la pendenza media della curva
+``log-sconto'' tra le due scadenze.
+
+\paragraph{Forward istantaneo: limite per $t_2 \to t_1$.}
+
+\begin{definizione}[Tasso forward istantaneo]
+\label{def:forward}
+Facendo tendere $t_2 \to t_1 = t$ nella~\eqref{eq:fwd-finito} si ottiene il
+\textbf{tasso forward istantaneo}:
+\begin{equation}
+  f(t) = \lim_{t_2 \to t} f(t, t_2)
+       = -\frac{d}{dt}\ln P(0,t)
+       = -\frac{P'(0,t)}{P(0,t)},
+  \label{eq:fwd-ist}
+\end{equation}
+cio\`e la \textbf{derivata del log-fattore di sconto} cambiata di segno.
+\end{definizione}
+
+$f(t)\,dt$ rappresenta il tasso applicato a un prestito infinitesimale stipulato in $t$
+e rimborsato in $t+dt$: il forward istantaneo \`e il ``tasso marginale'' o ``tasso locale''
+della struttura a termine.
+
+% ------------------------------------------------------------
+\subsection{La relazione che unifica tutto}
+% ------------------------------------------------------------
+
+Integrando la definizione~\eqref{eq:fwd-ist} si recupera il fattore di sconto:
+\begin{equation}
+  P(0,t) = \exp\!\left(-\int_0^t f(s)\,ds\right).
+  \label{eq:B-da-fwd}
+\end{equation}
+Sostituendo~\eqref{eq:B-da-fwd} in~\eqref{eq:spot-inv} si ottiene la relazione
+fondamentale tra spot e forward:
+\begin{equation}
+  r(t) = \frac{1}{t}\int_0^t f(s)\,ds.
+  \label{eq:spot-media-fwd}
+\end{equation}
+\begin{keybox}[Lo spot \`e la media dei forward]
+L'equazione~\eqref{eq:spot-media-fwd} dice che il \textbf{tasso spot $r(t)$ \`e la media
+aritmetica del forward istantaneo} sull'intervallo $[0,t]$. Una media \emph{reagisce con
+ritardo} rispetto al valore puntuale: se il forward cresce, lo spot cresce pi\`u lentamente;
+se il forward converge all'$\UFR$ dall'alto (come in Figura~\ref{fig:motivazione}),
+lo spot ci arriver\`a \emph{dopo}. Questo spiega perch\'e in figura il forward raggiunge
+l'asintoto a scadenze sensibilmente pi\`u brevi dello spot.
+\end{keybox}
+
+\medskip
+La tabella seguente riassume le tre rappresentazioni equivalenti.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lll}
+\toprule
+\textbf{Oggetto} & \textbf{Formula} & \textbf{Lettura} \\
+\midrule
+Fattore di sconto & $P(0,t)$ & valore oggi di $1$\,\texteuro{} in $t$ \\
+Tasso spot (continuo) & $r(t) = -\ln P(0,t)/t$ & tasso medio da $0$ a $t$ \\
+Tasso forward istant. & $f(t) = -\tfrac{d}{dt}\ln P(0,t)$ & tasso marginale in $t$ \\
+Ricostruzione & $P(0,t) = e^{-\int_0^t f(s)\,ds}$ & $P$ da integrale del forward \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Tassi par e dati di input}
+\label{sec:inputdati}
+
+Gli strumenti effettivamente quotati sul mercato non sono zero-coupon: i prezzi
+direttamente osservabili sono quelli di contratti a cedola multipla. Il concetto chiave
+\`e il \textbf{tasso par}.
+
+Considera un'obbligazione con \textbf{valore nominale} $1$, cedola annua fissa $s$ pagata
+alle date $j = 1, 2, \ldots, T$, e rimborso del nominale a scadenza $T$. Il suo
+\textbf{prezzo} oggi \`e la somma dei valori attuali di ogni flusso:
+\[
+  \text{Prezzo}(s, T)
+  = s \sum_{j=1}^{T} P(0,j) + P(0,T).
+\]
+Un titolo che quota \emph{alla pari} ha prezzo esattamente uguale al valore nominale.
+
+\begin{definizione}[Tasso par]
+\label{def:par}
+Il \textbf{tasso par} $s_T$ di scadenza $T$ \`e il tasso cedola che rende il prezzo
+dell'obbligazione uguale al suo valore nominale ($= 1$):
+\[
+  \text{Prezzo}(s_T, T) = 1
+  \;\;\Longleftrightarrow\;\;
+  s_T \sum_{j=1}^{T} P(0,j) + P(0,T) = 1
+  \;\;\Longrightarrow\;\;
+  s_T = \frac{1 - P(0,T)}{\displaystyle\sum_{j=1}^{T} P(0,j)}.
+\]
+\end{definizione}
+
+\begin{osservazione}
+Un \textbf{Interest Rate Swap} (IRS) a cedola annua con scadenza $T$ pu\`o essere visto
+come lo scambio della gamba variabile (floating) con la gamba fissa (cedola $s$). Per
+non-arbitrage la gamba variabile vale $1$ alla data di stipula (si ``rinnova'' a ogni data
+cedola), quindi il tasso fisso che rende nullo il valore dello swap all'emissione \`e
+\emph{esattamente} il tasso par della Definizione~\ref{def:par}. I contratti swap IRS sono
+gli strumenti liquidi quotati sul mercato a cui applicare questa formula.
+\end{osservazione}
+
+I tassi swap di mercato incorporano tuttavia un piccolo premio per il rischio di
+controparte, che deve essere rimosso prima della calibrazione (cfr.\ Sez.~\ref{sec:cra}).
+Il dato di input per il metodo Smith--Wilson \`e quindi il \textbf{tasso par
+after-CRA}:
+\begin{equation}
+  s_T^{\rm EIOPA} = \frac{1 - P(0,T)}{\sum_{j=1}^{T} P(0,j)} + \CRA .
+  \label{eq:par}
+\end{equation}
+La relazione~\eqref{eq:par} lega i dati osservati (i par rate) all'oggetto da ricostruire
+(la funzione di sconto $P(0,\cdot)$), ed \`e il \emph{vincolo} che la curva Smith--Wilson
+dovr\`a soddisfare ai nodi di mercato.
+
+\begin{keybox}[Dati di input: IRS EURIBOR]
+Usiamo i par rate degli \textbf{Interest Rate Swap EUR contro EURIBOR~6M} (ticker Bloomberg
+\texttt{EUSA<tenor> CMPL Curncy}), file \texttt{dati/tickersEUSA\_v3.xlsx}. Le scadenze sono
+le \textbf{15 scadenze DLT ufficiali} EUR SWP valide dal 30~giugno al 31~dicembre~2025:
+\[
+  \{1,2,3,4,5,6,7,8,9,10,11,12,13,15,20\}\ \text{anni}.
+\]
+\end{keybox}
+
+La Figura~\ref{fig:spot-fwd-par} mostra, per il mese di riferimento (dicembre~2025), lo spot
+e il forward ricostruiti insieme ai 15 par rate di input.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/eiopa_rfr_sw_var/fig2_spot_forward_par.pdf}
+\caption{Spot $r(0,T)$, forward $f(0,T)$ e par rate \texttt{EUSA*} (punti neri) ai 15 nodi DLT,
+dicembre~2025. La curva Smith--Wilson interpola i par rate e produce uno spot e un forward
+$\mathcal{C}^\infty$ su tutto $[0,\CP]$.}
+\label{fig:spot-fwd-par}
+\end{figure}
+
+% ============================================================
+\section{Struttura matematica del metodo Smith--Wilson}
+% ============================================================
+
+L'idea di Smith--Wilson \`e cercare la funzione di sconto in una \textbf{famiglia
+parametrica} costruita attorno all'$\UFR$, scegliendo i parametri in modo da
+\textbf{riprezzare esattamente} gli strumenti di mercato. La struttura \`e quella di un
+problema di \emph{interpolazione con kernel}, che si formula come un problema di
+\textbf{minima energia} (minima norma) risolubile con la sola algebra lineare.
+
+Introduciamo la costruzione a partire dalla \emph{funzione di Wilson} $W$
+(§\ref{sub:kernel-W}); riscrivendo $W(t,u)=e^{-\omega(t+u)}H(t,u)$ la riconduciamo subito alla
+forma imperniata sul \emph{nucleo} $H$, su cui poggia tutta l'algebra del resto del capitolo.
+
+%\subsection{Il kernel di Wilson --- formulazione con il nucleo \texorpdfstring{$H$}{H}}
+%\label{sub:kernel-H}
+%
+%\begin{definizione}[Nucleo e funzione di Wilson, \cite{eiopa2025} sez.~9.7]
+%Posto $\omega = \ln(1+\UFR)$ (intensit\`a dell'$\UFR$), il \textbf{nucleo (cuore) di Wilson}
+%\`e la funzione simmetrica
+%\[
+%  H(t,u) = \alpha\,\min(t,u) - e^{-\alpha\,\max(t,u)}\,\sinh\!\bigl(\alpha\,\min(t,u)\bigr),
+%  \qquad H(t,u) = H(u,t),
+%\]
+%dove $\alpha>0$ \`e un parametro di \emph{velocit\`a di convergenza}. Il nucleo $H$ \`e il
+%\textbf{mattone} con cui si costruisce la curva: come vedremo (Sez.~\ref{sec:minenergia}), la
+%sua matrice di Gram $[H(u_i,u_j)]$ \`e simmetrica definita positiva, propriet\`a su cui poggia
+%l'intera costruzione algebrica \cite{fasshauer2007,lageras2016}.
+%\end{definizione}
+%
+%Nella presentazione classica di EIOPA il nucleo compare moltiplicato per il fattore di sconto
+%asintotico, dando la \textbf{funzione di Wilson}
+%\[
+%  W(t,u) = e^{-\omega(t+u)}\,H(t,u)
+%         = e^{-\omega u}\,\underbrace{e^{-\omega t}H(t,u)}_{\displaystyle \psi_u(t)} .
+%\]
+%\`E la funzione $W$ che si visualizza naturalmente (Figura~\ref{fig:kernel}), perch\'e
+%localizzata attorno al nodo $u$ e smorzata a zero per $t\to\infty$. In questa dispensa
+%lavoriamo per\`o con il nucleo $H$: \`e esso a generare la matrice di Gram SPD su cui si fonda
+%il metodo, e tenere separato il fattore $e^{-\omega t}$ rende trasparente l'algebra che segue.
+%
+%La funzione di sconto viene cercata nella forma
+%\begin{equation}
+%  P(t) = e^{-\omega t}\Bigl(1 + \textstyle\sum_{j} \zeta_j\, H(t,u_j)\Bigr)
+%       = e^{-\omega t} + \textstyle\sum_{j} \zeta_j\,\psi_{u_j}(t),
+%  \qquad \psi_{u_j}(t) := e^{-\omega t}H(t,u_j),
+%  \label{eq:sw-P}
+%\end{equation}
+%cio\`e come \textbf{combinazione lineare} delle funzioni di base $\psi_{u_j}$ centrate nei nodi
+%di pagamento $u_j$, pi\`u il termine di base $e^{-\omega t}$ che codifica la convergenza
+%all'$\UFR$. Le $\psi_{u_j}$ coincidono, a meno del fattore costante $e^{-\omega u_j}>0$, con le
+%funzioni di Wilson $W(\cdot,u_j)$ della Figura~\ref{fig:kernel}: stessa forma, stessa
+%localizzazione. (Riscrivendo $P$ direttamente in termini di $W$ si otterrebbe l'espressione
+%equivalente $P(t)=e^{-\omega t}+\sum_j \xi_j\,W(t,u_j)$ con $\xi_j = e^{\omega u_j}\zeta_j$:
+%una semplice riparametrizzazione dei coefficienti.)
+%
+%I coefficienti $\zeta_j$ sono le incognite del problema: verranno determinati imponendo il
+%riprezzamento degli strumenti di mercato (Sez.~\ref{sec:minenergia}). Si mostrer\`a che la
+%soluzione di minima energia impone $\zeta = \Qmat b$, dove $b \in \mathbb{R}^n$ sono i
+%\textbf{moltiplicatori di Lagrange} del vincolo di repricing, soluzione del
+%sistema~\eqref{eq:sistema}. Nella formula finale si scrive quindi $(Qb)_j$ al posto di
+%$\zeta_j$.
+%
+%\begin{figure}[H]
+%\centering
+%\includegraphics[width=0.88\textwidth]{../output/eiopa_rfr_sw_var/fig3_kernel_wilson.pdf}
+%\caption{Funzioni di Wilson $W(t,u_j)=e^{-\omega(t+u_j)}H(t,u_j)$ centrate nei nodi
+%$u_j \in \{1,5,10,20\}$. Ogni funzione \`e localizzata attorno al proprio nodo e si smorza a
+%zero; a meno del fattore costante $e^{-\omega u_j}$ esse sono le funzioni di base $\psi_{u_j}$
+%di cui la curva Smith--Wilson \`e combinazione lineare (eq.~\ref{eq:sw-P}).}
+%\label{fig:kernel}
+%\end{figure}
+
+\subsection{La funzione di Wilson e la funzione di sconto}
+\label{sub:kernel-W}
+
+\begin{definizione}[Funzione di Wilson, \cite{eiopa2025} sez.~9.7]
+Posto $\omega = \ln(1+\UFR)$ (intensit\`a dell'$\UFR$), la \textbf{funzione di Wilson} \`e
+\[
+  W(t,u) = e^{-\omega(t+u)}\Bigl[\alpha\,\min(t,u)
+           - e^{-\alpha\,\max(t,u)}\,\sinh\!\bigl(\alpha\,\min(t,u)\bigr)\Bigr],
+  \qquad W(t,u)=W(u,t),
+\]
+con $\alpha>0$ parametro di \emph{velocit\`a di convergenza}. \`E un \textbf{nucleo simmetrico
+definito positivo}: la sua matrice di Gram $\mathbf{W}=[W(u_i,u_j)]$. Il fattore $e^{-\omega(t+u)}$ smorza $W$ a zero per
+$t\to\infty$, da cui la convergenza della curva all'$\UFR$.
+\end{definizione}
+
+La funzione di sconto viene cercata nella forma
+\begin{equation}
+  P(t) = e^{-\omega t} + \textstyle\sum_{j} \xi_j\, W(t,u_j),
+  \label{eq:sw-P-W}
+\end{equation}
+cio\`e come termine di base $e^{-\omega t}$ --- che codifica la convergenza all'$\UFR$ --- pi\`u
+una \textbf{combinazione lineare} delle funzioni di Wilson $W(\cdot,u_j)$ centrate nei nodi di
+pagamento $u_j$ (Figura~\ref{fig:kernel-W}). I coefficienti $\xi_j$ sono le \textbf{incognite}
+del problema, da determinare imponendo che la curva ricostruita riprezzi gli strumenti
+osservati sul mercato.
+
+Ogni funzione di Wilson $W(\cdot,u_j)$ \`e localizzata attorno al proprio nodo $u_j$ e si smorza
+a zero per $t\to\infty$: il suo peso diventa via via meno rilevante, cosicch\'e la curva
+converge all'$\UFR$ (Figura~\ref{fig:kernel-W}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{../output/eiopa_rfr_sw_var/fig3_kernel_wilson.pdf}
+\caption{Funzioni di Wilson $W(t,u_j)$ centrate nei nodi $u_j \in \{1,5,10,20\}$. Ogni funzione
+\`e localizzata attorno al proprio nodo e si smorza a zero: la curva Smith--Wilson \`e la
+combinazione lineare $\sum_j \xi_j\,W(\cdot,u_j)$ sommata al termine $e^{-\omega t}$
+(eq.~\ref{eq:sw-P-W}).}
+\label{fig:kernel-W}
+\end{figure}
+
+\paragraph{Dalla funzione di Wilson al nucleo \texorpdfstring{$H$}{H}.}
+La funzione di Wilson contiene il fattore di sconto asintotico $e^{-\omega(t+u)}$ moltiplicato
+per il \textbf{nucleo (cuore) di Wilson}, la funzione simmetrica
+\[
+  H(t,u) = \alpha\,\min(t,u) - e^{-\alpha\,\max(t,u)}\,\sinh\!\bigl(\alpha\,\min(t,u)\bigr),
+  \qquad H(t,u) = H(u,t),
+\]
+cosicch\'e $W(t,u) = e^{-\omega(t+u)}H(t,u)$. Sostituendo questa identit\`a
+nella~\eqref{eq:sw-P-W} e mettendo in evidenza il fattore comune $e^{-\omega t}$ si ottiene
+\[
+  P(t)
+  = e^{-\omega t} + \sum_{j=1}^{m} \xi_j\, e^{-\omega(t+u_j)}\,H(t,u_j)
+  = e^{-\omega t}\Bigl(1 + \sum_{j=1}^{m} \xi_j\, e^{-\omega u_j}\,H(t,u_j)\Bigr).
+\]
+Posto allora $\zeta_j := e^{-\omega u_j}\,\xi_j$ (una semplice \emph{riparametrizzazione} dei
+coefficienti, con $e^{-\omega u_j}>0$), la funzione di sconto si riscrive nella forma compatta
+imperniata sul nucleo $H$
+\begin{equation}
+  P(t) = e^{-\omega t}\Bigl(1 + \sum_{j=1}^{m} \zeta_j\, H(t,u_j)\Bigr),
+  \label{eq:sw-P}
+\end{equation}
+dove $u_1,\dots,u_m$ sono gli $m=\LLP$ nodi di pagamento e $\zeta=(\zeta_1,\dots,\zeta_m)\transp$
+\`e il nuovo vettore di coefficienti incogniti. \`E la forma~\eqref{eq:sw-P} che useremo nel
+resto del capitolo: come vedremo, \`e il nucleo $H$ a generare la matrice di Gram simmetrica
+definita positiva su cui poggia l'intera costruzione algebrica
+\cite{fasshauer2007,lageras2016}.
+
+
+\subsection{Il problema di minima energia: dalla curva al sistema lineare}
+\label{sec:minenergia}
+
+La funzione di sconto Smith--Wilson \`e individuata da un \textbf{problema di minimo
+vincolato}: tra tutte le curve che riprezzano esattamente gli strumenti di mercato si
+sceglie quella di \emph{energia minima}. Mostriamo come questo problema si imposti e si
+risolva con i soli strumenti dell'algebra lineare --- matrici simmetriche definite positive
+(SPD), forme quadratiche, prodotti scalari indotti da una matrice SPD, moltiplicatori di
+Lagrange e proiezioni ortogonali --- e come conduca \textbf{esattamente} al sistema di
+calibrazione. Procediamo in tre parti: (1) la \emph{funzione da minimizzare}, (2) i
+\emph{vincoli} di mercato, (3) la \emph{soluzione} via moltiplicatori di Lagrange.
+
+% ----------------------------------------------------------
+\paragraph{Parte 1 --- La funzione da minimizzare: l'energia.}
+% ----------------------------------------------------------
+Fissato il kernel $H$, la curva~\eqref{eq:sw-P} \`e individuata \emph{soltanto} dal
+\textbf{vettore finito} di coefficienti $\zeta = (\zeta_1,\dots,\zeta_m)\transp \in
+\mathbb{R}^m$: il problema \`e dunque finito-dimensionale, ambientato nel sottospazio
+$\mathcal{V} = \operatorname{span}\{H(\cdot,u_j)\}_{j=1}^{m}$, e tutto ci\`o che segue \`e
+algebra lineare su $\mathbb{R}^m$. Resta da scegliere \emph{quale} funzione di $\zeta$
+minimizzare: il punto di partenza \`e un fatto generale di algebra lineare, che enunciamo con
+precisione perch\'e \`e il cardine di tutta la costruzione.
+
+\begin{osservazione}[Una matrice SPD induce un prodotto scalare]
+\label{oss:spd-prodotto}
+Sia $\mathbf{A}\in\mathbb{R}^{m\times m}$ \textbf{simmetrica definita positiva} (SPD).
+Allora la forma $\langle x,y\rangle_{\mathbf{A}} := x\transp \mathbf{A}\, y$ \`e un
+\textbf{prodotto scalare} su $\mathbb{R}^m$, perch\'e ne soddisfa i tre assiomi:
+\begin{enumerate}
+  \item \textbf{simmetria}: $\langle x,y\rangle_{\mathbf{A}} = \langle y,x\rangle_{\mathbf{A}}$,
+        conseguenza di $\mathbf{A} = \mathbf{A}\transp$ (\,$\mathbf{A}$ \emph{simmetrica}\,);
+  \item \textbf{bilinearit\`a}: $\langle \cdot,\cdot\rangle_{\mathbf{A}}$ \`e lineare in
+        ciascun argomento, perch\'e tale \`e il prodotto matrice--vettore;
+  \item \textbf{definita positivit\`a}: $\langle x,x\rangle_{\mathbf{A}} = x\transp\mathbf{A}\,x > 0$
+        per ogni $x\neq 0$, conseguenza di $\mathbf{A}$ \emph{definita positiva}.
+\end{enumerate}
+Di conseguenza $\|x\|_{\mathbf{A}} := \sqrt{x\transp \mathbf{A}\, x}$ \`e una \textbf{norma}.
+\end{osservazione}
+
+Applichiamo l'Osservazione~\ref{oss:spd-prodotto} alla \textbf{matrice di Wilson}
+$\Hmat = [H(u_i,u_j)]_{i,j=1}^{m}$ (matrice di Gram del nucleo $H$). Essa \`e la
+\textbf{matrice di Gram} dei nuclei $H(\cdot,u_j)$ centrati nei nodi: poich\'e tali funzioni sono linearmente
+indipendenti, $\Hmat$ \`e simmetrica e \textbf{definita positiva} (SPD). Per
+l'Osservazione~\ref{oss:spd-prodotto}, $\Hmat$ induce allora su $\mathbb{R}^m$ il prodotto
+scalare $\langle x,y\rangle_{\Hmat} = x\transp\Hmat\,y$. Chiamiamo \textbf{energia}
+(ruvidezza) della curva la forma quadratica
+\[
+  E(\zeta) = \zeta\transp \Hmat\, \zeta = \|\zeta\|_{\Hmat}^2 \ \ge 0 .
+\]
+\`E una misura di quanto i coefficienti $\zeta$ ``caricano'' i nuclei $H(\cdot,u_j)$, e dipende
+\textbf{solo dalla matrice di Gram} $\Hmat$: minimizzarla seleziona la curva pi\`u regolare
+tra quelle compatibili con i dati.
+
+% ----------------------------------------------------------
+\paragraph{Parte 2 --- I vincoli di mercato (affini in $\zeta$).}
+% ----------------------------------------------------------
+Abbiamo $n$ IRS EUR contro EURIBOR~6M (ticker Bloomberg \texttt{EUSA*},
+cfr.~Sez.~\ref{sec:inputdati}) alle scadenze DLT $T_1<\cdots<T_n\le\LLP$, ognuno quotato al
+proprio par rate after-CRA $s_j$ (Def.~\ref{def:par}).
+
+La condizione ``lo swap $j$ vale la pari'' (Def.~\ref{def:par}), esplicitando i flussi
+annuali cedola + rimborso del nozionale, \`e:
+\[
+  s_j\,\sum_{i=1}^{T_j-1} P(u_i) + (1+s_j)\,P(u_{T_j}) = 1,
+\]
+cio\`e una \emph{somma pesata} dei fattori di sconto su tutti i $T_j$ nodi di pagamento dello
+swap, non solo sulla scadenza. Con $n$ strumenti si hanno $n$ tali condizioni.
+
+\begin{osservazione}[Cosa vale 1 e cosa no]
+\label{oss:pari}
+\`E cruciale non confondere due oggetti distinti.
+\begin{itemize}
+  \item I \textbf{fattori di sconto} $P(u_i)$ con $u_i > 0$ sono \emph{incogniti} e
+        \emph{strettamente minori di 1}: $P(0)=1$, ma $P(u_i) < 1$ per $u_i>0$, perch\'e il
+        denaro futuro vale meno di quello odierno.
+  \item Il \textbf{prezzo dello swap} $j$ (scadenza $T_j$) --- la somma pesata dai flussi di
+        cassa, $s_j\sum_{i=1}^{T_j}P(u_i)+P(u_{T_j})$ --- vale \emph{esattamente} 1
+        perch\'e $s_j$ \`e scelto proprio cos\`i (Definizione~\ref{def:par}).
+\end{itemize}
+Conoscere i par rate $s_j$ (osservabili sul mercato) \textbf{non} ci d\`a direttamente i
+$P(u_i)$ (incogniti). Le $n$ condizioni di tasso par sono $n$ equazioni lineari nelle $m$
+incognite $P(u_1),\ldots,P(u_m)$; con $m = \LLP = 20$ nodi di pagamento e $n = 15$ scadenze
+DLT, il sistema \`e \textbf{sottoindeterminato}: infiniti vettori $(P(u_i))$ soddisfano
+simultaneamente le $n$ equazioni. Si nota inoltre che le scadenze $14, 16, 17, 18, 19$ anni
+mancano dal panel DLT, rendendo inapplicabile anche un semplice bootstrap ricorsivo. La
+matrice $\mathbf{C}$ scrive il sistema in forma compatta; il metodo Smith--Wilson seleziona
+la soluzione di \emph{minima energia} (Sez.~\ref{sec:minenergia}).
+\end{osservazione}
+
+Per trattare simultaneamente le $n$ condizioni in forma algebrica compatta, raccogliamo i
+flussi nella \textbf{matrice dei flussi di cassa} $\mathbf{C}\in\mathbb{R}^{m\times n}$,
+dove la colonna $j$ \`e il profilo temporale dei pagamenti dello swap $j$ (scadenza $T_j$ anni):
+\[
+  C_{ij} =
+  \begin{cases}
+    s_j     & i < T_j \quad\text{(cedola),}\\
+    1 + s_j & i = T_j \quad\text{(cedola + rimborso del nozionale),}\\
+    0        & i > T_j \quad\text{(nessun flusso dopo la scadenza).}
+  \end{cases}
+\]
+Per gli strumenti consecutivi $j=1,\ldots,13$ si ha $T_j=j$; per il 15Y e il 20Y invece
+$T_{14}=15$ e $T_{15}=20$, per cui la riga del rimborso del nozionale non coincide con
+l'indice di colonna.
+La condizione di riprezzamento si scrive allora $\sum_{i=1}^{m} C_{ij}\,P(u_i) = 1$ per ogni
+$j$ --- \`e la Definizione~\ref{def:par} riscritta esplicitando i flussi; in forma matriciale,
+detto $p = \mathbf{1} \in \mathbb{R}^n$:
+\[
+  \mathbf{C}\transp \mathbf{P} = p .
+\]
+
+Valutiamo ora~\eqref{eq:sw-P} ai nodi per esprimere $\mathbf{P}$ in termini di $\zeta$.
+Con $d_j = e^{-\omega u_j}$ si ha
+\[
+  \mathbf{P} = d + \operatorname{diag}(d)\,\Hmat\,\zeta .
+\]
+Sostituendo in $\mathbf{C}\transp \mathbf{P} = p$ e ponendo
+$\Qmat = \operatorname{diag}(d)\,\mathbf{C}$ e $q = \mathbf{C}\transp d$, si ottiene la
+\textbf{condizione di vincolo}
+\begin{equation}
+  \Qmat\transp \Hmat\, \zeta = p - q .
+  \label{eq:vincolo}
+\end{equation}
+Si tratta di un \textbf{sistema lineare} di $n$ equazioni nelle $m$ incognite $\zeta$:
+i suoi vettori soluzione formano un \textbf{insieme affine} (non vuoto) di $\mathbb{R}^m$.
+
+% ----------------------------------------------------------
+\paragraph{Parte 3 --- La soluzione: moltiplicatori di Lagrange.}
+% ----------------------------------------------------------
+Tra tutte le curve che riprezzano gli strumenti scegliamo quella di energia minima:
+\begin{equation}
+  \min_{\zeta\,\in\,\mathbb{R}^m} \ \zeta\transp \Hmat\, \zeta
+  \qquad \text{s.t.}\quad
+  \Qmat\transp \Hmat\, \zeta = p - q .
+  \label{eq:minenergia}
+\end{equation}
+Questo problema \`e \textbf{ben posto} gi\`a prima di calcolarne la soluzione: la funzione
+obiettivo $\zeta\mapsto\zeta\transp\Hmat\zeta$ \`e una forma quadratica
+\textbf{strettamente convessa} (perch\'e $\Hmat$ \`e definita positiva) ristretta a un
+insieme affine non vuoto. Un tale problema ammette uno e un solo punto di minimo.
+
+\begin{proposizione}[Minima norma, versione finito-dimensionale]
+\label{prop:minnorm-finita}
+Il problema~\eqref{eq:minenergia} ammette \textbf{soluzione unica}. L'esistenza e
+l'unicit\`a seguono dalla \textbf{definita positivit\`a} di $\Hmat$ (stretta
+convessit\`a dell'energia) su un vincolo affine non vuoto.
+\end{proposizione}
+
+Per \emph{calcolare} il minimo si usano i \textbf{moltiplicatori di Lagrange}.
+Ad ogni vincolo scalare $(\Qmat\transp\Hmat\zeta)_k = (p-q)_k$, $k=1,\ldots,n$,
+si associa un moltiplicatore $b_k\in\mathbb{R}$; raccolti in $b\in\mathbb{R}^n$, si forma la
+\textbf{funzione lagrangiana}
+\begin{equation}
+  \mathcal{L}(\zeta,b)
+  = \zeta\transp\Hmat\zeta
+    \;-\; 2\,b\transp\!\bigl(\Qmat\transp\Hmat\zeta - (p-q)\bigr).
+  \label{eq:lagrangiana}
+\end{equation}
+Si calcola il gradiente rispetto a $\zeta$ e lo si pone uguale a zero:
+\[
+  \nabla_\zeta\,\mathcal{L}
+  = 2\,\Hmat\zeta - 2\,\Hmat\Qmat\,b = 0
+  \quad\Longrightarrow\quad
+  \Hmat(\zeta - \Qmat b) = 0.
+\]
+Poich\'e $\Hmat$ \`e invertibile (SPD), si ottiene
+\[
+  \zeta = \Qmat\, b .
+\]
+Sostituendo nel vincolo~\eqref{eq:vincolo} si ritrova \textbf{esattamente} il sistema di
+calibrazione~\eqref{eq:sistema}:
+\[
+  \bigl(\Qmat\transp \Hmat\, \Qmat\bigr)\, b = p - q .
+\]
+I coefficienti $b$ del metodo Smith--Wilson non sono dunque altro che i
+\textbf{moltiplicatori di Lagrange} del problema di minima energia~\eqref{eq:minenergia}.
+
+La relazione $\zeta = \Qmat\,b$ ha un significato \textbf{geometrico}: il vettore ottimo dei
+coefficienti appartiene a $\operatorname{range}(\Qmat)$, il \textbf{sottospazio generato
+dalle colonne di} $\Qmat$ (le sezioni del kernel pesate dai flussi di cassa). La soluzione
+\`e quindi la \textbf{proiezione $\Hmat$-ortogonale} della curva base $e^{-\omega t}$
+sull'insieme delle curve che riprezzano gli strumenti: tra tutte le correzioni ammissibili
+si sceglie quella di lunghezza minima nella metrica indotta da $\Hmat$. \`E il principio di
+\textbf{minima energia} nella sua forma pi\`u trasparente, e completamente elementare.
+
+\begin{keybox}[Riepilogo: minima energia e proiezione]
+La curva Smith--Wilson si ottiene con la sola algebra lineare:
+\begin{enumerate}
+  \item la matrice di Wilson $\Hmat$ \`e \textbf{SPD} $\Rightarrow$ definisce un prodotto
+        scalare e una nozione di \emph{energia} $\zeta\transp\Hmat\zeta$;
+  \item si minimizza l'energia sotto i \textbf{vincoli lineari} di repricing
+        (\,\eqref{eq:minenergia}\,);
+  \item i \textbf{moltiplicatori di Lagrange} $b$ risolvono il sistema SPD
+        $(\Qmat\transp\Hmat\Qmat)b = p-q$, di ordine $n$ (Cholesky);
+  \item geometricamente, la curva \`e la \textbf{proiezione ortogonale} (nella metrica
+        $\Hmat$) sul sottospazio generato dalle funzioni $H$.
+\end{enumerate}
+Per approfondire: \cite{boyd2018} per i minimi quadrati vincolati e la soluzione di minima
+norma via moltiplicatori di Lagrange, \cite{fasshauer2007} per l'interpolazione con kernel
+definiti positivi, \cite{lageras2016} per il caso Smith--Wilson.
+\end{keybox}
+
+\subsection{Il sistema lineare di calibrazione}
+
+Imporre il riprezzamento esatto degli strumenti conduce, con la matrice dei flussi di cassa
+$\mathbf{C}$ introdotta nella formulazione dei vincoli (Sez.~\ref{sec:minenergia}) e con le
+posizioni
+$d_j = e^{-\omega u_j}$, $\Qmat = \mathrm{diag}(d)\,\mathbf{C}$,
+$\Hmat = [H(u_i,u_j)]$, $q = \mathbf{C}\transp d$, al sistema lineare
+(\cite{eiopa2025} sez.~9.8--9.10)
+\begin{equation}
+  \bigl(\Qmat\transp \Hmat\, \Qmat\bigr)\, b = p - q,
+  \qquad p = \mathbf{1}\ \text{(par swap)} .
+  \label{eq:sistema}
+\end{equation}
+Risolto per $b$, i coefficienti $Qb = \Qmat b$ entrano direttamente
+nella~\eqref{eq:sw-P}. La matrice del sistema ha una struttura che ne garantisce la buona
+risolubilit\`a numerica.
+
+\begin{teorema}[Sistema SPD e fattorizzazione di Cholesky]
+\label{thm:spd}
+La matrice $\Qmat\transp \Hmat\, \Qmat \in \mathbb{R}^{n\times n}$ \`e \textbf{simmetrica
+definita positiva}. Di conseguenza il sistema~\eqref{eq:sistema} ammette \textbf{soluzione
+unica}, calcolabile in modo stabile tramite la \textbf{fattorizzazione di Cholesky}
+$\Qmat\transp \Hmat\,\Qmat = R\transp R$ con $R$ triangolare superiore.
+\end{teorema}
+
+La Figura~\ref{fig:QHQ} visualizza la matrice $\Qmat\transp\Hmat\Qmat$ per il mese di
+riferimento: simmetrica e con autovalore minimo strettamente positivo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{../output/eiopa_rfr_sw_var/fig4_matrice_QHQ.pdf}
+\caption{Matrice del sistema $\Qmat\transp\Hmat\Qmat$ ($n=15$), dicembre~2025. \`E simmetrica
+e definita positiva ($\lambda_{\min} > 0$): la fattorizzazione di Cholesky \`e applicabile ed
+\`e circa due volte pi\`u efficiente di una LU generica.}
+\label{fig:QHQ}
+\end{figure}
+
+\begin{teorema}[Rappresentazione Smith--Wilson]
+\label{thm:rappresentazione}
+Risolto il sistema~\eqref{eq:sistema}, la funzione di sconto~\eqref{eq:sw-P} riprezza
+esattamente tutti gli strumenti di input ed \`e di classe $\mathcal{C}^\infty$ su $[0,\CP]$.
+Da essa si ricavano spot e forward tramite
+\[
+  r(0,t) = P(t)^{-1/t}-1, \qquad
+  f(0,t) = \omega - \frac{\sum_j (Qb)_j\,\partial_t H(t,u_j)}{1 + \sum_j (Qb)_j\, H(t,u_j)} .
+\]
+\end{teorema}
+
+\subsection{Calibrazione di $\alpha$: un problema di ricerca di zeri}
+
+Il parametro $\alpha$ governa la velocit\`a di convergenza all'$\UFR$. EIOPA lo fissa con un
+criterio preciso (\cite{eiopa2025} sez.~9.14): si sceglie il \textbf{pi\`u piccolo}
+$\alpha \ge \alpha_{\min}=0.05$ tale che il forward al Convergence Point disti dall'$\UFR$
+meno di una tolleranza $\tau = 1$ bp:
+\begin{equation}
+  \alpha^\star = \min\Bigl\{\alpha \ge \alpha_{\min} : \bigl|f(0,\CP;\alpha) - \omega\bigr|
+  \le \tau \Bigr\}.
+  \label{eq:criterio-alpha}
+\end{equation}
+Definita $g(\alpha) = |f(0,\CP;\alpha) - \omega| - \tau$, la~\eqref{eq:criterio-alpha} \`e un
+\textbf{problema di ricerca di zeri}, risolvibile con il metodo di \textbf{bisezione} (robusto)
+o di \textbf{Newton} (rapido). La Figura~\ref{fig:alpha} mostra $g$ per il mese di riferimento.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../output/eiopa_rfr_sw_var/fig5_calibrazione_alpha.pdf}
+\caption{Calibrazione di $\alpha$ come ricerca di zeri (dicembre~2025). La curva \`e
+$f(0,\CP;\alpha)-\omega$ in bps; la banda grigia \`e la tolleranza $\pm 1$ bp. Il valore
+$\alpha^\star \approx 0.064$ \`e il pi\`u piccolo $\alpha \ge \alpha_{\min}$ che entra nella
+banda.}
+\label{fig:alpha}
+\end{figure}
+
+\begin{teorema}[Convergenza all'UFR]
+\label{thm:convergenza}
+Per ogni $\alpha>0$ il forward Smith--Wilson converge all'intensit\`a dell'$\UFR$:
+\[
+  \lim_{t\to\infty} f(0,t) = \omega = \ln(1+\UFR).
+\]
+\end{teorema}
+
+\begin{algobox}[Costruzione della curva Smith--Wilson (in R)]
+\begin{Verbatim}[fontsize=\small]
+# INPUT: par rate EUSA after-CRA r_k ai nodi T_mkt = {1..13,15,20}
+
+# 1. Matrice dei flussi C (m x n), m = LLP date di pagamento annuali
+C <- build_C(T_mkt, r)                 # C[j,k]=r_k (j<T_k), C[T_k,k]=1+r_k
+
+# 2. Oggetti del sistema (dato alpha)
+d   <- exp(-omega * (1:LLP)); Q <- C * d
+H   <- outer(1:LLP, 1:LLP, H_heart, a = alpha)
+QHQ <- t(Q) %*% H %*% Q                # SIMMETRICA DEFINITA POSITIVA
+
+# 3. Soluzione via Cholesky (QHQ = R'R)
+R  <- chol(QHQ)
+b  <- backsolve(R, forwardsolve(t(R), p - q))
+Qb <- as.numeric(Q %*% b)
+
+# 4. alpha* via ricerca di zeri: |f(CP,alpha) - omega| <= 1bp, alpha >= 0.05
+alpha_star <- alpha_star_for_mat(r, T_mkt)
+
+# 5. Curva: P(t) = e^{-omega t}(1 + sum_j Qb_j H(t,u_j))
+spot <- sw_spot_ann(v, Qb, alpha_star)
+\end{Verbatim}
+\end{algobox}
+
+% ============================================================
+\section{Ricostruzione della curva: giugno--dicembre 2025}
+\label{sec:ricostruzione}
+% ============================================================
+
+Mettiamo alla prova il metodo ricostruendo la curva EIOPA EUR sui \textbf{sette mesi} da
+giugno a dicembre~2025, la finestra in cui il set di scadenze $\{1,\dots,13,15,20\}$ \`e quello
+ufficiale. Per ogni mese:
+\begin{enumerate}
+  \item leggiamo i par rate \texttt{EUSA*} e sottraiamo il $\CRA$;
+  \item calibriamo Smith--Wilson (Cholesky + ricerca di $\alpha$);
+  \item confrontiamo la curva spot ricostruita con quella \textbf{ufficiale} pubblicata da
+        EIOPA (file \texttt{dati/eiopa\_zips/}).
+\end{enumerate}
+
+\subsection{Confronto grafico}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/eiopa_rfr_sw_var/fig6_overlay_ricostruzione.pdf}
+\caption{Curva spot ricostruita con Smith--Wilson su \texttt{EUSA*} (tratteggiata) vs curva
+ufficiale EIOPA (continua), per i sette fine-mese da giugno a dicembre~2025. Le due curve sono
+visivamente sovrapposte su tutta la struttura a termine.}
+\label{fig:overlay}
+\end{figure}
+
+La Figura~\ref{fig:banda} sintetizza lo scarto: l'inviluppo min--max dei residui sui sette mesi
+resta entro pochi bps in zona liquida e si mantiene contenuto anche in estrapolazione.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/eiopa_rfr_sw_var/fig7_banda_residui.pdf}
+\caption{Banda delle differenze (ricostruita $-$ ufficiale) sui sette mesi: regione
+ombreggiata = inviluppo min--max per scadenza, linea = media. In zona liquida lo scarto
+massimo \`e di poco superiore al bp.}
+\label{fig:banda}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/eiopa_rfr_sw_var/fig8_barre_per_tenor.pdf}
+\caption{Differenza ricostruita $-$ ufficiale (bps) ai 15 nodi DLT, per ciascun mese. Barre
+arancioni: scarto positivo; barre blu: negativo. Quasi tutte le barre stanno entro $\pm 2$ bps.}
+\label{fig:barre}
+\end{figure}
+
+\subsection{Risultati quantitativi}
+
+La Tabella~\ref{tab:rmse} riporta, per ogni mese, l'$\alpha$ di criterio e quello ufficiale e
+gli RMSE dello scarto in zona liquida ($T\le\LLP$) e in estrapolazione ($T>\LLP$).
+
+\begin{table}[H]
+\centering\small
+\caption{Ricostruzione Smith--Wilson da \texttt{EUSA*} vs curva ufficiale EIOPA, giugno--dicembre~2025.
+Prodotta da \texttt{R/eiopa\_rfr\_sw\_variazionale.R}, salvata in
+\texttt{output/eiopa\_rfr\_sw\_var/tab\_ricostruzione\_var.csv}.}
+\label{tab:rmse}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Data} & $\alpha^\star_{\rm crit}$ & $\alpha_{\rm uff}$ &
+\textbf{RMSE}$_{\le 20}$ & \textbf{RMSE}$_{>20}$ & $\max|\Delta|$\\
+ & & & (bps) & (bps) & (bps)\\
+\midrule
+\rowcolor{blue!4}2025-06-30 & 0.0946 & 0.0936 & 1.04 & 0.38 & 1.78\\
+2025-07-31 & 0.0897 & 0.0908 & 0.39 & 0.16 & 0.73\\
+\rowcolor{blue!4}2025-08-29 & 0.0752 & 0.0781 & 0.27 & 0.51 & 0.65\\
+2025-09-30 & 0.0810 & 0.0822 & 0.11 & 0.36 & 0.49\\
+\rowcolor{blue!4}2025-10-31 & 0.0754 & 0.0790 & 0.25 & 0.79 & 1.00\\
+2025-11-28 & 0.0500 & 0.0500 & 0.40 & 1.87 & 2.20\\
+\rowcolor{blue!4}2025-12-31 & 0.0635 & 0.0736 & 0.46 & 1.41 & 1.72\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{codebox}[Ricostruzione mensile (estratto)]
+\begin{Verbatim}[fontsize=\small]
+for (i in seq_len(nrow(eusa))) {           # eusa = 7 mesi giu-dic 2025
+  s_i  <- as.numeric(eusa[i, -1])          # par EUSA (decimali)
+  off  <- read_eiopa_official(eusa$date[i])# curva ufficiale dal relativo zip
+  r_i  <- s_i - off$CRA/1e4                 # after-CRA
+  a    <- off$alpha                         # alpha ufficiale del mese
+  Qb   <- sw_calibrate(T_mkt, r_i, a)$Qb    # Cholesky
+  sp   <- sw_spot_ann(1:80, Qb, a) * 100    # spot ricostruito
+  res  <- (sp - sp_ufficiale) * 100         # residuo in bps
+}
+\end{Verbatim}
+\end{codebox}
+
+\begin{osservazione}
+In tutti i sette mesi l'$\alpha$ di criterio e quello ufficiale quasi coincidono e gli RMSE
+restano di \emph{pochi} bps, sia in zona liquida sia in estrapolazione. Ci\`o conferma due
+fatti: il metodo Smith--Wilson \`e numericamente esatto nel riprezzamento, e l'\textbf{IRS
+EURIBOR} (\texttt{EUSA*}) \`e lo strumento di input coerente con la curva ufficiale EIOPA.
+\end{osservazione}
+
+% ============================================================
+\section{Conclusioni}
+% ============================================================
+
+\begin{itemize}
+  \item La curva EIOPA risk-free risolve un problema di \textbf{interpolazione ed
+        estrapolazione}: seguire i tassi di mercato fino al $\LLP$ e convergere all'$\UFR$ oltre.
+  \item Il metodo \textbf{Smith--Wilson} costruisce la funzione di sconto come combinazione di
+        \textbf{funzioni di base centrate nei nodi} (i nuclei di Wilson); la si caratterizza come curva di \textbf{minima energia}
+        (minima norma) tra quelle che riprezzano i dati, in analogia con le spline.
+  \item Il nucleo numerico \`e un \textbf{sistema lineare SPD} risolto con \textbf{Cholesky}
+        (Teorema~\ref{thm:spd}) e una \textbf{ricerca di zeri} per il parametro $\alpha$
+        (criterio sez.~9.14).
+  \item La ricostruzione sui sette mesi giugno--dicembre~2025 riproduce la curva ufficiale EIOPA
+        entro pochi bps, validando sia l'implementazione sia la scelta dell'input di mercato.
+\end{itemize}
+
+% ============================================================
+\renewcommand{\refname}{Riferimenti bibliografici}
+\begin{thebibliography}{9}
+
+\bibitem{eiopa2025}
+  \textbf{EIOPA} (2025).
+  \textit{Technical documentation of the methodology to derive EIOPA's risk-free interest rate
+  term structures}, EIOPA-BoS-25-599.
+  Sezione~9 (Extrapolation and interpolation) per il metodo Smith--Wilson.
+
+\bibitem{solvency2}
+  \textbf{Direttiva 2009/138/CE} (Solvency~II) e
+  \textbf{Regolamento Delegato (UE) 2015/35}.
+  Quadro normativo per la valutazione market-consistent delle riserve tecniche.
+
+\bibitem{smithwilson2001}
+  \textbf{Smith, A., Wilson, T.} (2001).
+  \textit{Fitting yield curves with long term constraints}.
+  Bacon \& Woodrow Research Notes.
+
+\bibitem{quarteroni2017}
+  \textbf{Quarteroni, A., Saleri, F., Gervasio, P.} (2017).
+  \textit{Calcolo Scientifico}, 6a ed. Springer.
+  Fattorizzazione di Cholesky (cap.~5) e metodi per la ricerca di zeri (cap.~2).
+
+\bibitem{burden2016}
+  \textbf{Burden, R.L., Faires, J.D.} (2016).
+  \textit{Numerical Analysis}, 10th ed. Cengage.
+  Bisezione, Newton e sistemi lineari definiti positivi.
+
+\bibitem{boyd2018}
+  \textbf{Boyd, S., Vandenberghe, L.} (2018).
+  \textit{Introduction to Applied Linear Algebra: Vectors, Matrices, and Least Squares}.
+  Cambridge University Press.
+  Cap.~16: minimi quadrati vincolati e soluzione di minima norma via moltiplicatori di
+  Lagrange. Testo liberamente disponibile (Stanford/UCLA).
+
+\bibitem{fasshauer2007}
+  \textbf{Fasshauer, G.E.} (2007).
+  \textit{Meshfree Approximation Methods with MATLAB}. World Scientific.
+  Interpolazione con kernel definiti positivi: l'interpolante \`e combinazione lineare delle
+  sezioni del kernel e i coefficienti risolvono il sistema con la matrice di Gram SPD.
+
+\bibitem{lageras2016}
+  \textbf{Lager\aa s, A., Lindholm, M.} (2016).
+  Issues with the Smith--Wilson method.
+  \textit{Insurance: Mathematics and Economics}, 68, 32--41.
+  Trattazione del metodo Smith--Wilson come interpolazione con kernel.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,79 @@
+Perché minimizzare la norma indotta da H e non un'altra norma?
+===============================================================
+
+Domanda di uno studente attento: la dispensa dice che si minimizza l'energia
+E(ζ) = ζᵀHζ = ‖ζ‖_H². Ma H non è l'unica matrice SPD disponibile — si potrebbe
+scegliere A = I (norma euclidea) o qualunque altra matrice definita positiva.
+Perché proprio H?
+
+
+1. Qualsiasi norma SPD è matematicamente valida (ma non tutte sono significative)
+----------------------------------------------------------------------------------
+È vero: qualsiasi matrice A simmetrica definita positiva definisce una norma
+‖ζ‖_A² = ζᵀAζ, con tutti i requisiti assiomatici. La scelta è quindi una decisione
+di MODELLAZIONE, non di algebra. La domanda diventa: quale scelta è giustificata dal
+problema che stiamo risolvendo?
+
+
+2. La norma euclidea dipende dalla parametrizzazione: non va bene
+-----------------------------------------------------------------
+Supponiamo di riscalare le funzioni di base: H(·,u_j) → c·H(·,u_j) con c > 0.
+Per mantenere la stessa curva P(t), i coefficienti devono cambiare: ζ_j → ζ_j/c.
+La norma euclidea darebbe:
+
+    ‖ζ/c‖₂² = (1/c²) ‖ζ‖₂²
+
+Il valore dell'energia CAMBIA, anche se la curva P(t) è esattamente la stessa.
+Il criterio di minimo dipenderebbe dall'unità di misura arbitraria con cui si sono
+definite le funzioni di base — un risultato privo di senso fisico.
+
+
+3. La norma H è INTRINSECA al problema: non dipende dalla parametrizzazione
+---------------------------------------------------------------------------
+La forma quadratica E(ζ) = ζᵀHζ = Σᵢⱼ ζᵢ H(u_i,u_j) ζⱼ usa come pesi esattamente
+i valori del kernel H nei nodi di pagamento. Riscalando le basi: ζ_j → ζ_j/c,
+e contemporaneamente H(u_i,u_j) → c²H(u_i,u_j) (perché H(t,u) è bilineare nelle basi).
+Il prodotto rimane:
+
+    (ζ/c)ᵀ (c²H) (ζ/c) = ζᵀHζ
+
+invariante. L'energia H non dipende dalla parametrizzazione: è una proprietà DELLA CURVA,
+non dei coefficienti che la rappresentano.
+
+Intuitivamente: H(u_i,u_j) misura quanto le funzioni di base centrate in u_i e u_j si
+"sovrappongono" nella struttura del kernel. La forma quadratica ζᵀHζ somma tutti questi
+prodotti incrociati pesati dai coefficienti: è la "dimensione" della correzione alla curva
+asintotica misurata con la metrica naturale del kernel stesso.
+
+
+4. Significato geometrico: proiezione ortogonale
+-------------------------------------------------
+Minimizzare E(ζ) = ζᵀHζ vincolato a Qᵀ H ζ = p-q equivale a trovare la PROIEZIONE
+H-ORTOGONALE della curva base e^{-ωt} sull'insieme affine delle curve che riprezzano
+i dati. Cambiare norma (qualsiasi A ≠ H) produrrebbe una proiezione "obliqua" che
+misura distanze in un senso geometricamente non correlato alla struttura del problema.
+Il risultato numerico cambia e NON corrisponde più a una "minima perturbazione
+all'asintoto" in senso intrinseco.
+
+
+5. Regolarità della curva: il legame con le derivate
+----------------------------------------------------
+La forma analitica del nucleo H(t,u) non è casuale: è costruita in modo che la
+forma quadratica ζᵀHζ sia collegata (per costruzione variazionale che qui non
+dimostriamo) a una misura di "ruvidezza" integrale della curva — proporzionale a
+un integrale della derivata seconda di P(t). Minimizzare E(ζ) = ζᵀHζ equivale quindi
+a scegliere la curva P(t) più liscia (meno rugosa) tra tutte quelle che riprezzano
+gli strumenti. Con la norma euclidea ‖ζ‖₂², non ci sarebbe alcuna corrispondenza
+tra il criterio di ottimizzazione e la regolarità della curva.
+
+
+In sintesi
+----------
+                  Norma euclidea ‖ζ‖₂²       Norma H ζᵀHζ
+                  --------------------       --------------
+Invariante per    No (dipende dalla          Sì (intrinseca
+riscalamento      rappresentazione)          alla curva)
+Significato       Nessuno (arbitrario)       Misura di ruvidezza
+geometrico                                   di P(t)
+Proiezione        Obliqua, non intrinseca    H-ortogonale, intrinseca
+risultante
