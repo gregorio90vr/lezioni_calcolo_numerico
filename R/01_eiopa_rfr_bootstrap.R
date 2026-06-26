@@ -112,7 +112,7 @@ cat(sprintf("FSP = %d anni,  CRA = %d bps,  alpha = %.1f%% (phasing-in 2027)\n\n
 # ================
 # I tassi par OIS (Overnight Index Swap) su €STR sono pubblicati quotidianamente
 # da Bloomberg con i ticker EESWE<tenor> Curncy (es. EESWE10 Curncy = 10Y).
-# Il file dati/EESWE.xlsx contiene la serie storica mensile per le 12 scadenze
+# Il file dati/01_eeswe.xlsx contiene la serie storica mensile per le 12 scadenze
 # DLT (deep, liquid, transparent) dell'EUR. Qui usiamo la data di valutazione
 # del 29/05/2026 (ultimo giorno lavorativo del mese).
 #
@@ -125,13 +125,13 @@ cat("=== SEZ. 1: DATI INPUT (par OIS €STR, ticker EESWE*) ===\n")
 
 T_mkt <- c(1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20)
 
-# Fallback (riga 29/05/2026 del file dati/EESWE.xlsx), par rate LORDI in %:
+# Fallback (riga 29/05/2026 del file dati/01_eeswe.xlsx), par rate LORDI in %:
 s_fallback <- c(2.39325, 2.43045, 2.43680, 2.46935, 2.50100, 2.54500,
                 2.59700, 2.65030, 2.75150, 2.84600, 2.95800, 3.04400) / 100
 
-# Lettura da dati/EESWE.xlsx (se disponibile), altrimenti fallback.
+# Lettura da dati/01_eeswe.xlsx (se disponibile), altrimenti fallback.
 read_eswe <- function() {
-  f <- file.path(dirname(getwd()), "dati", "EESWE.xlsx")
+  f <- file.path(dirname(getwd()), "dati", "01_eeswe.xlsx")
   if (!have_openxlsx || !file.exists(f)) return(NULL)
   out <- tryCatch({
     df <- openxlsx::read.xlsx(f, sheet = 1, startRow = 2, detectDates = TRUE)
@@ -154,7 +154,7 @@ if (is.null(s_mkt)) {
   s_mkt <- s_fallback
   cat("  (uso valori di fallback hardcoded per il 29/05/2026)\n")
 } else {
-  cat("  (letti da dati/EESWE.xlsx, data 29/05/2026)\n")
+  cat("  (letti da dati/01_eeswe.xlsx, data 29/05/2026)\n")
 }
 
 # After-CRA (sez. 6: sottrazione del CRA dai tassi di input)

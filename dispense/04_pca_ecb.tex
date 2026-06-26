@@ -414,7 +414,7 @@ con $M \approx 260$ mesi.
 library(data.table); library(openxlsx); library(lubridate); library(ggplot2)
 
 curve_df <- as.data.table(
-  read.xlsx("pca_input_curves_1Y_20Y.xlsx", sheet = "PCA_Input"))
+  read.xlsx("04_ecb_spot.xlsx", sheet = "PCA_Input"))
 
 # ... parsing date e interpolazione NA (invariati rispetto alla versione giornaliera)
 

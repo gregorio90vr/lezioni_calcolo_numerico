@@ -422,7 +422,7 @@ dovr\`a soddisfare ai nodi di mercato.
 
 \begin{keybox}[Dati di input: IRS EURIBOR]
 Usiamo i par rate degli \textbf{Interest Rate Swap EUR contro EURIBOR~6M} (ticker Bloomberg
-\texttt{EUSA<tenor> CMPL Curncy}), file \texttt{dati/tickersEUSA\_v3.xlsx}. Le scadenze sono
+\texttt{EUSA<tenor> CMPL Curncy}), file \texttt{dati/03_eusa.xlsx}. Le scadenze sono
 le \textbf{15 scadenze DLT ufficiali} EUR SWP valide dal 30~giugno al 31~dicembre~2025:
 \[
   \{1,2,3,4,5,6,7,8,9,10,11,12,13,15,20\}\ \text{anni}.
@@ -964,7 +964,7 @@ con la curva ufficiale pubblicata da EIOPA nel file \texttt{EIOPA\_RFR\_20250731
 % ----------------------------------------------------------
 
 I par rate \texttt{EUSA*} (IRS EUR vs EURIBOR~6M) ai 15 nodi DLT, letti da
-\texttt{dati/tickersEUSA\_v3.xlsx}, sono riportati nella Tabella~\ref{tab:input-jul}.
+\texttt{dati/03_eusa.xlsx}, sono riportati nella Tabella~\ref{tab:input-jul}.
 Il $\CRA = 10$ bps viene sottratto per ottenere i tassi after-CRA $r_j = s_j - \CRA$
 che alimentano la calibrazione.
 

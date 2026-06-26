@@ -16,7 +16,7 @@
 #  Sezione 9 (Smith-Wilson). Le funzioni core sono ricopiate da
 #  "curva_eiopa_rfr_CN - sw.R" per rendere lo script autosufficiente.
 #
-#  Dati di ricostruzione: dati/tickersEUSA_v3.xlsx (par IRS EUR vs EURIBOR 6M,
+#  Dati di ricostruzione: dati/03_eusa.xlsx (par IRS EUR vs EURIBOR 6M,
 #  ticker Bloomberg EUSA*), scadenze DLT ufficiali EUR SWP {1..13,15,20} valide
 #  30 giu - 31 dic 2025. Curve ufficiali EIOPA: dati/eiopa_zips/.
 #
@@ -194,9 +194,9 @@ read_eiopa_official <- function(date) {
   }, error = function(e) NULL)
 }
 
-# Lettura par EUSA da tickersEUSA_v3.xlsx (12 mesi x 15 scadenze)
+# Lettura par EUSA da 03_eusa.xlsx (12 mesi x 15 scadenze)
 read_eusa_all <- function() {
-  f <- file.path(dirname(getwd()), "dati", "tickersEUSA_v3.xlsx")
+  f <- file.path(dirname(getwd()), "dati", "03_eusa.xlsx")
   if (!have_openxlsx || !file.exists(f)) return(NULL)
   tryCatch({
     df <- openxlsx::read.xlsx(f, sheet = 1, startRow = 1, detectDates = TRUE)
@@ -214,7 +214,7 @@ read_eusa_all <- function() {
 # ==============================================================================
 
 eusa_all <- read_eusa_all()
-if (is.null(eusa_all)) stop("Impossibile leggere dati/tickersEUSA_v3.xlsx")
+if (is.null(eusa_all)) stop("Impossibile leggere dati/03_eusa.xlsx")
 
 # Finestra regolamentare del set {1..13,15,20}: 30 giugno - 31 dicembre 2025
 in_window <- format(eusa_all$date, "%Y") == "2025" &

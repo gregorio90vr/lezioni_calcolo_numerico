@@ -17,7 +17,7 @@ if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable())
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 }
 
-input_xlsx <- "../dati/pca_input_curves_1Y_20Y.xlsx"
+input_xlsx <- "../dati/04_ecb_spot.xlsx"
 output_dir <- "../output/04_pca_ecb"
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -34,7 +34,7 @@ if (!file.exists(input_xlsx)) {
 }
 
 # ==============================================================
-# STEP 1 — Lettura, pulizia e aggregazione mensile
+# Lettura, pulizia e aggregazione mensile
 # ==============================================================
 
 cat("\n=== STEP 1: LETTURA, PULIZIA E AGGREGAZIONE MENSILE ===\n")
@@ -134,7 +134,7 @@ plot_curves_dt <- rbindlist(lapply(sel_idx, function(i) {
 
 p1 <- ggplot(plot_curves_dt, aes(x = MAT_NUM, y = Rate, color = Data, group = Data)) +
   geom_line(linewidth = 1) + geom_point(size = 1.7) +
-  labs(title = "STEP 1 — Curve dei tassi in 3 mesi rappresentativi",
+  labs(title = "Curve dei tassi in 3 mesi rappresentativi",
        x = "Scadenza (anni)", y = "Tasso (%)", color = "Mese") +
   scale_y_continuous(labels = label_percent(scale = 1, accuracy = 0.01)) +
   plot_theme
@@ -158,7 +158,7 @@ p2 <- ggplot(delta_m_long, aes(x = factor(MAT_NUM), y = DeltaRate * 100)) +
   geom_hline(yintercept = 0, color = "grey40", linetype = "dashed") +
   geom_boxplot(fill = "#4575b4", alpha = 0.55,
                outlier.size = 0.7, outlier.alpha = 0.4, width = 0.65) +
-  labs(title = "STEP 1 — Distribuzione delle variazioni mensili per scadenza",
+  labs(title = "Distribuzione delle variazioni mensili per scadenza",
        x = "Scadenza (anni)",
        y = "Variazione mensile (punti base)",
        caption = "Scatola: 25°–75° percentile; baffi: 1.5×IQR; punti: outlier.\n1 pb = 0.01%. Le variazioni mensili sono tipicamente 10–80 pb, ben visibili.") +
@@ -181,7 +181,7 @@ p3 <- ggplot(cor_dt, aes(x = MAT_XN, y = MAT_YN, fill = CORR)) +
   geom_tile() +
   scale_fill_gradient2(low = "#2c7bb6", mid = "white", high = "#d7191c",
                        midpoint = 0, limits = c(-1, 1)) +
-  labs(title = "STEP 1 — Correlazione tra variazioni mensili",
+  labs(title = "Correlazione tra variazioni mensili",
        x = "Scadenza X (anni)", y = "Scadenza Y (anni)", fill = "Corr") +
   coord_fixed() + plot_theme
 ggsave(file.path(output_dir, "step1_heatmap_correlazioni_m.pdf"),
@@ -243,7 +243,7 @@ if (requireNamespace("plot3D", quietly = TRUE)) {
 }
 
 # ==============================================================
-# STEP 2 — PCA tramite SVD
+# PCA tramite SVD
 # ==============================================================
 
 cat("\n=== STEP 2: PCA CON SVD (DATI MENSILI) ===\n")
@@ -269,14 +269,14 @@ p4 <- ggplot(expl_dt, aes(x = PC)) +
   geom_point(aes(y = CumVar), color = "#d73027", size = 1.6) +
   geom_hline(yintercept = 0.95, linetype = "dashed", color = "#555555") +
   scale_y_continuous(labels = label_percent()) +
-  labs(title = "STEP 2 — Scree plot e varianza cumulata (mensile)",
+  labs(title = "Scree plot e varianza cumulata (mensile)",
        x = "Componente principale", y = "Quota di varianza") +
   plot_theme
 ggsave(file.path(output_dir, "step2_varianza_spiegata_m.pdf"),
        p4, width = 9, height = 5, device = cairo_pdf)
 
 # ==============================================================
-# STEP 3 — Interpretazione, scores con eventi, ricostruzione
+# Interpretazione, scores con eventi, ricostruzione
 # ==============================================================
 
 cat("\n=== STEP 3: INTERPRETAZIONE E RICOSTRUZIONE (MENSILE) ===\n")
@@ -293,7 +293,7 @@ loadings_dt <- rbindlist(lapply(1:k_show, function(i) {
 p5 <- ggplot(loadings_dt, aes(x = MAT_NUM, y = Loading, color = PC)) +
   geom_hline(yintercept = 0, color = "grey70") +
   geom_line(linewidth = 1) + geom_point(size = 1.4) +
-  labs(title = "STEP 3 — Loadings delle prime componenti (livello/pendenza/curvatura)",
+  labs(title = "Loadings delle prime componenti (livello/pendenza/curvatura)",
        x = "Scadenza (anni)", y = "Loading") +
   plot_theme
 ggsave(file.path(output_dir, "step3_loadings_pc1_pc3_m.pdf"),
@@ -345,7 +345,7 @@ p6 <- ggplot(scores_dt_m, aes(x = TIME_PERIOD, y = Score)) +
              labeller = labeller(PC = c(PC1 = "PC1 — Livello",
                                         PC2 = "PC2 — Pendenza",
                                         PC3 = "PC3 — Curvatura"))) +
-  labs(title = "STEP 3 — Scores mensili con eventi macroeconomici",
+  labs(title = "Scores mensili con eventi macroeconomici",
        subtitle = paste0("Dati: ", format(min(dates_delta_m), "%b %Y"),
                          " — ", format(max(dates_delta_m), "%b %Y")),
        x = NULL, y = "Score") +
@@ -418,7 +418,7 @@ p7 <- ggplot(cmp_long, aes(x = MAT_NUM, y = DeltaRate * 100,
               `Delta ricostruita (PCA, k=3)` = "dashed")) +
   scale_y_continuous(labels = label_number(suffix = " pb")) +
   facet_wrap(~Mese, ncol = 1, scales = "free_y") +
-  labs(title = "STEP 3 — Confronto: delta osservata vs delta ricostruita con PCA",
+  labs(title = "Confronto: delta osservata vs delta ricostruita con PCA",
        subtitle = "Mesi selezionati: primo, centrale, ultimo",
        x = "Scadenza (anni)", y = "Variazione mensile (punti base)",
     color = "Serie", linetype = "Serie") +
@@ -485,7 +485,7 @@ p8 <- ggplot(prog_dt, aes(x = MAT_NUM, y = DeltaRate * 100,
   scale_linetype_manual(values = lty_scale) +
   scale_linewidth_manual(values = lwd_scale) +
   scale_y_continuous(labels = label_number(suffix = " pb")) +
-  labs(title = "STEP 3 — Ricostruzione progressiva della variazione mensile",
+  labs(title = "Ricostruzione progressiva della variazione mensile",
       subtitle = paste0("Mese centrale: ", format(ref_ym, "%B %Y")),
        x = "Scadenza (anni)", y = "Variazione mensile (punti base)",
        color = "Componenti", linetype = "Componenti") +
@@ -533,7 +533,7 @@ p9 <- ggplot(ns_list, aes(x = MAT_NUM, y = Rate,
   scale_linetype_manual(values = c(Osservata = "solid",
                                     "Nelson-Siegel" = "dashed")) +
   scale_y_continuous(labels = label_percent(scale = 1, accuracy = 0.01)) +
-  labs(title = "STEP 3 — Confronto curva osservata vs fit Nelson-Siegel",
+  labs(title = "Confronto curva osservata vs fit Nelson-Siegel",
        x = "Scadenza (anni)", y = "Tasso (%)", color = NULL, linetype = NULL) +
   plot_theme
 ggsave(file.path(output_dir, "step3_nelson_siegel_confronto_m.pdf"),
@@ -650,7 +650,7 @@ p_s5a <- ggplot(df_levels,
   scale_x_continuous(breaks = seq(1, 20, by = 2)) +
   scale_y_continuous(labels = label_number(suffix = "%", accuracy = 0.01)) +
   labs(
-    title   = "SEZ. 5 — Ricostruzione PCA di una curva dei livelli",
+    title   = "Ricostruzione PCA di una curva dei livelli",
     x       = "Scadenza (anni)",
     y       = "Tasso (%)",
     colour  = NULL,
@@ -710,7 +710,7 @@ p_s5b <- ggplot(df_err, aes(x = k, y = Errore_bp)) +
     minor_breaks = NULL
   ) +
   labs(
-    title   = "SEZ. 5 — Convergenza dell'errore di ricostruzione (scala log)",
+    title   = "Convergenza dell'errore di ricostruzione (scala log)",
     x       = "Numero di componenti principali k",
     y       = "Errore L2 (punti base, scala log)"
   ) +

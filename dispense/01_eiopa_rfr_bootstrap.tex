@@ -310,7 +310,7 @@ pubblicato da BCE) sono il proxy del tasso privo di rischio per l'area euro. I t
 sono rilevabili da provider come Bloomberg e Refinitiv/LSEG (sez.~4 di~\cite{eiopa2026}).
 In questa dispensa usiamo i ticker \textbf{Bloomberg \texttt{EESWE<tenor> Curncy}}
 (es.\ \texttt{EESWE10 Curncy} = OIS \estr{} a 10 anni), raccolti nel file
-\texttt{dati/EESWE.xlsx}.
+\texttt{dati/01_eeswe.xlsx}.
 
 \paragraph{Scadenze DLT.}
 Per l'EUR le scadenze standard DLT fino all'FSP sono:
@@ -917,7 +917,7 @@ alpha   <- 0.20                    # parametro di convergenza (phasing-in 2027)
 
 # Scadenze DLT e tassi par OIS €STR (ticker Bloomberg EESWE*, 29/05/2026)
 T_mkt <- c(1,2,3,4,5,6,7,8,10,12,15,20)
-# (s_mkt letti da dati/EESWE.xlsx con openxlsx::read.xlsx)
+# (s_mkt letti da dati/01_eeswe.xlsx con openxlsx::read.xlsx)
 r_mkt <- s_mkt - CRA               # tassi after-CRA -> input del bootstrap
 \end{Verbatim}
 \end{codebox}
@@ -973,7 +973,7 @@ z_e  <- exp(zc_e) - 1                                   # zero discreto annuo
 \end{codebox}
 
 \begin{osservazione}
-La lettura del file \texttt{dati/EESWE.xlsx} usa \texttt{openxlsx::read.xlsx}; in
+La lettura del file \texttt{dati/01_eeswe.xlsx} usa \texttt{openxlsx::read.xlsx}; in
 mancanza del pacchetto o del file, lo script usa un vettore di fallback con i valori del
 29/05/2026 riportati in Tabella~\ref{tab:ois_eur}.
 \end{osservazione}
@@ -1052,7 +1052,7 @@ Con la curva zero ottenuta dal bootstrap (Figura~\ref{fig:bootstrap}):
 \begin{esercizio}[Progetto: replica della curva EIOPA EUR]
 \begin{enumerate}[label=(\alph*)]
   \item Eseguite \texttt{R/curva\_eiopa\_rfr\_CN.R} con i dati di
-        \texttt{dati/EESWE.xlsx} e producete la curva spot 1--150 anni.
+        \texttt{dati/01_eeswe.xlsx} e producete la curva spot 1--150 anni.
   \item Confrontate i tassi spot del bootstrap con quelli ottenuti da
         un'interpolazione a forward costante implementata da voi.
   \item \emph{Sfida}: scaricate il file Excel mensile EIOPA da

@@ -38,7 +38,7 @@ suppressPackageStartupMessages({
 })
 
 input_file_name <- "../dati/data.csv"       # copia data.csv in LaboratorioPCA/dati/
-output_file_name <- "../dati/pca_input_curves_1Y_20Y.xlsx"
+output_file_name <- "../dati/04_ecb_spot.xlsx"
 
 args_all <- commandArgs(trailingOnly = FALSE)
 file_arg <- "--file="
