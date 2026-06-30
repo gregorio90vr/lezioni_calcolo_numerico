@@ -224,7 +224,7 @@ eusa <- eusa[order(eusa$date), ]
 cat(sprintf("Mesi nella finestra giu-dic 2025: %d\n", nrow(eusa)))
 cat("  ", paste(format(eusa$date), collapse = ", "), "\n\n")
 
-ref_date <- max(eusa$date)            # mese di riferimento per le figure 1-5 (dic 2025)
+ref_date <- as.Date("2025-07-31")     # mese di riferimento per le figure 1-5 (lug 2025)
 ref_lab  <- format(ref_date, "%b %Y")
 
 # --- Calibrazione del mese di riferimento -------------------------------------
@@ -246,25 +246,24 @@ cat(sprintf("  CRA = %.0f bps,  alpha* (criterio) = %.4f\n\n", CRA_ref * 1e4, a_
 # Spot e forward ricostruiti fino al Convergence Point: oltre il LLP il mercato
 # non quota, la curva e' ESTRAPOLATA e il forward converge all'UFR.
 
-grid1 <- seq(1, CP, by = 0.25)
-df1 <- rbind(
-  data.frame(T = grid1, val = sw_spot_ann(grid1, Qb_ref, a_ref) * 100, Serie = "Spot r(0,T)"),
-  data.frame(T = grid1, val = sw_fwd_ann (grid1, Qb_ref, a_ref) * 100, Serie = "Forward f(0,T)")
-)
-p1 <- ggplot(df1, aes(x = T, y = val, color = Serie)) +
-  annotate("rect", xmin = LLP, xmax = CP, ymin = -Inf, ymax = Inf,
+# Fig 1: curva spot ufficiale EIOPA luglio 2026, tenor 1-150
+off1 <- read_eiopa_official(as.Date("2025-07-31"))
+if (is.null(off1)) stop("Curva ufficiale EIOPA non trovata per luglio 2026")
+df1 <- data.frame(T = off1$mat, val = off1$spot * 100)
+p1 <- ggplot(df1, aes(x = T, y = val)) +
+  annotate("rect", xmin = LLP, xmax = max(df1$T), ymin = -Inf, ymax = Inf,
            fill = "gray85", alpha = 0.35) +
   geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed", linewidth = 0.7) +
   geom_vline(xintercept = LLP, color = "gray55", linetype = "dashed", linewidth = 0.4) +
-  geom_line(linewidth = 1) +
-  annotate("text", x = LLP + 0.6, y = min(df1$val), label = "estrapolazione (T > LLP)",
+  geom_line(linewidth = 1, color = col_spot) +
+  annotate("text", x = LLP + 1, y = min(df1$val), label = "estrapolazione (T > LLP)",
            hjust = 0, color = "gray35", size = 3.4) +
-  annotate("text", x = CP - 0.5, y = UFR_ann * 100 + 0.06, label = "UFR = 3.30%",
+  annotate("text", x = max(df1$T) - 1, y = UFR_ann * 100 + 0.06, label = "UFR = 3.30%",
            hjust = 1, color = col_ufr, size = 3.6) +
-  scale_color_manual(values = c("Spot r(0,T)" = col_spot, "Forward f(0,T)" = col_fwd)) +
-  labs(title = sprintf("Perche' estrapolare: curva EUR ricostruita oltre il LLP (%s)", ref_lab),
-       subtitle = "Il mercato e' liquido solo fino al LLP=20a; oltre, il forward converge all'UFR",
-       x = "Scadenza T (anni)", y = "Tasso annuo (%)", color = NULL) +
+  scale_x_continuous(breaks = c(1, 10, 20, 40, 60, 80, 100, 120, 150)) +
+  labs(title = "Curva spot EUR ufficiale EIOPA — luglio 2026",
+       subtitle = "Zona grigia: estrapolazione (T > LLP = 20a); linea viola: UFR = 3.30%",
+       x = "Scadenza T (anni)", y = "Tasso spot annuo (%)") +
   theme_dispensa
 save_fig("fig1_motivazione_estrapolazione", p1)
 
@@ -273,26 +272,50 @@ save_fig("fig1_motivazione_estrapolazione", p1)
 # ==============================================================================
 # Spot, forward e nodi par EUSA per il mese di riferimento.
 
-grid2 <- seq(0.5, 30, by = 0.25)
+grid2 <- seq(0.5, 60, by = 0.25)
 df2 <- rbind(
   data.frame(T = grid2, val = sw_spot_ann(grid2, Qb_ref, a_ref) * 100, Serie = "Spot r(0,T)"),
   data.frame(T = grid2, val = sw_fwd_ann (grid2, Qb_ref, a_ref) * 100, Serie = "Forward f(0,T)")
 )
-df2_par <- data.frame(T = T_mkt, val = s_ref * 100)
 p2 <- ggplot(df2, aes(x = T, y = val, color = Serie)) +
   geom_vline(xintercept = LLP, color = "gray70", linetype = "dashed", linewidth = 0.4) +
+  geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed", linewidth = 0.5) +
   geom_line(linewidth = 1) +
-  geom_point(data = df2_par, aes(x = T, y = val), inherit.aes = FALSE,
-             color = col_par, size = 2) +
+  annotate("text", x = 59, y = UFR_ann * 100 + 0.06, label = "UFR = 3.30%",
+           hjust = 1, color = col_ufr, size = 3.4) +
   scale_color_manual(values = c("Spot r(0,T)" = col_spot, "Forward f(0,T)" = col_fwd)) +
-  labs(title = sprintf("Spot, forward e par swap EUSA* — %s", ref_lab),
-       subtitle = "Punti neri: par rate IRS EUR vs EURIBOR 6M ai 15 nodi DLT {1..13,15,20}",
+  labs(title = sprintf("Spot e forward — %s", ref_lab),
+       subtitle = sprintf("Curva Smith-Wilson calibrata. Il forward converge all'UFR al CP = %d anni.", CP),
        x = "Scadenza T (anni)", y = "Tasso annuo (%)", color = NULL) +
-  scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 25, 30)) +
+  scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 30, 40, 50, 60)) +
   theme_dispensa
 save_fig("fig2_spot_forward_par", p2)
 
-df2b <- data.frame(T = grid2, P = sw_P(grid2, Qb_ref, a_ref))
+# fig_spot_fwd_media: spot e forward su orizzonte esteso (per la keybox §2.4)
+grid_km <- seq(0.25, CP, by = 0.25)
+df_km <- rbind(
+  data.frame(T = grid_km, val = sw_spot_ann(grid_km, Qb_ref, a_ref) * 100, Serie = "Spot r(t)"),
+  data.frame(T = grid_km, val = sw_fwd_ann (grid_km, Qb_ref, a_ref) * 100, Serie = "Forward f(t)")
+)
+p_km <- ggplot(df_km, aes(x = T, y = val, color = Serie)) +
+  annotate("rect", xmin = LLP, xmax = CP, ymin = -Inf, ymax = Inf,
+           fill = "gray85", alpha = 0.30) +
+  geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed", linewidth = 0.7) +
+  geom_vline(xintercept = LLP, color = "gray55", linetype = "dashed", linewidth = 0.4) +
+  geom_line(linewidth = 1) +
+  annotate("text", x = LLP + 0.6, y = min(df_km$val, na.rm = TRUE),
+           label = "estrapolazione (T > LLP)", hjust = 0, color = "gray35", size = 3.2) +
+  annotate("text", x = CP - 0.5, y = UFR_ann * 100 + 0.07, label = "UFR = 3.30%",
+           hjust = 1, color = col_ufr, size = 3.5) +
+  scale_color_manual(values = c("Spot r(t)" = col_spot, "Forward f(t)" = col_fwd)) +
+  labs(title = sprintf("Spot e forward istantaneo — %s", ref_lab),
+       subtitle = "Il forward converge all'UFR prima dello spot: lo spot e' la media del forward su [0,t]",
+       x = "Scadenza T (anni)", y = "Tasso annuo (%)", color = NULL) +
+  scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 30, 40, 50, 60)) +
+  theme_dispensa
+save_fig("fig_spot_fwd_media", p_km)
+
+df2b <- data.frame(T = seq(0.5, 25, by = 0.25), P = sw_P(seq(0.5, 25, by = 0.25), Qb_ref, a_ref))
 p2b <- ggplot(df2b, aes(x = T, y = P)) +
   geom_vline(xintercept = LLP, color = "gray70", linetype = "dashed", linewidth = 0.4) +
   geom_line(linewidth = 1, color = col_spot) +
@@ -390,36 +413,82 @@ grid_spl <- seq(1, 60, by = 0.25)
 
 spl_nat <- splinefun(T_mkt, sp_nodes, method = "natural")  # 2a derivata = 0 ai bordi
 spl_fmm <- splinefun(T_mkt, sp_nodes, method = "fmm")      # cubica ai bordi (default R)
-spot_sw <- sw_spot_ann(grid_spl, Qb_jul, a_jul) * 100
+
+# Curva ufficiale EIOPA ai tenor interi 1:60 (disponibile solo su griglia intera)
+mats_off    <- 1:60
+off_spot_60 <- off_jul$spot[match(mats_off, off_jul$mat)] * 100   # %
+ok_off      <- is.finite(off_spot_60)
 
 df_fan <- rbind(
-  data.frame(T = grid_spl, val = spl_nat(grid_spl), Serie = "Spline naturale"),
-  data.frame(T = grid_spl, val = spl_fmm(grid_spl), Serie = "Spline cubica (fmm)"),
-  data.frame(T = grid_spl, val = spot_sw,           Serie = "Smith-Wilson")
+  data.frame(T = grid_spl,         val = spl_nat(grid_spl),   Serie = "Spline naturale"),
+  data.frame(T = grid_spl,         val = spl_fmm(grid_spl),   Serie = "Spline cubica (fmm)"),
+  data.frame(T = mats_off[ok_off], val = off_spot_60[ok_off], Serie = "EIOPA ufficiale")
 )
 df_fan$Serie <- factor(df_fan$Serie,
-  levels = c("Spline naturale", "Spline cubica (fmm)", "Smith-Wilson"))
+  levels = c("Spline naturale", "Spline cubica (fmm)", "EIOPA ufficiale"))
 
-p_fan <- ggplot(df_fan, aes(x = T, y = val, color = Serie)) +
+p_fan <- ggplot(df_fan, aes(x = T, y = val, color = Serie, linewidth = Serie)) +
   annotate("rect", xmin = LLP, xmax = 60, ymin = -Inf, ymax = Inf,
            fill = "gray85", alpha = 0.35) +
   geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed",
              linewidth = 0.7) +
   geom_vline(xintercept = LLP, color = "gray55", linetype = "dashed", linewidth = 0.4) +
-  geom_line(linewidth = 1) +
+  geom_line() +
   coord_cartesian(ylim = c(-1, 6)) +     # la fmm puo' uscire dalla scala: divergenza
-  scale_color_manual(values = c("Spline naturale"     = "#E08214",
-                                "Spline cubica (fmm)"  = "#B2182B",
-                                "Smith-Wilson"         = col_spot)) +
+  scale_color_manual(values = c("Spline naturale"    = "#E08214",
+                                "Spline cubica (fmm)" = "#B2182B",
+                                "EIOPA ufficiale"     = col_spot)) +
+  scale_linewidth_manual(values = c("Spline naturale"    = 0.9,
+                                    "Spline cubica (fmm)" = 0.9,
+                                    "EIOPA ufficiale"     = 1.4)) +
+  guides(linewidth = "none") +
   annotate("text", x = LLP + 0.7, y = -0.6, label = "estrapolazione (T > LLP)",
            hjust = 0, color = "gray35", size = 3.3) +
   annotate("text", x = 59, y = UFR_ann * 100 + 0.18, label = "UFR = 3.30%",
            hjust = 1, color = col_ufr, size = 3.5) +
   labs(title = sprintf("Oltre il LLP il dato non basta: estrapolazioni a confronto (%s)", lab_jul),
-       subtitle = "Le spline coincidono sui dati liquidi ma divergono in modo arbitrario; SW converge all'UFR",
+       subtitle = "Le spline coincidono sui dati liquidi ma divergono in modo arbitrario; la curva EIOPA converge all'UFR",
        x = "Scadenza T (anni)", y = "Tasso spot r(0,T) (%)", color = NULL) +
   theme_dispensa + theme(legend.position = "top")
 save_fig("fig_spline_vs_sw", p_fan)
+
+# --- fig_spline_delta: scarti spline - EIOPA ufficiale (bps) ------------------
+mats_delta <- 1:60
+off_delta  <- off_jul$spot[match(mats_delta, off_jul$mat)] * 100   # %
+
+df_delta <- rbind(
+  data.frame(T     = mats_delta,
+             delta = (spl_nat(mats_delta) - off_delta) * 100,
+             Serie = "Spline naturale",
+             Zona  = ifelse(mats_delta <= LLP, "Liquida", "Estrapolazione")),
+  data.frame(T     = mats_delta,
+             delta = (spl_fmm(mats_delta) - off_delta) * 100,
+             Serie = "Spline cubica (fmm)",
+             Zona  = ifelse(mats_delta <= LLP, "Liquida", "Estrapolazione"))
+)
+df_delta <- df_delta[is.finite(df_delta$delta), ]
+df_delta$Serie <- factor(df_delta$Serie,
+  levels = c("Spline naturale", "Spline cubica (fmm)"))
+df_delta$Zona  <- factor(df_delta$Zona, levels = c("Liquida", "Estrapolazione"))
+
+ylim_spl <- max(10, ceiling(max(abs(df_delta$delta), na.rm = TRUE) / 10) * 10)
+
+p_delta <- ggplot(df_delta, aes(x = T, y = delta, fill = Zona)) +
+  geom_col(width = 0.9) +
+  geom_hline(yintercept = 0, color = "gray40", linewidth = 0.4) +
+  geom_vline(xintercept = LLP + 0.5, color = "gray50", linetype = "dashed",
+             linewidth = 0.4) +
+  scale_fill_manual(values = c("Liquida" = col_spot, "Estrapolazione" = col_fwd)) +
+  scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 30, 40, 50, 60)) +
+  scale_y_continuous(limits = c(-ylim_spl, ylim_spl)) +
+  facet_wrap(~Serie, ncol = 1) +
+  labs(title = sprintf("Scarti spline − EIOPA ufficiale (%s)", lab_jul),
+       subtitle = paste0("Ogni barra = differenza spot in bps (tenor interi 1–60a); ",
+                         "blu = zona liquida, rosso = estrapolazione"),
+       x = "Tenor (anni)", y = "Differenza (bps)", fill = NULL) +
+  theme_dispensa +
+  theme(legend.position = "top")
+save_fig("fig_spline_delta", p_delta)
 
 # ==============================================================================
 # PARTE 4 — RICOSTRUZIONE luglio 2025: passo a passo
@@ -433,6 +502,67 @@ tab_input <- data.frame(
 )
 cat("\n  Par rate EUSA* e after-CRA (luglio 2025):\n")
 print(tab_input, row.names = FALSE)
+
+# --- fig_sconto_nodi_jul: P(0,T) con punti esatti ai 15 nodi DLT ---------------
+grid_P  <- seq(0.5, 22, by = 0.1)
+P_nodi  <- sw_P(T_mkt, Qb_jul, a_jul)
+df_P    <- data.frame(T = grid_P, P = sw_P(grid_P, Qb_jul, a_jul))
+df_Pnod <- data.frame(T = T_mkt, P = P_nodi)
+
+p_sconto_nodi <- ggplot(df_P, aes(x = T, y = P)) +
+  geom_vline(xintercept = LLP, color = "gray70", linetype = "dashed", linewidth = 0.4) +
+  geom_line(linewidth = 1, color = col_spot) +
+  geom_point(data = df_Pnod, aes(x = T, y = P), inherit.aes = FALSE,
+             color = col_par, size = 2.5) +
+  scale_x_continuous(breaks = c(1, 5, 10, 15, 20)) +
+  labs(title = sprintf("Fattori di sconto P(0,T) — %s", lab_jul),
+       subtitle = paste0("Punti neri: P(0,T_j) ai 15 nodi DLT dalla soluzione SW.",
+                         " Giacciono esattamente sulla curva: interpolazione esatta."),
+       x = "Scadenza T (anni)", y = "P(0,T)") +
+  theme_dispensa
+save_fig("fig_sconto_nodi_jul", p_sconto_nodi)
+
+# --- tab_C_luglio: matrice dei flussi di cassa C (20x15) in LaTeX -------------
+C_jul <- build_C(T_mkt, r_jul)
+write_C_latex <- function(C, maturities, rates, out_file) {
+  m <- nrow(C); n <- ncol(C)
+  lines <- c(
+    "% GENERATO AUTOMATICAMENTE da 03_eiopa_rfr_smith_wilson.R",
+    "\\begin{table}[H]",
+    "\\centering",
+    paste0("\\caption{Matrice dei flussi di cassa $\\mathbf{C}\\in\\mathbb{R}^{20\\times 15}$,",
+           " luglio~2025. Celle \\colorbox{cyan!20}{azzurre} = cedola $r_j$;",
+           " celle \\colorbox{orange!35}{arancio} = cedola$+$rimborso $1{+}r_j$;",
+           " punti = flusso nullo.}"),
+    "\\label{tab:C-luglio}",
+    "\\resizebox{\\textwidth}{!}{%",
+    "\\renewcommand{\\arraystretch}{1.15}",
+    "\\scriptsize",
+    paste0("\\begin{tabular}{r|", paste(rep("r", n), collapse = ""), "}")
+  )
+  hdr <- paste0("$u_i\\backslash T_j$ & ",
+                paste(sprintf("\\textbf{%dY}", maturities), collapse = " & "),
+                " \\\\")
+  lines <- c(lines, "\\toprule", hdr, "\\midrule")
+  for (i in seq_len(m)) {
+    cells <- character(n)
+    for (j in seq_len(n)) {
+      Tj <- maturities[j]; v <- C[i, j]
+      if (i < Tj) {
+        cells[j] <- sprintf("\\cellcolor{cyan!18}$%.4f$", v)
+      } else if (i == Tj) {
+        cells[j] <- sprintf("\\cellcolor{orange!35}$\\mathbf{%.4f}$", v)
+      } else {
+        cells[j] <- "$\\cdot$"
+      }
+    }
+    lines <- c(lines, paste0("$", i, "$ & ", paste(cells, collapse = " & "), " \\\\"))
+  }
+  lines <- c(lines, "\\bottomrule", "\\end{tabular}}", "\\end{table}")
+  writeLines(lines, out_file)
+  cat(sprintf("  [OK] %s\n", out_file))
+}
+write_C_latex(C_jul, T_mkt, r_jul, file.path(dir_out, "tab_C_luglio.tex"))
 
 # --- fig_sw_alpha_jul: calibrazione di alpha ----------------------------------
 a_grid <- seq(a_min, 0.30, length.out = 200)
@@ -459,62 +589,93 @@ p_alpha_jul <- ggplot(df_g, aes(x = alpha, y = g)) +
 save_fig("fig_sw_alpha_jul", p_alpha_jul)
 
 # --- fig_sw_curve_jul: spot + forward + nodi par ------------------------------
-grid_f <- seq(0.5, 30, by = 0.25)
+grid_f <- seq(0.5, 60, by = 0.25)
 df_curve <- rbind(
   data.frame(T = grid_f, val = sw_spot_ann(grid_f, Qb_jul, a_jul) * 100, Serie = "Spot r(0,T)"),
   data.frame(T = grid_f, val = sw_fwd_ann (grid_f, Qb_jul, a_jul) * 100, Serie = "Forward f(0,T)")
 )
-df_par_jul <- data.frame(T = T_mkt, val = s_jul * 100)
 p_curve_jul <- ggplot(df_curve, aes(x = T, y = val, color = Serie)) +
   geom_vline(xintercept = LLP, color = "gray70", linetype = "dashed", linewidth = 0.4) +
   geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed",
              linewidth = 0.5) +
   geom_line(linewidth = 1) +
-  geom_point(data = df_par_jul, aes(x = T, y = val), inherit.aes = FALSE,
-             color = col_par, size = 2.5) +
   scale_color_manual(values = c("Spot r(0,T)" = col_spot, "Forward f(0,T)" = col_fwd)) +
-  scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 25, 30)) +
-  annotate("text", x = 29.5, y = UFR_ann * 100 + 0.06, label = "UFR",
+  scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 30, 40, 50, 60)) +
+  annotate("text", x = 59, y = UFR_ann * 100 + 0.06, label = "UFR = 3.30%",
            hjust = 1, color = col_ufr, size = 3.4) +
   labs(title = sprintf("Curva Smith-Wilson calibrata — %s", lab_jul),
-       subtitle = "Punti neri: par rate EUSA* ai 15 nodi DLT. Linea viola = UFR = 3.30%.",
+       subtitle = "Spot r(0,T) e forward f(0,T). Linea viola = UFR = 3.30%.",
        x = "Scadenza T (anni)", y = "Tasso annuo (%)", color = NULL) +
   theme_dispensa
 save_fig("fig_sw_curve_jul", p_curve_jul)
 
-# --- fig_sw_residui_jul: scarto SW - ufficiale su tutti i tenor interi -------
-# La curva ufficiale EIOPA pubblica spot a tutti i tenor interi 1..150;
-# confrontiamo su 1..80 (zona liquida + estrapolazione fino al CP)
+# --- fig_sw_vs_eiopa_jul: pannello doppio overlay + scarti 1-80a ---------------
+# Calcolo residui su 1:80 (usato sia nel pannello sia nella diagnostica)
 mats_all   <- 1:80
 sp_sw_all  <- sw_spot_ann(mats_all, Qb_jul, a_jul) * 100
 sp_off_all <- off_jul$spot[match(mats_all, off_jul$mat)] * 100
 res_all    <- (sp_sw_all - sp_off_all) * 100   # bps
-ok         <- is.finite(res_all)
-df_res_jul <- data.frame(T = mats_all[ok], Res = res_all[ok],
-                         Zona = ifelse(mats_all[ok] <= LLP, "Liquida", "Estrapolazione"))
-res_jul    <- res_all[match(T_mkt, mats_all)]   # per diagnostica (nodi DLT)
-ylim_res   <- max(2, ceiling(max(abs(res_all[ok]), na.rm = TRUE)))
-p_res_jul <- ggplot(df_res_jul, aes(x = T, y = Res, fill = Zona)) +
-  geom_col(width = 0.9, show.legend = TRUE) +
+ok_all     <- is.finite(res_all)
+res_jul    <- res_all[match(T_mkt, mats_all)]
+RMSE_liq   <- sqrt(mean(res_jul^2, na.rm = TRUE))
+ylim_res   <- max(2, ceiling(max(abs(res_all[ok_all]), na.rm = TRUE)))
+
+off_spot_60 <- off_jul$spot[match(1:60, off_jul$mat)] * 100
+ok60        <- is.finite(off_spot_60)
+
+df_vs_sw  <- data.frame(T = grid_f, val = sw_spot_ann(grid_f, Qb_jul, a_jul) * 100)
+df_vs_off <- data.frame(T = (1:60)[ok60], val = off_spot_60[ok60])
+
+p_vs_top <- ggplot() +
+  geom_vline(xintercept = LLP, color = "gray70", linetype = "dashed", linewidth = 0.4) +
+  geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed",
+             linewidth = 0.5) +
+  geom_line(data = df_vs_sw, aes(x = T, y = val, color = "SW ricostruito"),
+            linewidth = 1.1) +
+  geom_point(data = df_vs_off, aes(x = T, y = val, color = "EIOPA ufficiale"),
+             shape = 21, size = 1.6, fill = "white", stroke = 1.0) +
+  annotate("text", x = 59, y = UFR_ann * 100 + 0.06, label = "UFR = 3.30%",
+           hjust = 1, color = col_ufr, size = 3.2) +
+  scale_color_manual(values = c("SW ricostruito" = col_spot, "EIOPA ufficiale" = col_fwd)) +
+  scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 30, 40, 50, 60)) +
+  labs(title = sprintf("SW ricostruito vs EIOPA ufficiale — %s", lab_jul),
+       subtitle = "Tasso spot annuo: le due curve coincidono a occhio nudo (vedi pannello inferiore)",
+       x = NULL, y = "Tasso spot (%)", color = NULL) +
+  theme_dispensa + theme(legend.position = "top")
+
+df_res_vs <- data.frame(T    = mats_all[ok_all],
+                        Res  = res_all[ok_all],
+                        Zona = ifelse(mats_all[ok_all] <= LLP, "Liquida", "Estrapolazione"))
+df_res_vs$Zona <- factor(df_res_vs$Zona, levels = c("Liquida", "Estrapolazione"))
+
+p_vs_bot <- ggplot(df_res_vs, aes(x = T, y = Res, fill = Zona)) +
+  geom_col(width = 0.9) +
   geom_vline(xintercept = LLP + 0.5, color = "gray50", linetype = "dashed",
              linewidth = 0.4) +
   geom_hline(yintercept = 0, color = "gray40", linewidth = 0.4) +
   geom_hline(yintercept = c(-2, 2), color = "gray65", linetype = "dotted",
              linewidth = 0.35) +
+  annotate("text", x = LLP + 1, y = ylim_res * 0.85, label = "LLP = 20a",
+           hjust = 0, color = "gray40", size = 3.2) +
   scale_fill_manual(values = c("Liquida" = col_spot, "Estrapolazione" = col_fwd)) +
   scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 30, 40, 60, 80)) +
   scale_y_continuous(limits = c(-ylim_res, ylim_res)) +
-  annotate("text", x = LLP + 1, y = ylim_res * 0.85, label = "LLP = 20a",
-           hjust = 0, color = "gray40", size = 3.2) +
-  labs(title = sprintf("Residui SW - ufficiale EIOPA su tutti i tenor — %s", lab_jul),
-       subtitle = "Ogni barra = scarto spot in bps (tenor interi 1-80a). Linee tratteggiate: +/-2 bps.",
-       x = "Tenor (anni)", y = "Differenza (bps)", fill = NULL) +
-  theme_dispensa +
-  theme(legend.position = "top")
-save_fig("fig_sw_residui_jul", p_res_jul)
+  labs(subtitle = sprintf("Scarto SW − EIOPA (bps, tenor 1–80a). Linee tratteggiate: ±2 bps. RMSE liquido = %.2f bps.", RMSE_liq),
+       x = "Scadenza T (anni)", y = "Scarto (bps)", fill = NULL) +
+  theme_dispensa + theme(legend.position = "top")
+
+path_vs <- file.path(dir_out, "fig_sw_vs_eiopa_jul.pdf")
+pdf(path_vs, width = 9, height = 7.5)
+grid::grid.newpage()
+grid::pushViewport(grid::viewport(layout = grid::grid.layout(
+  2, 1, heights = grid::unit(c(2, 1), "null"))))
+print(p_vs_top, vp = grid::viewport(layout.pos.row = 1))
+print(p_vs_bot, vp = grid::viewport(layout.pos.row = 2))
+dev.off()
+cat(sprintf("  [OK] %s\n", path_vs))
+cat(sprintf("  - fig_sw_vs_eiopa_jul.pdf \n"))
 
 # --- Diagnostica numerica (residui ai 15 nodi DLT, tutti <= LLP) -------------
-RMSE_liq <- sqrt(mean(res_jul^2, na.rm = TRUE))
 maxdiff  <- max(abs(res_jul), na.rm = TRUE)
 tab_diag <- data.frame(
   Mese         = format(d_jul, "%Y-%m-%d"),
