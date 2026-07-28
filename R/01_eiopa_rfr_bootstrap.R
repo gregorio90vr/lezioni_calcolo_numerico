@@ -417,9 +417,12 @@ save_fig("fig02_bootstrap_zero", p2)
 fwd_1y <- numeric(FSP); fwd_1y[1] <- 1/bcRef$d[1] - 1
 for (t in 2:FSP) fwd_1y[t] <- bcRef$d[t-1]/bcRef$d[t] - 1
 df_fwd1 <- data.frame(t = seq_len(FSP), f = fwd_1y*100, is_obs = bcRef$is_obs)
-p3 <- ggplot(df_fwd1, aes(x = t, y = f)) +
-  geom_step(direction = "vh", color = col_fwd, linewidth = 1) +
-  geom_point(aes(color = ifelse(is_obs, "osservato", "interpolato")), size = 2.4) +
+df_step <- data.frame(t0 = seq_len(FSP) - 1, t1 = seq_len(FSP), f = fwd_1y*100)
+p3 <- ggplot() +
+  geom_segment(data = df_step, aes(x = t0, xend = t1, y = f, yend = f),
+               color = col_fwd, linewidth = 1) +
+  geom_point(data = df_fwd1, aes(x = t, y = f,
+             color = ifelse(is_obs, "osservato", "interpolato")), size = 2.4) +
   scale_color_manual(values = c("osservato" = col_obs, "interpolato" = col_interp), name = NULL) +
   labs(title = "Forward annuali f(t-1,t) e ipotesi constant forward — dati di input EIOPA",
        subtitle = "Nei tratti tra tenor non consecutivi il forward e' costante (gap 13->15, 15->20)",
@@ -427,13 +430,30 @@ p3 <- ggplot(df_fwd1, aes(x = t, y = f)) +
   theme_dispensa + scale_x_continuous(breaks = seq_len(FSP))
 save_fig("fig03_constant_forward", p3)
 
-# --- Newton sul gap 15->20 (gap 5), dati di input EIOPA ---
+# --- Newton sui due gap (13->15, gap 2; 15->20, gap 5), dati di input EIOPA ---
 bc15 <- bootstrap_curve(T_mkt[T_mkt <= 15], r_input[T_mkt <= 15], 15, solver = "newton")
-k20 <- which(T_mkt == 20); k15 <- which(T_mkt == 15)
+k13 <- which(T_mkt == 13); k15 <- which(T_mkt == 15); k20 <- which(T_mkt == 20)
 s2 <- r_input[k20]; s1 <- r_input[k15]; d_tk <- bc15$d[15]; gap <- 5
 f0 <- bc15$d[14]/bc15$d[15] - 1
 nr <- nr_solve(s2, s1, d_tk, gap, f0)
+nr13 <- nr_solve(r_input[k15], r_input[k13], bcRef$d[13], 2, bcRef$d[12]/bcRef$d[13] - 1)
+cat(sprintf("Gap 13->15: f*(Newton)=%.12f in %d iter\n", nr13$f, nr13$n_iter))
 cat(sprintf("Gap 15->20: f*(Newton)=%.12f in %d iter\n\n", nr$f, nr$n_iter))
+
+# --- fig04: convergenza di Newton sui due gap (residuo |phi(f_k)| per iterazione) ---
+df_conv <- rbind(
+  data.frame(iter = nr13$trace$iter, resid = abs(nr13$trace$g), Gap = "13 -> 15 (g=2)"),
+  data.frame(iter = nr$trace$iter,   resid = abs(nr$trace$g),   Gap = "15 -> 20 (g=5)"))
+df_conv <- df_conv[df_conv$resid > 0, ]
+p4 <- ggplot(df_conv, aes(x = iter, y = resid)) +
+  geom_line(linewidth = 1, color = col_nr) + geom_point(size = 2.4, color = col_nr) +
+  facet_wrap(~ Gap, scales = "free_x") +
+  scale_y_log10() +
+  labs(title = "Convergenza di Newton sui due gap del bootstrap — dicembre 2025",
+       subtitle = "Residuo |phi(f_k)| per iterazione (scala log): convergenza quadratica",
+       x = "Iterazione k", y = "Residuo |phi(f_k)|") +
+  theme_dispensa
+save_fig("fig04_newton_convergenza", p4)
 
 # --- fig05: peso B(a,h) ---
 hh <- seq(0, 130, length.out = 400)
@@ -749,20 +769,29 @@ print(p_botm, vp = grid::viewport(layout.pos.row = 2))
 dev.off()
 cat(sprintf("  [OK] %s\n", path_m))
 
-# --- (ii) tabella delta ai nodi DLT (titoli neutri) ---
+# --- (ii) tabella delta ai nodi DLT + alcuni tenor estrapolati (titoli neutri) ---
 {
+  T_extra <- c(30, 40, 50, 60)
+  T_tab   <- c(T_mkt, T_extra)
   lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Ricostruzione di dicembre~2025 (bootstrap dai dati di input EIOPA, LLFR a ",
-           "media pesata) vs curva EIOPA ufficiale, ai 15 tenor DLT.}"),
+           "media pesata) vs curva EIOPA ufficiale, ai 15 tenor DLT e, per illustrare la ",
+           "convergenza in estrapolazione, ad alcuni tenor oltre l'FSP (30, 40, 50, 60 anni).}"),
     "\\label{tab:delta-dic}\\renewcommand{\\arraystretch}{1.15}",
     "\\begin{tabular}{rccc}", "\\toprule",
     "$T_k$ (anni) & ricostruzione (\\%) & EIOPA ufficiale (\\%) & $\\Delta$ (bps)\\\\",
     "\\midrule")
-  for (i in seq_along(T_mkt)) {
+  for (i in seq_along(T_tab)) {
+    if (i == length(T_mkt) + 1) {
+      lines <- c(lines, "\\midrule",
+                 "\\multicolumn{4}{l}{\\emph{Oltre l'FSP (estrapolazione):}}\\\\",
+                 "\\midrule")
+    }
     tint <- if (i %% 2 == 1) "\\rowcolor{rowtint}" else ""
-    lines <- c(lines, sprintf("%s%d & %.4f & %.4f & %.2f\\\\", tint, T_mkt[i],
-                              z_all[match(T_mkt[i], t_all)]*100, znew_at(T_mkt[i]), res_nodi_m[i]))
+    Tk <- T_tab[i]
+    lines <- c(lines, sprintf("%s%d & %.4f & %.4f & %.2f\\\\", tint, Tk,
+                              z_rec[match(Tk, mats)], z_o[match(Tk, mats)], res[match(Tk, mats)]))
   }
   lines <- c(lines, "\\bottomrule", "\\end{tabular}", "\\end{table}")
   writeLines(lines, file.path(dir_out, "tab_delta_dic.tex"))

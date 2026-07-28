@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  28 JUL 2026 18:03
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  29 JUL 2026 00:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1071,28 +1071,28 @@ LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [2{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
-}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:
-/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}] [
-3{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc
+}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}] [
+3{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc
+}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc
 }]
 
-LaTeX Warning: Command \texteuro invalid in math mode on input line 277.
+LaTeX Warning: Command \texteuro invalid in math mode on input line 280.
 
 
-LaTeX Warning: Command \texteuro invalid in math mode on input line 277.
+LaTeX Warning: Command \texteuro invalid in math mode on input line 280.
 
 <../output/shared/fig_fattori_sconto.pdf, id=169, 578.16pt x 361.35pt>
 File: ../output/shared/fig_fattori_sconto.pdf Graphic file (type pdf)
 <use ../output/shared/fig_fattori_sconto.pdf>
 Package pdftex.def Info: ../output/shared/fig_fattori_sconto.pdf  used on input
- line 285.
+ line 288.
 (pdftex.def)             Requested size: 350.53915pt x 219.08333pt.
 [4
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.298 \begin{definizione}[Tasso spot]
+l.301 \begin{definizione}[Tasso spot]
                                       <../output/shared/fig_fattori_sconto.pdf>
 ] [5]
 <../output/01_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf, id=200, 650.43pt 
@@ -1101,216 +1101,230 @@ File: ../output/01_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf Graphic file
 (type pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig_spot_fwd_bootstra
-p.pdf  used on input line 403.
+p.pdf  used on input line 406.
 (pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
  [6
 pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.435 I
+l.438 I
        l \textbf{valore nominale} (o \textbf{nozionale}) di un'obbligazione ...
  <../output/01_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf>]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 477.
+(Font)              <10> on input line 480.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 477.
+(Font)              <7> on input line 480.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 477.
+(Font)              <5> on input line 480.
  [7] [8]
-[9] [10] [11]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 8
-52.
-
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
-File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [12]
-<../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf, id=335, 650.43pt x 397.48
+[9] [10] [11] [12]
+<../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf, id=315, 650.43pt x 397.48
 5pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf Graphic file (type pd
 f)
 <use ../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf  u
-sed on input line 979.
+sed on input line 984.
 (pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
+ [13]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
+030.
 
-[13] [14
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1042 
-        <../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf>]
+(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
 (../output/01_eiopa_rfr_bootstrap/tab_input_main_dic.tex
 Underfull \hbox (badness 1789) in paragraph at lines 3--3
 []\T1/lmr/m/n/10.95 Tabella 1: []Par swap EUR di in-put EIO-PA a di-cem-bre 202
 5 ai 15 te-nor DLT
  []
 
-)
-<../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf, id=369, 650.43pt x 397.4
+) [14
+pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1037 
+        <../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf>]
+<../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf, id=349, 650.43pt x 397.4
 85pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf Graphic file (type p
 df)
 <use ../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf  
-used on input line 1058.
+used on input line 1052.
 (pdftex.def)             Requested size: 394.35236pt x 240.99773pt.
- [15
-pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1063 
-       ]
-<../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf, id=377, 650.43pt x 
+<../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf, id=350, 650.43pt x 
 397.485pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf Graphic file (t
 ype pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.
-pdf  used on input line 1066.
+pdf  used on input line 1060.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
-<../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf, id=378, 650.43pt 
+ [15
+pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1066 
+       
+pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1066 
+        <../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf>]
+<../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf, id=364, 650.43pt 
 x 397.485pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf Graphic file 
 (type pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig03_constant_forwar
-d.pdf  used on input line 1075.
+d.pdf  used on input line 1069.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
  [16
-pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1081 
-       
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1081 
-        <../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf> <../output/01_ei
-opa_rfr_bootstrap/fig02_bootstrap_zero.pdf>]
-(../output/01_eiopa_rfr_bootstrap/tab_llfr_weighted.tex) [17
+l.1087 
+       
 pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1106 
-        <../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf>]
-<../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic.pdf, id=421, 650.43pt x
+l.1087 
+        <../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf> <../output/
+01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf>]
+<../output/01_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf, id=385, 650.43p
+t x 397.485pt>
+File: ../output/01_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf Graphic fil
+e (type pdf)
+<use ../output/01_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf>
+Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig04_newton_converge
+nza.pdf  used on input line 1090.
+(pdftex.def)             Requested size: 394.35236pt x 240.99773pt.
+
+(../output/01_eiopa_rfr_bootstrap/tab_llfr_weighted.tex) [17
+pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1123 
+       
+pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1123 
+        <../output/01_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf>]
+<../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic.pdf, id=410, 650.43pt x
  397.485pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic.pdf Graphic file (
 type pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic
-.pdf  used on input line 1131.
+.pdf  used on input line 1134.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [18
-pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1140 
-       ]
-<../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf, id=434, 650.43pt x 
+<../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf, id=418, 650.43pt x 
 542.025pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf Graphic file (t
 ype pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.
-pdf  used on input line 1147.
+pdf  used on input line 1150.
 (pdftex.def)             Requested size: 403.11768pt x 335.93623pt.
- [19
-pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1154 
-        <../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic.pdf>]
-(../output/01_eiopa_rfr_bootstrap/tab_delta_dic.tex) [20
+
+[18
 pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1160 
+l.1157 
+        <../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic.pdf>]
+(../output/01_eiopa_rfr_bootstrap/tab_delta_dic.tex) [19
+pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1163 
         <../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf>]
-<../output/01_eiopa_rfr_bootstrap/fig06b_convergenza_ufr.pdf, id=463, 650.43pt 
+<../output/01_eiopa_rfr_bootstrap/fig06b_convergenza_ufr.pdf, id=448, 650.43pt 
 x 397.485pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig06b_convergenza_ufr.pdf Graphic file 
 (type pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig06b_convergenza_ufr.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig06b_convergenza_uf
-r.pdf  used on input line 1179.
+r.pdf  used on input line 1182.
 (pdftex.def)             Requested size: 372.4491pt x 227.612pt.
- [21
+ [20
 pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1185 
+l.1188 
        ]
-<../output/01_eiopa_rfr_bootstrap/fig07a_sensitivita_alpha.pdf, id=469, 650.43p
+<../output/01_eiopa_rfr_bootstrap/fig07a_sensitivita_alpha.pdf, id=454, 650.43p
 t x 397.485pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig07a_sensitivita_alpha.pdf Graphic fil
 e (type pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig07a_sensitivita_alpha.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig07a_sensitivita_al
-pha.pdf  used on input line 1188.
+pha.pdf  used on input line 1191.
 (pdftex.def)             Requested size: 394.35236pt x 240.99773pt.
- [22
-pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1213 
-       
+ [21
 pdfTeX warning (ext4): destination with the same identifier (name{figure.10}) h
 as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1213 
+l.1216 
+       
+pdfTeX warning (ext4): destination with the same identifier (name{figure.11}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1216 
         <../output/01_eiopa_rfr_bootstrap/fig06b_convergenza_ufr.pdf> <../outpu
 t/01_eiopa_rfr_bootstrap/fig07a_sensitivita_alpha.pdf>]
-<../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_curves.pdf, id=494, 650.43pt x 
+<../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_curves.pdf, id=479, 650.43pt x 
 397.485pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_curves.pdf Graphic file (t
 ype pdf)
 <use ../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_curves.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_curves.
-pdf  used on input line 1221.
+pdf  used on input line 1224.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
 
-(../output/01_eiopa_rfr_bootstrap/tab_sw_vs_new.tex) [23
-pdfTeX warning (ext4): destination with the same identifier (name{figure.11}) h
+(../output/01_eiopa_rfr_bootstrap/tab_sw_vs_new.tex) [22
+pdfTeX warning (ext4): destination with the same identifier (name{figure.12}) h
 as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1229 
+l.1232 
         <../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_curves.pdf>]
-<../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf, id=508, 650.43pt x 397.485
+<../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf, id=493, 650.43pt x 397.485
 pt>
 File: ../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf Graphic file (type pdf
 )
 <use ../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf>
 Package pdftex.def Info: ../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf  us
-ed on input line 1232.
+ed on input line 1235.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [24
+ [23
 pdfTeX warning (ext4): destination with the same identifier (name{table.4}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1252 
+l.1255 
        
-pdfTeX warning (ext4): destination with the same identifier (name{figure.12}) h
+pdfTeX warning (ext4): destination with the same identifier (name{figure.13}) h
 as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1252 
-        <../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf>] [25]
+l.1255 
+        <../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf>] [24]
 (01_eiopa_rfr_bootstrap.aux)
  ***********
 LaTeX2e <2025-11-01>
@@ -1321,35 +1335,34 @@ Package rerunfilecheck Info: File `01_eiopa_rfr_bootstrap.out' has not changed.
 (rerunfilecheck)             Checksum: 0604D8035927E08F7DC37DC9E8E8DC4A;4931.
  ) 
 Here is how much of TeX's memory you used:
- 28270 strings out of 467871
- 541585 string characters out of 5418376
- 956545 words of memory out of 5000000
- 56516 multiletter control sequences out of 15000+600000
- 720192 words of font info for 113 fonts, out of 8000000 for 9000
+ 28209 strings out of 467871
+ 540466 string characters out of 5418376
+ 955791 words of memory out of 5000000
+ 56467 multiletter control sequences out of 15000+600000
+ 721460 words of font info for 113 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,16n,108p,842b,721s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 98i,14n,108p,842b,577s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
 b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pf
-b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx8.pfb
-><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pfb
-><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb
-><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi6.pfb>
-<C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><
-C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><C
-:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:
-/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/
-Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Us
-ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/User
-s/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users/
-grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/
-grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/
-grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/g
-rego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/gr
-ego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/gre
-go/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
-Output written on 01_eiopa_rfr_bootstrap.pdf (25 pages, 559872 bytes).
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pf
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pf
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi6.pfb
+><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb>
+<C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><
+C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C
+:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:
+/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/U
+sers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Use
+rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users
+/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users
+/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users
+/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/
+grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/g
+rego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/gr
+ego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
+Output written on 01_eiopa_rfr_bootstrap.pdf (24 pages, 538345 bytes).
 PDF statistics:
- 657 PDF objects out of 1000 (max. 8388607)
- 126 named destinations out of 1000 (max. 500000)
- 265 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 636 PDF objects out of 1000 (max. 8388607)
+ 115 named destinations out of 1000 (max. 500000)
+ 270 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -24,14 +24,14 @@
 \contentsline {subsection}{\numberline {3.6}Estrapolazione: dall'LLFR all'UFR}{12}{subsection.3.6}%
 \contentsline {paragraph}{Dove arrivare: l'UFR.}{12}{subsection.3.6}%
 \contentsline {paragraph}{Da dove partire: l'LLFR.}{12}{subsection.3.6}%
-\contentsline {paragraph}{Come passare dall'uno all'altro: convergenza graduale.}{13}{equation.21}%
+\contentsline {paragraph}{Come passare dall'uno all'altro: convergenza graduale.}{12}{equation.21}%
 \contentsline {subsection}{\numberline {3.7}Il parametro di convergenza $\alpha $}{14}{subsection.3.7}%
 \contentsline {section}{\numberline {4}Ricostruzione: dicembre 2025}{14}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Dati di input}{15}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.1}Dati di input}{14}{subsection.4.1}%
 \contentsline {subsection}{\numberline {4.2}Il bootstrap in azione}{15}{subsection.4.2}%
-\contentsline {paragraph}{Il gap $15\!\to \!20$ con Newton.}{17}{figure.6}%
+\contentsline {paragraph}{Newton sui due gap: velocit\`a di convergenza.}{16}{figure.6}%
 \contentsline {subsection}{\numberline {4.3}Il calcolo del LLFR}{17}{subsection.4.3}%
 \contentsline {subsection}{\numberline {4.4}Curva ricostruita e confronto col benchmark}{18}{subsection.4.4}%
-\contentsline {paragraph}{Convergenza e sensitivit\`a.}{21}{table.3}%
-\contentsline {section}{\numberline {5}Confronto con il metodo Smith--Wilson}{22}{section.5}%
-\contentsline {section}{\numberline {6}Conclusioni}{25}{section.6}%
+\contentsline {paragraph}{Convergenza e sensitivit\`a.}{20}{table.3}%
+\contentsline {section}{\numberline {5}Confronto con il metodo Smith--Wilson}{21}{section.5}%
+\contentsline {section}{\numberline {6}Conclusioni}{24}{section.6}%
