@@ -1,0 +1,18 @@
+% GENERATO da R/01_eiopa_rfr_bootstrap.R
+\begin{table}[H]\centering\small
+\caption{Calcolo dell'LLFR a media pesata (EIOPA-BoS-26-198, sez.~8.5.6) per dicembre~2025. Ogni riga: forward continuo $f^c$ tra la scadenza indicata e il riferimento precedente (l'FSP a 20 anni, o il tenor DLT 15 per il primo termine), moltiplicato per il peso $w$. La somma dei contributi \`e l'$\LLFR^c$.}
+\label{tab:llfr-weighted}\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{rccc}
+\toprule
+Tenor (anni) & peso $w$ & $f^c$ (\%) & contributo $w\,f^c$ (\%)\\
+\midrule
+\rowcolor{rowtint}20 & 0.33 & 3.4546 & 1.1400\\
+25 & 0.12 & 3.2032 & 0.3844\\
+\rowcolor{rowtint}30 & 0.48 & 3.1209 & 1.4980\\
+40 & 0.04 & 2.9849 & 0.1194\\
+\rowcolor{rowtint}50 & 0.03 & 2.7704 & 0.0831\\
+\midrule
+\textbf{$\LLFR^c$} & \textbf{1.00} & & \textbf{3.2249}\\
+\bottomrule
+\end{tabular}
+\end{table}

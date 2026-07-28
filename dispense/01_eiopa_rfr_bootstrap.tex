@@ -4,6 +4,9 @@
 %  Corso di Calcolo Numerico — Laboratorio
 %  Università degli Studi di Verona — A.A. 2026–2027
 %  Riferimento: EIOPA-BoS-26-198 (RFR Technical Documentation, Mag 2026)
+%  Struttura speculare alla dispensa 03 (Smith-Wilson):
+%    motivazioni -> contesto matematico -> spline -> metodo -> ricostruzione -> conclusioni
+%  Ricostruzione: dicembre 2025 dai dati di input EIOPA (eiopa_input_swap_dec2025.csv)
 % ============================================================
 \documentclass[11pt,a4paper]{article}
 
@@ -28,14 +31,14 @@
 \usepackage{bm}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 
+% le figure sono prodotte da R/01_eiopa_rfr_bootstrap.R in output/01_eiopa_rfr_bootstrap/
+\graphicspath{{../output/01_eiopa_rfr_bootstrap/}}
+
 \geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
 \setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
 \setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
 \hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black,
             citecolor=green!40!black}
-
-% le figure sono prodotte da R/01_eiopa_rfr_bootstrap.R in output/01_eiopa_rfr_bootstrap/
-\graphicspath{{../output/01_eiopa_rfr_bootstrap/}}
 
 \titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
@@ -51,7 +54,6 @@
 \theoremstyle{remark}
 \newtheorem*{osservazione}{Osservazione}
 \newtheorem*{attenzione}{Nota numerica}
-\newtheorem{esercizio}{Esercizio}[section]
 
 % --- box colorati ---
 \tcbset{
@@ -90,9 +92,8 @@
 % ============================================================
 \title{%
   \textbf{Costruzione della Curva EIOPA Risk-Free Rate}\\[6pt]
-  \large Bootstrap a forward costante, First Smoothing Point e\\[3pt]
-  Estrapolazione verso l'Ultimate Forward Rate\\[4pt]
-  \normalsize Ricerca di zeri (Newton--Raphson e bisezione) e implementazione in R
+  \large Il metodo a bootstrap: forward costante, First Smoothing Point\\[3pt]
+  ed estrapolazione verso l'Ultimate Forward Rate\\[4pt]
 }
 \author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
   Universit\`a degli Studi di Verona\\[2pt]
@@ -105,962 +106,1174 @@
 \newpage
 
 % ============================================================
-\section{Introduzione e obiettivi}
-\label{sec:intro}
+\section{Motivazioni economiche}
 % ============================================================
 
-\subsection{Il problema}
+\subsection{Contesto regolamentare}
 
-Le compagnie di assicurazione vita assumono impegni che possono estendersi per
-50--80 anni nel futuro: rendite vitalizie, polizze Long-Term Care, fondi pensione.
-Per quantificarne il \emph{valore attuale}, occorre attualizzare i flussi di cassa
-futuri stimati, il che richiede una \textbf{curva dei tassi di interesse} valida su
-tutto l'orizzonte.
+Una compagnia di assicurazione vita o un fondo pensione assume obblighi di pagamento che si
+estendono per decenni: una rendita vitalizia o una polizza possono generare uscite fino a
+50--60 anni nel futuro.
 
-Il nodo cruciale \`e che i mercati finanziari forniscono tassi osservabili e affidabili
-solo fino a una certa scadenza --- tipicamente 20 anni per l'euro. Oltre quel punto i
-dati sono illiquidi o inesistenti. Il metodo di costruzione della curva deve quindi
-risolvere due sotto-problemi:
+Il quadro regolamentare europeo \textbf{Solvency~II} impone che ogni compagnia dimostri,
+\emph{oggi}, di avere risorse sufficienti per far fronte a tutti i propri impegni verso gli
+assicurati, chiamati \emph{passivit\`a}. Si tratta quindi di rispondere alla domanda: \emph{quanto
+valgono, oggi, quei pagamenti futuri?}
+
+Risulta centrale in questa prospettiva il \textbf{valore temporale del denaro}: 100\,\texteuro{}
+ricevuti tra 30 anni valgono \emph{meno} di 100\,\texteuro{} ricevuti oggi, perch\'e nel
+frattempo il denaro pu\`o essere investito e generare interessi. Poich\'e le passivit\`a hanno
+scadenze diverse, serve un tasso per ogni orizzonte temporale: 1 anno, 5 anni, 20 anni, 50
+anni\ldots\ L'insieme di questi tassi al variare della scadenza $T$ \`e la \textbf{struttura a
+termine dei tassi di interesse}, o pi\`u brevemente \textbf{curva dei tassi}.
+
+Solvency~II prevede che tutte le imprese di assicurazione europee utilizzino la \textbf{medesima
+curva dei tassi di interesse privi di rischio}, calcolata e pubblicata con cadenza mensile da
+\textbf{EIOPA} (\emph{European Insurance and Occupational Pensions Authority}), l'autorit\`a
+europea di vigilanza competente per il settore assicurativo e previdenziale. EIOPA pubblica le
+strutture a termine dei tassi di interesse per \textbf{pi\`u valute} (EUR, GBP, CHF, NOK, SEK e
+altre). Questa dispensa si concentra sulla curva dei tassi \textbf{EUR}, costruita a partire dai
+tassi swap sull'euro e destinata alle imprese con passivit\`a denominate in euro. La metodologia
+di calcolo \`e definita nella documentazione tecnica di EIOPA~\cite{eiopa2026} e rispecchia
+un'importante revisione che entra in vigore dal 1\textsuperscript{o} gennaio 2027. Tale revisione
+\`e frutto della \textbf{revisione di Solvency~II} (la \emph{2020 Review of Solvency~II}%
+~\cite{eiopa2020opinion}, recepita dalla Dir.~(UE)~2025/2~\cite{dir2025}): il precedente metodo
+Smith--Wilson estrapolava il lungo periodo con una curva poco sensibile all'informazione di
+mercato disponibile oltre l'ultimo punto liquido; la revisione lo sostituisce con un metodo che
+incorpora anche i tassi osservati sulle scadenze pi\`u lunghe, riflettendo meglio il mercato di
+lungo periodo e limitando l'impatto immediato sulla valutazione delle passivit\`a.
+
+\subsection{La metodologia}
+
+Il mercato finanziario fornisce quotazioni affidabili di tassi di interesse solo per scadenze
+\textbf{attivamente scambiate}. Un mercato si dice \textbf{liquido} quando gli strumenti
+trattati soddisfano tre requisiti: sono scambiati in volumi elevati (\emph{deep}), le
+transazioni avvengono con continuità e con spread denaro--lettera ridotti (\emph{liquid}),
+e i prezzi sono osservabili e confrontabili da operatori indipendenti (\emph{transparent}).
+Queste tre condizioni --- sintetizzate nell'acronimo \textbf{DLT} --- garantiscono che le
+quotazioni riflettano effettivamente le aspettative del mercato e non siano distorte da
+scambi isolati o poco rappresentativi.
+
+Per l'area euro gli strumenti di tasso presi in considerazione sono chiamati \textbf{swap su
+tassi di interesse} (che definiremo in seguito): hanno grandi volumi di scambio e sono DLT fino a
+circa 20 anni; oltre, i volumi calano drasticamente e le quotazioni diventano sporadiche o del
+tutto assenti. Questa soglia --- l'\textbf{ultimo punto liquido di mercato} --- \`e detta
+\textbf{First Smoothing Point} ($\FSP$) ed \`e fissata a 20 anni per l'euro.
+
+Entro l'orizzonte liquido di mercato (20 anni) si hanno informazioni sufficienti per determinare
+la curva dei tassi; oltre, il problema \`e estendere queste informazioni alle scadenze
+successive, costruendo una curva che resti sufficientemente stabile fino a 150 anni. In sintesi
+ci si concentra su due sotto-problemi:
 \begin{enumerate}
-  \item \textbf{Interpolazione}: ricostruire la curva dei tassi zero per tutte le
-        scadenze tra i nodi di mercato osservati;
-  \item \textbf{Estrapolazione}: prolungare la curva fino a 150 anni con convergenza
-        a un tasso asintotico economicamente fondato (l'Ultimate Forward Rate).
+  \item \textbf{Bootstrap}: algoritmo per ricostruire in modo regolare i tassi risk-free alle scadenze dove
+        esistono quotazioni di mercato ($T \le 20$ anni);
+  \item \textbf{Estrapolazione}: estendere la curva oltre i 20 anni in modo stabile e
+        coerente, garantendo la convergenza verso un tasso asintotico di lungo periodo dotato di una solida interpretazione economica.
 \end{enumerate}
 
-\begin{warningbox}
-\textbf{Cambio di metodologia (importante).} Gli emendamenti a Solvency~II
-(Direttiva (UE) 2025/2~\cite{dir2025} e Regolamento Delegato (UE)
-2026/269~\cite{reg2026}) hanno modificato le tecniche di interpolazione ed
-estrapolazione. La documentazione tecnica vigente,
-\textbf{EIOPA-BoS-26-198 (Maggio 2026)}~\cite{eiopa2026}, \textbf{non utilizza pi\`u
-il metodo Smith--Wilson}. Il metodo attuale \`e basato su:
-\begin{itemize}
-  \item \textbf{bootstrap} sotto l'ipotesi di \emph{forward costante} per
-        l'interpolazione (Annex~D di~\cite{eiopa2026});
-  \item \textbf{First Smoothing Point (FSP)} e \textbf{Last Liquid Forward Rate
-        (LLFR)} per l'estrapolazione verso l'UFR (sez.~8 di~\cite{eiopa2026}).
-\end{itemize}
-Questa dispensa segue integralmente la nuova documentazione tecnica.
-\end{warningbox}
+% ============================================================
+\section{La curva dei tassi e i tassi forward}
+% ============================================================
 
-In questa dispensa mostriamo come l'intero problema si riduca a passi numerici ben
-definiti, che analizziamo in dettaglio:
-
-\begin{enumerate}
-  \item \textbf{Bootstrap della curva zero (Sezione~\ref{sec:bootstrap}).}
-        A partire dai tassi par degli swap di mercato si ricavano in sequenza i
-        fattori di sconto $d_t$ (e quindi i tassi zero $z_t$) per tutte le scadenze
-        intere fino all'FSP. Quando due scadenze osservate non sono consecutive,
-        l'ipotesi di \emph{forward costante} fra di esse trasforma il vincolo par in
-        un'\textbf{equazione non lineare} nel forward incognito.
-
-  \item \textbf{Ricerca di zeri (Sezione~\ref{sec:numerici}).}
-        L'equazione non lineare del bootstrap si risolve con metodi di
-        \textbf{ricerca di zeri}: il \textbf{metodo di Newton--Raphson} (usato dal
-        codice di produzione EIOPA, Annex~D.6 di~\cite{eiopa2026}, che ne fornisce la
-        derivata analitica) e, come alternativa robusta, il \textbf{metodo di
-        bisezione}. Confrontiamo i due metodi in termini di ordine di convergenza e
-        numero di iterazioni.
-
-  \item \textbf{Estrapolazione verso l'UFR (Sezione~\ref{sec:estrapolazione}).}
-        Oltre l'FSP il tasso forward converge all'UFR mediante una formula in forma
-        chiusa governata da un parametro di convergenza $\alpha$ (sez.~8.5
-        di~\cite{eiopa2026}). A differenza del precedente metodo Smith--Wilson,
-        $\alpha$ \textbf{non viene calibrato}: \`e un parametro regolamentare fisso.
-\end{enumerate}
-
-\begin{keybox}[Il filo rosso: dai tassi di mercato alla curva 1--150 anni]
-\textbf{Passo 0 (dati di mercato)} Si rilevano i tassi par degli OIS \estr{} per le
-scadenze DLT (deep, liquid, transparent) e si sottrae il Credit Risk Adjustment (CRA).
-
-\textbf{Passo 1 (bootstrap, interpolazione)} Si ricostruiscono i fattori di sconto
-$d_1,\dots,d_{\FSP}$: per scadenze consecutive il vincolo par \`e \emph{lineare};
-per scadenze non consecutive si risolve un'equazione \emph{non lineare} nel forward
-costante (Newton--Raphson / bisezione).
-
-\textbf{Passo 2 (estrapolazione)} Si calcola il Last Liquid Forward Rate (LLFR) e si
-estende la curva oltre l'FSP facendo convergere il forward all'UFR con peso
-$B(\alpha,h)$.
-
-\textbf{Risultato} La curva spot $z(0,T)$ per $T = 1,\dots,150$ anni, che interpola
-i dati di mercato e converge all'UFR.
-\end{keybox}
-
-\subsection{Finalit\`a didattiche}
-
-Questa dispensa illustra un caso reale in cui i metodi del calcolo numerico svolgono
-un ruolo diretto nel settore finanziario--assicurativo:
-
-\begin{center}
-\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{lll}
-\toprule
-\textbf{Metodo numerico} & \textbf{Applicazione EIOPA} & \textbf{Riferimento}\\
-\midrule
-Bootstrap sequenziale & Interpolazione zero rates & Annex~D\\
-Newton--Raphson (ricerca di zeri) & Bootstrap con forward costante & Annex~D.5--D.6\\
-Bisezione (ricerca di zeri) & Alternativa robusta al bootstrap & --- \\
-\emph{Confronto:} spline cubica / Thomas & Interpolazione alternativa & de Boor~\cite{deBoor1978}\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Il codice R di supporto \`e nel file \texttt{R/curva\_eiopa\_rfr\_CN.R} e produce
-tutti i grafici mostrati nella dispensa.
-
-\subsection{Il quadro normativo: Solvency~II e EIOPA}
-
-Il quadro normativo europeo \textbf{Solvency~II} (Direttiva 2009/138/CE~\cite{dir2009},
-art.~77a/77e), come modificato dalla Direttiva (UE) 2025/2~\cite{dir2025} e attuato dal
-Regolamento Delegato (UE) 2026/269~\cite{reg2026}, richiede alle imprese assicurative di
-calcolare le riserve tecniche attualizzando con una curva risk-free ufficiale.
-L'\textbf{EIOPA} (European Insurance and Occupational Pensions Authority) pubblica
-questa struttura a termine \emph{mensilmente} per tutte le valute rilevanti.
-
-I principi guida (sez.~3.1 di~\cite{eiopa2026}):
-\begin{itemize}
-  \item \textbf{Replicabilit\`a}: ogni impresa deve poter riprodurre la curva;
-  \item \textbf{Coerenza di mercato}: si usano solo dati da mercati DLT
-        (deep, liquid, transparent);
-  \item \textbf{Trasparenza}: tutti i passaggi di calcolo sono documentati.
-\end{itemize}
+In questa sezione definiamo i concetti base relativi ai tassi di interesse, utili per la comprensione dei passi successivi.
 
 % ------------------------------------------------------------
-\subsection{Struttura dei tassi di interesse: spot, forward e par}
-\label{sec:tassi-def}
+\subsection{Dalla capitalizzazione al fattore di sconto}
 % ------------------------------------------------------------
 
-Per comprendere l'input e l'output del metodo EIOPA occorre distinguere tre
-rappresentazioni della struttura a termine, tutte derivabili dalla stessa funzione di
-sconto $P(t)$.
-
-\begin{definizione}[Funzione di sconto e tasso spot]
-La \textbf{funzione di sconto} $P(t)>0$ \`e il prezzo odierno di $1$~euro pagato con
-certezza all'istante $t \ge 0$. Useremo la notazione $d_t \defeq P(t)$ per le scadenze
-intere. Il corrispondente \textbf{tasso spot} (zero rate) a capitalizzazione
-\emph{annua composta} \`e:
-\[
-  z(0,t) \defeq d_t^{-1/t} - 1, \qquad t > 0,
-  \qquad\Longleftrightarrow\qquad d_t = (1+z(0,t))^{-t}.
-\]
-La struttura $t \mapsto z(0,t)$ per $t=1,\ldots,150$ anni \`e ci\`o che EIOPA pubblica.
-A volte conviene usare il tasso spot a \textbf{capitalizzazione continua}
-$z^c(0,t) = \ln(1+z(0,t))$, per cui $d_t = e^{-z^c(0,t)\,t}$.
-\end{definizione}
-
-\begin{definizione}[Tasso forward]
-Il \textbf{tasso forward} (annuo) per la finestra $[u,v]$ \`e il rendimento concordato
-oggi per quel periodo futuro:
-\[
-  f_{u,v} \defeq \left(\frac{d_u}{d_v}\right)^{1/(v-u)} - 1.
-\]
-Il \textbf{forward istantaneo} \`e $f^c(0,t) = -\frac{\mathrm d}{\mathrm dt}\ln P(t)$.
-In capitalizzazione continua, il forward annuale fra interi $t-1$ e $t$ \`e
-$f^c_{t-1,t} = t\,z^c(0,t) - (t-1)\,z^c(0,t-1)$.
-Il criterio di convergenza EIOPA \`e enunciato proprio in termini di forward: oltre
-l'FSP il forward istantaneo converge all'UFR (sez.~8.5 di~\cite{eiopa2026}).
-\end{definizione}
-
-\begin{definizione}[Tasso par di uno swap]
-\label{def:tasso_par}
-Uno \textbf{swap su tassi} (interest rate swap) \`e un contratto in cui due controparti
-si scambiano periodicamente interessi calcolati sullo stesso nozionale (non scambiato):
-una \textbf{gamba fissa} paga un tasso costante $s$, una \textbf{gamba variabile} paga
-un tasso indicizzato (qui overnight \estr{} composto).
-
-Siano $T_1 < T_2 < \cdots < T_n$ le date di pagamento (qui annuali). Il \textbf{tasso
-par} $s_n$ alla scadenza $T_n$ \`e il tasso fisso che rende nullo il valore netto
-iniziale del contratto. Per cedole annuali (frequenza $m_1=1$):
+Definiamo per prima cosa il concetto di capitalizzazione.
+Investendo un capitale iniziale $A$ a tasso annuo $r$ per $T$ anni si ottiene il
+\textbf{montante}
 \begin{equation}
-  \label{eq:tasso_par}
-  s_n \cdot \sum_{j=1}^{n} d_j + d_n = 1
-  \quad\Longleftrightarrow\quad
-  s_n = \frac{1 - d_n}{\displaystyle\sum_{j=1}^{n} d_j}.
+  M = A\,(1+r)^T.
+  \label{eq:montante}
 \end{equation}
-Il nome ``par'' deriva dal fatto che un titolo con cedola $s_n$ e rimborso del nozionale
-$1$ alla scadenza $T_n$ vale esattamente $1$ (``alla pari'') oggi (cfr.\ Hull~\cite{hull2018},
-cap.~7).
+Nel seguito normalizziamo $A = 1$~\texteuro{} (convenzione standard: si ragiona per
+unit\`a di capitale), cosicch\'e il montante coincide con il \textbf{fattore di
+capitalizzazione} $(1+r)^T$. Ad esempio con $r=3\%$ e $T=10$ anni:
+$(1{,}03)^{10} \approx 1{,}344$, cio\`e $1$~\texteuro{} cresce a $1{,}34$~\texteuro{}.
+
+Se la capitalizzazione avviene $m$ volte per anno al tasso nominale $r_m$ (tasso per
+periodo $r_m/m$), il montante (con $A=1$) diventa
+\[
+  M = \left(1 + \frac{r_m}{m}\right)^{mT}.
+\]
+All'aumentare di $m$ la capitalizzazione diventa sempre pi\`u frequente: $m=12$ mensile,
+$m=365$ giornaliera, e cos\`i via.
+
+Considerando il limite ${m\to\infty}$, ovvero una frequenza di rivalutazione continua, si
+ottiene il \textbf{fattore di capitalizzazione continua}:
+\begin{equation}
+  M = \lim_{m\to\infty}\left(1+\frac{r_m}{m}\right)^{mT} = e^{r\,T}.
+  \label{eq:cap-cont}
+\end{equation}
+La capitalizzazione continua \`e lo standard della matematica finanziaria quantitativa; nella
+pratica una capitalizzazione giornaliera ne costituisce una buona approssimazione.
+
+Finora abbiamo lavorato con tassi in capitalizzazione continua, ma spesso le curve pubblicate
+esprimono i tassi in capitalizzazione \textbf{annuale}, cio\`e con rivalutazione del capitale una
+sola volta all'anno anzich\'e in continuo. Dalle definizioni~\eqref{eq:montante}
+e~\eqref{eq:cap-cont} si ricava la conversione tra le due convenzioni.
+
+Tasso annuo e tasso continuo sono due \emph{unit\`a di misura} equivalenti per
+l'attualizzazione. La conversione si ottiene imponendo che i montanti~\eqref{eq:montante}
+e~\eqref{eq:cap-cont} coincidano per la stessa durata $T$ (con $A=1$):
+\[
+  (1+r_{\rm ann})^T = e^{r\,T}
+  \quad\Longrightarrow\quad
+  r_{\rm ann} = e^{r} - 1,\qquad r = \ln(1+r_{\rm ann}).
+\]
+In forma compatta, la relazione biunivoca \`e
+\begin{equation}
+  r_{\rm ann}(t) \;=\; e^{r(t)} - 1,
+  \qquad
+  r(t) \;=\; \ln\!\bigl(1 + r_{\rm ann}(t)\bigr).
+  \label{eq:conv-ann-cont}
+\end{equation}
+
+La curva EIOPA \`e costruita usando internamente l'intensit\`a continua $r(t)$;
+la~\eqref{eq:conv-ann-cont} viene applicata \emph{solo all'output finale}, per
+restituire i tassi nella convenzione annua composta adottata dall'$\UFR$ e dalla curva
+ufficiale EIOPA.
+
+In matematica finanziaria \`e altrettanto fondamentale il processo inverso della
+capitalizzazione, l'\textbf{attualizzazione}: mentre la capitalizzazione determina il valore
+futuro di un capitale investito oggi, l'attualizzazione determina il valore odierno di un
+flusso di cassa futuro, ossia l'ammontare che occorre investire ora per ottenere una data somma
+a una data futura. A parit\`a di importo nominale, una somma disponibile oggi possiede sempre un
+valore economico superiore alla medesima somma disponibile in futuro.
+
+L'operazione che realizza questo \`e il \textbf{fattore di sconto}, semplicemente il reciproco
+del fattore di capitalizzazione continua.
+
+\begin{definizione}[Fattore di sconto]
+\label{def:sconto}
+Il \textbf{fattore di sconto} $P(s,t)$ \`e il valore al tempo $s$ di $1$~\texteuro{}
+pagato al tempo $t \ge s$:
+\[
+  P(s,t) = e^{-r(s,t)\,(t-s)}.
+\]
+Il primo argomento $s$ \`e la \textbf{data di osservazione} (quando valutiamo), il secondo
+$t$ \`e la \textbf{data di pagamento} (quando riceviamo l'euro). Nel seguito fissiamo
+$s = 0$ (oggi) e scriviamo semplicemente $P(0,t)$.
+
+Propriet\`a immediate:
+\begin{itemize}
+  \item $P(0,0) = 1$ (un euro pagato subito vale un euro);
+  \item $P(0,t)$ \`e strettamente decrescente in $t$: pi\`u \`e lontano il pagamento, minore \`e il suo valore attuale;
+  \item tutta la struttura a termine dei tassi \`e codificata in $P(0,\cdot)$.
+\end{itemize}
 \end{definizione}
 
-\begin{keybox}[Il bootstrap: dai tassi par ai tassi zero --- Annex~D di~\cite{eiopa2026}]
-I tassi spot $z(0,t)$ \emph{non} sono osservabili direttamente: sul mercato si
-osservano i tassi \emph{par} $s_n$. Il \textbf{bootstrap} ricava i fattori di sconto
-$d_t$ (e quindi $z_t$) risolvendo la~\eqref{eq:tasso_par} in sequenza per
-$n=1,2,\ldots,N$.
-
-\smallskip
-\textbf{Differenza rispetto al precedente metodo Smith--Wilson.} La versione precedente
-della documentazione (EIOPA-BoS-25-599) applicava Smith--Wilson \emph{direttamente} ai
-tassi par, senza bootstrap. La sez.~3.7 e l'Annex~D di~\cite{eiopa2026} prescrivono ora
-\emph{esplicitamente} il bootstrap: \emph{``If the input instruments used are swaps,
-then the corresponding zero-coupon bond interest rates are numerically solved
-(`bootstrapped') using the par-swap pricing formula in combination with the constant
-forward assumption''} (sez.~3.7.2 di~\cite{eiopa2026}).
-\end{keybox}
-
-% ------------------------------------------------------------
-\subsection{Origine dei dati e dati utilizzati}
-\label{sec:dati-origine}
-% ------------------------------------------------------------
-
-\paragraph{Tassi OIS su \estr{}.}
-Gli \textbf{Overnight Index Swap (OIS)} riferiti a \estr{} (Euro Short-Term Rate,
-pubblicato da BCE) sono il proxy del tasso privo di rischio per l'area euro. I tassi par
-sono rilevabili da provider come Bloomberg e Refinitiv/LSEG (sez.~4 di~\cite{eiopa2026}).
-In questa dispensa usiamo i ticker \textbf{Bloomberg \texttt{EESWE<tenor> Curncy}}
-(es.\ \texttt{EESWE10 Curncy} = OIS \estr{} a 10 anni), raccolti nel file
-\texttt{dati/01_eeswe.xlsx}.
-
-\paragraph{Scadenze DLT.}
-Per l'EUR le scadenze standard DLT fino all'FSP sono:
+Riprendiamo l'esempio precedente: con un tasso annuo del $3\%$ e un orizzonte di $10$ anni,
+$1$~\texteuro{} investito oggi si trasforma in circa $1{,}34$~\texteuro{} alla scadenza; di
+conseguenza il valore attuale di $1{,}34$~\texteuro{} ricevuti tra $10$ anni \`e pari a
+$1$~\texteuro{} oggi. In termini di fattore di sconto,
 \[
-  T \in \{1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20\} \text{ anni}.
+P(0,10) = \frac{1}{(1+0{,}03)^{10}} \approx 0{,}744,
 \]
-Le scadenze 9, 11, 13, 14, 16--19 non sono osservate (non DLT): vengono ricostruite per
-bootstrap sotto l'ipotesi di forward costante (Sezione~\ref{sec:bootstrap}).
+per cui il valore attuale di un flusso futuro pari a $1{,}34$~\texteuro{} \`e
+\[
+1{,}34 \cdot P(0,10) \approx 1{,}00~\texteuro{}.
+\]
+L'attualizzazione consente quindi di riportare al presente importi disponibili in futuro
+mediante l'applicazione di opportuni fattori di sconto.
 
-\paragraph{Data di valutazione.}
-Usiamo la rilevazione del \textbf{venerd\`i 29 maggio 2026} (ultimo giorno lavorativo
-del mese). La Tabella~\ref{tab:ois_eur} riporta i tassi par e i tassi after-CRA.
-
-\begin{table}[H]
-\centering\small
-\caption{Tassi OIS \estr{} par (Bloomberg \texttt{EESWE*}, 29/05/2026) e after-CRA.}
-\label{tab:ois_eur}
-\begin{tabular}{cccc}
-\toprule
-$T_k$ (anni) & Ticker & $s_k$ (\%) & $r_k = s_k - 0.10$ (\%) \\
-\midrule
-\rowcolor{rowtint}1  & \texttt{EESWE1}  & 2.39325 & 2.29325 \\
-2  & \texttt{EESWE2}  & 2.43045 & 2.33045 \\
-\rowcolor{rowtint}3  & \texttt{EESWE3}  & 2.43680 & 2.33680 \\
-4  & \texttt{EESWE4}  & 2.46935 & 2.36935 \\
-\rowcolor{rowtint}5  & \texttt{EESWE5}  & 2.50100 & 2.40100 \\
-6  & \texttt{EESWE6}  & 2.54500 & 2.44500 \\
-\rowcolor{rowtint}7  & \texttt{EESWE7}  & 2.59700 & 2.49700 \\
-8  & \texttt{EESWE8}  & 2.65030 & 2.55030 \\
-\rowcolor{rowtint}10 & \texttt{EESWE10} & 2.75150 & 2.65150 \\
-12 & \texttt{EESWE12} & 2.84600 & 2.74600 \\
-\rowcolor{rowtint}15 & \texttt{EESWE15} & 2.95800 & 2.85800 \\
-20 & \texttt{EESWE20} & 3.04400 & 2.94400 \quad(\textbf{FSP})\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Credit Risk Adjustment (CRA).}
-Il CRA (sez.~6 di~\cite{eiopa2026}) viene sottratto dai tassi di input prima del
-bootstrap: $r_k = s_k - \CRA$, con $\CRA = 10$~bps per EUR (``first situation'',
-sez.~6.4). Sono i tassi $r_k$ a entrare nella~\eqref{eq:tasso_par}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig01_input_par_estr.pdf}
-\caption{Tassi OIS \estr{} par (lordi) e after-CRA per le 12 scadenze DLT EUR
-al 29/05/2026. La curva \`e crescente e si appiattisce sulle scadenze brevi.}
-\label{fig:input}
+\includegraphics[width=0.80\textwidth]{../output/shared/fig_fattori_sconto.pdf}
+\caption{Esempio di fattori di sconto $P(0,T)$. La curva decresce monotonamente:
+$P(0,T)<1$ riflette la preferenza temporale (un euro oggi vale pi\`u di un euro domani).}
+\label{fig:sconto-intro}
 \end{figure}
 
-\begin{keybox}[Parametri chiave per EUR]
+% ------------------------------------------------------------
+\subsection{Tasso spot}
+% ------------------------------------------------------------
+
+Dalla Definizione~\ref{def:sconto} il fattore di sconto ha la forma $P(0,t)=e^{-r(t)t}$.
+Invertendo si ricava il tasso che lo genera.
+
+\begin{definizione}[Tasso spot]
+\label{def:spot}
+Il \textbf{tasso spot} $r(t)$ \`e il tasso in capitalizzazione continua associato al
+fattore di sconto $P(0,t)$:
+\begin{equation}
+  r(t) = -\frac{\ln P(0,t)}{t}.
+  \label{eq:spot-inv}
+\end{equation}
+%\`E la media logaritmica del costo del denaro sull'intero intervallo $[0,t]$.
+\end{definizione}
+
+%\paragraph{Perch\'e il logaritmo rende tutto pi\`u semplice.}
+%In capitalizzazione discreta i fattori di sconto si \emph{moltiplicano}: il fattore su
+%$[0,t_1+t_2]$ \`e il prodotto di quello su $[0,t_1]$ e di quello su $[t_1,t_1+t_2]$,
+%il che rende le composizioni scomode da derivare. In capitalizzazione continua, invece,
+%$\ln P(0,t) = -r(t)\cdot t$ \`e \emph{additivo}: i log-fattori si sommano, e questo
+%\`e il punto di ingresso naturale per la derivata che definisce il forward.
+
+
+% ------------------------------------------------------------
+\subsection{Tasso forward}
+% ------------------------------------------------------------
+
+Il \textbf{tasso forward} \`e un'altra grandezza fondamentale nello studio dei tassi di
+interesse: qualitativamente \`e il tasso d'interesse fissato \emph{oggi} per un'operazione di
+prestito/investimento \emph{futura} e \emph{istantanea}, ovvero il tasso applicato a un istante
+puntuale nel futuro. Formalizziamo questa idea e mettiamo in relazione il valore dei tassi
+forward con il tasso spot.
+
+Introduciamo prima il concetto di assenza di arbitraggio.
+\begin{definizione}[Assenza di arbitraggio]
+\label{def:noarb}
+Un \textbf{arbitraggio} \`e una strategia di investimento che, senza impiegare capitale
+iniziale e senza assumersi alcun rischio, garantisce un profitto certo. In mercati
+finanziari efficienti tali opportunit\`a vengono eliminate quasi istantaneamente dagli
+operatori: si assume pertanto che \textbf{non esistano arbitraggi}. Questo vincolo implica
+che tutti i prezzi debbano essere coerenti con gli stessi fattori di sconto $P(0,t)$.
+\end{definizione}
+
+Il \textbf{tasso forward} $f(t_1, t_2)$ \`e il tasso ``bloccato oggi'' per il periodo
+futuro $[t_1, t_2]$. L'assenza di arbitraggio impone che le due strategie seguenti, a parit\`a
+di capitale iniziale $A=1$ euro, producano lo stesso risultato:
+\begin{itemize}
+  \item \textbf{Strategia diretta}: investire da $0$ a $t_2$ realizzando un capitale finale di $M(0,t_2) = e^{r(t_2)\,t_2}$;
+  \item \textbf{Strategia in due passi}: prima investire da $0$ a $t_1$, poi reinvestire al
+        \textbf{tasso forward} $f(t_1,t_2)$ da $t_1$ a $t_2$, ottenendo un capitale finale di
+        $M(0,t_1)\cdot e^{f(t_1,t_2)\,(t_2-t_1)}$.
+\end{itemize}
+
+Queste due quantit\`a si devono eguagliare, altrimenti sarebbe possibile realizzare un guadagno
+senza rischio e l'ipotesi di non arbitraggio verrebbe meno. Imponendo dunque
+$M(0,t_2) = M(0,t_1)\cdot e^{f(t_1,t_2)\,(t_2-t_1)}$ e ricordando che $M(0,t_1)=e^{r(t_1)\,t_1}$, si prende il logaritmo di entrambi i membri:
+\[
+  r(t_2)\,t_2 \;=\; r(t_1)\,t_1 + f(t_1,t_2)\,(t_2-t_1),
+\]
+da cui, isolando $f$:
+\begin{equation}
+  f(t_1, t_2) = \frac{r(t_2)\,t_2 - r(t_1)\,t_1}{t_2 - t_1}.
+  \label{eq:fwd-finito}
+\end{equation}
+Geometricamente, $f(t_1,t_2)$ \`e il \textbf{rapporto incrementale} della funzione
+$t\mapsto r(t)\,t$ sull'intervallo $[t_1,t_2]$.
+
+\begin{definizione}[Tasso forward istantaneo]
+\label{def:forward}
+Facendo tendere $t_2 \to t_1 = t$ nella~\eqref{eq:fwd-finito}, otteniamo:
+\begin{equation}
+  f(t) \;=\; \lim_{t_2 \to t} f(t, t_2)
+       \;=\; \frac{d\bigl(r(t)\,t\bigr)}{dt}
+       \;=\; r(t) + t\,\frac{dr}{dt}.
+  \label{eq:fwd-ist}
+\end{equation}
+Poich\'e $P(0,t)=e^{-r(t)\,t}$ da cui deriva $r(t)\,t=-\ln P(0,t)$, la stessa quantit\`a si
+scrive equivalentemente come:
+\[
+  f(t) = -\frac{d}{dt}\ln P(0,t) = -\frac{P'(0,t)}{P(0,t)}.
+\]
+\end{definizione}
+
+$f(t)\,dt$ rappresenta il tasso applicato a un prestito infinitesimale stipulato in $t$
+e rimborsato in $t+dt$: il forward istantaneo \`e il ``tasso marginale'' o ``tasso locale''
+della struttura a termine.
+
+
+Integrando la definizione~\eqref{eq:fwd-ist} si recupera il fattore di sconto:
+\begin{equation}
+  P(0,t) = \exp\!\left(-\int_0^t f(s)\,ds\right).
+  \label{eq:B-da-fwd}
+\end{equation}
+Sostituendo~\eqref{eq:B-da-fwd} in~\eqref{eq:spot-inv} si ottiene la relazione
+fondamentale tra spot e forward:
+\begin{equation}
+  r(t) = \frac{1}{t}\int_0^t f(s)\,ds.
+  \label{eq:spot-media-fwd}
+\end{equation}
+
+L'equazione~\eqref{eq:spot-media-fwd} dice che il \textbf{tasso spot $r(t)$ \`e la media
+aritmetica del forward istantaneo} sull'intervallo $[0,t]$. Una media \emph{reagisce con
+ritardo} rispetto al valore puntuale: se il forward cresce, lo spot cresce pi\`u lentamente;
+se il forward cala, lo spot cala pi\`u lentamente. Per questo, come si vede in
+Figura~\ref{fig:spot-fwd-media}, la curva del forward si muove sempre \emph{in anticipo}
+rispetto a quella dello spot.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf}
+\caption{Andamento del tasso spot $r(t)$ e del forward istantaneo $f(t)$. Il forward si muove
+pi\`u rapidamente, mentre lo spot \`e la \emph{media} del forward sull'intervallo $[0,t]$
+\eqref{eq:spot-media-fwd} e quindi ne segue le variazioni \emph{con ritardo}.}
+\label{fig:spot-fwd-media}
+\end{figure}
+
+\medskip
+La tabella seguente riassume le tre rappresentazioni equivalenti.
+
 \begin{center}
-\renewcommand{\arraystretch}{1.25}
+\renewcommand{\arraystretch}{1.4}
 \begin{tabular}{lll}
 \toprule
-\textbf{Parametro} & \textbf{Valore EUR} & \textbf{Riferimento} \\
+\textbf{Oggetto} & \textbf{Formula} & \textbf{Lettura} \\
 \midrule
-$\UFR_{\rm ann}$ & $3.30\%$ (annuo composto) & Annex~C \\
-$\UFR^c$ & $\ln(1.033) \approx 3.2467\%$ (continuo) & sez.~8.5.5 \\
-$\FSP$ & 20 anni & sez.~8.2 \\
-$\CRA$ & 10 bps & sez.~6.4 \\
-$\alpha$ & 11\% (40\% per SEK), \emph{phasing-in} & sez.~8.1.5, Table~4 \\
+Fattore di sconto & $P(0,t)$ & valore oggi di $1$\,\texteuro{} in $t$ \\
+Tasso spot (continuo) & $r(t) = -\ln P(0,t)/t$ & tasso medio da $0$ a $t$ \\
+Tasso forward istant. & $f(t) = -\tfrac{d}{dt}\ln P(0,t)$ & tasso marginale in $t$ \\
+Ricostruzione & $P(0,t) = e^{-\int_0^t f(s)\,ds}$ & $P$ da integrale del forward \\
 \bottomrule
 \end{tabular}
 \end{center}
-\textbf{Attenzione alla convenzione dell'UFR.} $\UFR_{\rm ann}=3.30\%$ \`e in
-convenzione annua composta; nelle formule di estrapolazione si usa l'intensit\`a
-continua $\UFR^c = \ln(1+0.033) \approx 0.032467 \neq 0.0330$.
-\end{keybox}
 
-% ============================================================
-\section{Prerequisiti matematici: ricerca di zeri}
-\label{sec:prerequisiti}
-% ============================================================
+\subsection{Tassi par}
+\label{sec:inputdati}
 
-Il nucleo computazionale del metodo EIOPA \`e la soluzione di un'equazione non lineare
-$g(f)=0$ (il bootstrap dei tenor non consecutivi). Presentiamo qui i due metodi di
-ricerca di zeri che useremo: la \textbf{bisezione} (globalmente convergente, robusta) e
-il \textbf{Newton--Raphson} (convergenza quadratica, usato da EIOPA).
+Molti strumenti finanziari quotati sul mercato sono contratti (obbligazioni) in cui l'emittente
+si impegna a corrispondere, a date prefissate, un certo ammontare di denaro (la
+\textbf{cedola}) e, alla chiusura del contratto, a rimborsare il capitale prestato
+inizialmente dal sottoscrittore.
 
-% ------------------------------------------------------------
-\subsection{Il metodo di bisezione}
-\label{sec:bisezione}
-% ------------------------------------------------------------
+Il \textbf{valore nominale} (o \textbf{nozionale}) di un'obbligazione \`e la somma di
+denaro scritta sul contratto, che l'emittente si impegna a restituire a scadenza e sulla
+quale vengono calcolate le cedole. Determinare il valore di questo contratto significa
+attualizzare, ai tassi di mercato correnti per ciascuna scadenza, il nozionale e tutte le
+cedole promesse.
 
-\begin{teorema}[Esistenza di zeri --- Bolzano]
-Sia $g: [a,b] \to \R$ continua con $g(a)\cdot g(b) < 0$. Allora esiste
-$\xi \in (a,b)$ tale che $g(\xi) = 0$.
-\end{teorema}
+\`E prassi esprimere la cedola non come importo assoluto ma come percentuale del nozionale:
+questa percentuale \`e detta \textbf{tasso cedolare}, e la sua entit\`a determina il prezzo del
+titolo e la sua quotazione sul mercato.
 
-\begin{definizione}[Metodo di bisezione]
-Dato $[a,b]$ con $g(a)\cdot g(b) < 0$, si genera la successione di intervalli
-$[a_n,b_n]$ con punto medio $m_n = (a_n+b_n)/2$ e
-\[
-  [a_{n+1}, b_{n+1}] = \begin{cases}
-    [a_n, m_n] & \text{se } g(a_n)\cdot g(m_n) < 0,\\
-    [m_n, b_n] & \text{altrimenti.}
-  \end{cases}
-\]
-\end{definizione}
-
-\begin{proposizione}[Convergenza della bisezione]
-\label{prop:bisez}
-Dopo $n$ iterazioni su un intervallo iniziale di ampiezza $\ell = b-a$:
-$\abs{\xi - m_n} \le \ell/2^{n+1}$. La convergenza \`e \textbf{lineare} con rapporto
-$1/2$; per una tolleranza $\varepsilon$ servono
-$n \ge \lceil \log_2(\ell/\varepsilon) \rceil$ iterazioni.
-\end{proposizione}
-
-\begin{attenzione}[Pregi della bisezione]
-\`E \textbf{globalmente convergente} (basta un cambio di segno, non serve una buona
-stima iniziale), \textbf{priva di derivate} e con \textbf{costo prevedibile} (il numero
-di iterazioni \`e noto a priori). Il prezzo \`e una convergenza solo lineare.
-\end{attenzione}
-
-% ------------------------------------------------------------
-\subsection{Il metodo di Newton--Raphson}
-\label{sec:newton}
-% ------------------------------------------------------------
-
-\begin{definizione}[Metodo di Newton--Raphson]
-Data $g \in C^1$ e una stima iniziale $x_0$, si itera
+Il \textbf{prezzo} di un'obbligazione con nozionale $N$, cedola periodica $c'$ alle
+date $t_1 < \cdots < t_n = T$ e rimborso del nozionale a scadenza \`e la somma dei valori
+attuali di tutti i flussi:
 \begin{equation}
-  \label{eq:newton}
-  x_{n+1} = x_n - \frac{g(x_n)}{g'(x_n)}, \qquad n = 0,1,2,\ldots
+  \text{Prezzo} = c' \sum_{k=1}^{n} P(0,t_k) + N\,P(0,T).
+  \label{eq:prezzo-bond}
 \end{equation}
-geometricamente: $x_{n+1}$ \`e l'intersezione con l'asse delle ascisse della retta
-tangente a $g$ in $x_n$.
+Equivalentemente, \`e come investire un importo pari alla cedola a ciascuna scadenza
+intermedia, pi\`u un unico investimento del nozionale $N$ a $T$: attualizzando questi flussi al
+presente si ottiene il prezzo.
+
+Il tasso cedolare determina il prezzo del titolo rispetto al nozionale: se il prezzo risulta
+inferiore al nozionale il titolo quota \emph{sotto la pari} (l'investimento rende di pi\`u); se
+superiore quota \emph{sopra la pari} (rende di meno); un titolo che quota \emph{alla pari} ha
+prezzo uguale al nozionale.
+\begin{definizione}[Tasso par]
+\label{def:par}
+Con cedole annue e nozionale unitario, il \textbf{tasso par} $s_T$ di scadenza $T$ \`e
+il tasso cedola che rende il prezzo uguale a~1:
+\begin{equation}
+  \label{eq:tasso_par}
+  s_T \sum_{j=1}^{T} P(0,j) + P(0,T) = 1
+  \quad\Longrightarrow\quad
+  s_T = \frac{1 - P(0,T)}{\displaystyle\sum_{j=1}^{T} P(0,j)}.
+\end{equation}
 \end{definizione}
-
-\begin{proposizione}[Convergenza quadratica]
-\label{prop:newton}
-Sia $\xi$ uno zero semplice di $g$ ($g(\xi)=0$, $g'(\xi)\neq 0$) e $g\in C^2$ in un
-intorno di $\xi$. Allora esiste un intorno di $\xi$ tale che, per ogni $x_0$ in esso,
-la successione~\eqref{eq:newton} converge a $\xi$ con \textbf{ordine 2}:
-\[
-  \abs{x_{n+1} - \xi} \le C\,\abs{x_n - \xi}^2,
-  \qquad C = \frac{\abs{g''(\xi)}}{2\,\abs{g'(\xi)}}.
-\]
-Il numero di cifre corrette \emph{raddoppia} a ogni iterazione.
-\end{proposizione}
-
-\begin{keybox}[Bisezione vs Newton--Raphson]
+\begin{esempio}[Prezzo e par yield --- dati di \cite{hull2018}, Tab.~4.2]
+\label{ex:hull42}
+Supponiamo di conoscere i tassi spot continui per quattro scadenze e consideriamo un'obbligazione con nozionale \$100, cedole semestrali di \$3 (cedola
+annua 6\%), scadenza 2 anni:
 \begin{center}\small
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{lccc}
+\begin{tabular}{ccc}
 \toprule
-\textbf{Metodo} & \textbf{Ordine} & \textbf{Serve $g'$?} & \textbf{Convergenza}\\
+Scadenza $t$ (anni) & Tasso spot $r(t)$ & $P(0,t) = e^{-r(t)\,t}$ \eqref{eq:spot-inv} \\
 \midrule
-Bisezione      & 1 (lineare)    & no  & globale (con cambio di segno)\\
-Newton--Raphson& 2 (quadratica) & s\`i & locale (buona stima iniziale)\\
+0.5 & 5.00\% & $e^{-0.050\times 0.5} = 0.9753$ \\
+1.0 & 5.80\% & $e^{-0.058\times 1.0} = 0.9436$ \\
+1.5 & 6.40\% & $e^{-0.064\times 1.5} = 0.9085$ \\
+2.0 & 6.80\% & $e^{-0.068\times 2.0} = 0.8727$ \\
 \bottomrule
 \end{tabular}
 \end{center}
-EIOPA usa Newton--Raphson nel codice di produzione (Annex~D.6 di~\cite{eiopa2026}),
-fornendo la \emph{derivata analitica} dell'equazione del bootstrap: ci\`o rende ogni
-iterazione economica e la convergenza rapidissima (poche iterazioni). La bisezione
-resta un utile termine di confronto e un metodo di salvaguardia (\emph{fallback}).
-\end{keybox}
 
-% ------------------------------------------------------------
-\subsection{Confronto: spline cubica e algoritmo di Thomas}
-\label{sec:thomas}
-% ------------------------------------------------------------
-
-Nella Sezione~\ref{sec:confronto} confronteremo l'estrapolazione EIOPA con una
-\textbf{spline cubica naturale}, metodo classico di interpolazione. La spline richiede
-la soluzione di un sistema lineare \textbf{tridiagonale}, risolubile in $O(n)$ con
-l'algoritmo di Thomas (de Boor~\cite{deBoor1978}). Vedremo che la spline interpola bene
-i nodi ma, oltre l'ultimo nodo, \textbf{non converge} ad alcun asintoto economico:
-estrapola in modo lineare, mentre il metodo EIOPA converge per costruzione all'UFR.
-
-% ============================================================
-\section{Il bootstrap della curva zero}
-\label{sec:bootstrap}
-% ============================================================
-
-L'interpolazione EIOPA (sez.~3.7 e Annex~D di~\cite{eiopa2026}) ricostruisce i fattori
-di sconto $d_1,\dots,d_{\FSP}$ per \emph{tutte} le scadenze intere a partire dai tassi
-par osservati, sotto l'ipotesi di \textbf{forward costante} tra scadenze DLT non
-consecutive.
-
-\subsection{La condizione par e le due gambe dello swap}
-
-Per un OIS a cedola annuale ($m_1=1$) e nozionale unitario, la gamba fissa vale
-$s_n \sum_{j=1}^{n} d_j$ pi\`u il rimborso, mentre la gamba variabile, per la relazione
-telescopica tra fattori di sconto consecutivi (Annex~D.3 di~\cite{eiopa2026}), vale
-$1 - d_n$. Uguagliando le due gambe si ottiene la condizione par~\eqref{eq:tasso_par}:
+ Dalla~\eqref{eq:prezzo-bond}:
 \[
-  s_n \sum_{j=1}^{n} d_j + d_n = 1.
+  \text{Prezzo}
+  = 3(0.9753) + 3(0.9436) + 3(0.9085) + 103(0.8727)
+  = 98.39.
 \]
+%Poich\'e $98.39 < 100$, la cedola del 6\% \`e inferiore al par yield per questa scadenza.
 
-\subsection{Step 1: il primo tenor (Annex~D.4)}
+Cerchiamo ora, sulla base della tabella dei tassi spot sopra riportata, il tasso par per la
+scadenza di 2 anni: la cedola annua $c$, pagata in rate semestrali $c/2$, che rende il
+prezzo pari a $100$. (La Definizione~\ref{def:par} \`e formulata per cedole annue; con
+cedole semestrali la logica \`e identica, cambiano solo le date dei flussi.)
+Sostituendo in~\eqref{eq:prezzo-bond} con $\text{Prezzo}=100$ e $N=100$:
+\[
+  \frac{c}{2}(0.9753 + 0.9436 + 0.9085 + 0.8727) + 100\times 0.8727 = 100,
+\]
+\[
+  \frac{c}{2}\times 3.7001 = 12.73
+  \quad\Longrightarrow\quad
+  c \approx 6.87\%.
+\]
+Il \textbf{par yield} per la scadenza 2 anni \`e $c = s_2 = 6.87\%$ annuo.%: \`e il tasso che il mercato quoterebbe come tasso swap (o par rate) per quella scadenza.
+\end{esempio}
 
-Per la scadenza pi\`u breve $t_1 = 1$ la~\eqref{eq:tasso_par} si riduce a
-$r_1 d_1 + d_1 = 1$, da cui immediatamente
+
+
+\begin{osservazione}
+\label{oss:inversione}
+Nell'Esempio~\ref{ex:hull42} si parte dai tassi spot \emph{noti} e si calcola il par
+yield: ovvero conoscendo i valori $r(t)$ abbiamo calcolato $s_T$. In pratica la situazione \`e \textbf{ribaltata}:
+il mercato quota direttamente i par rate $s_T$ (osservabili sui contratti IRS), mentre i
+fattori di sconto $P(0,j)$ sono \textbf{incogniti}. La condizione
+$s_T\sum_{j}P(0,j)+P(0,T)=1$ diventa allora un'\textbf{equazione lineare} nelle
+incognite $P(0,1),\ldots,P(0,T)$. Come vedremo in seguito questo sarà un punto fondamentale per definire la struttura del metodo di interpolazione ed estrapolazione EIOPA.
+\end{osservazione}
+
+% ------------------------------------------------------------
+\subsection{Gli swap di tasso di interesse}
+\label{sec:swap}
+% ------------------------------------------------------------
+In quanto segue utilizzeremo dei tassi di interesse chiamati \textbf{Interest Rate Swap} (IRS), questo \`e un contratto in cui due controparti si scambiano
+flussi di interesse sullo stesso nozionale: una paga un tasso \textbf{fisso} $s$ (la
+\emph{gamba fissa}), l'altra paga un tasso \textbf{variabile} aggiornato ai tassi di
+mercato a breve (la \emph{gamba floating}). All'emissione, per assenza di arbitraggio
+(Definizione~\ref{def:noarb}), il valore dello swap deve essere nullo; poich\'e la gamba
+floating vale~1 alla stipula (si rinnova a ogni scadenza cedola ai tassi correnti), il
+tasso fisso che azzera il valore \`e \emph{esattamente} il tasso par della
+Definizione~\ref{def:par}. Questo tasso fisso $s$ \`e detto \textbf{tasso swap} (o
+\emph{par swap rate}): a differenza del tasso par dell'Osservazione~\ref{oss:inversione},
+che l\`i era stato \emph{calcolato} a partire da tassi spot noti, il tasso swap \`e il dato
+\textbf{osservabile}, quotato ogni giorno dal mercato interbancario per ciascuna scadenza.. Gli IRS sono gli strumenti pi\`u liquidi con cui il mercato quota la struttura a
+termine fino a 20--30 anni.
+
+\begin{esempio}[Uno swap EUR contro EURIBOR~6M]
+\label{ex:swap-euribor}
+Consideriamo un IRS a 5 anni su nozionale $N=1$ milione di euro: gamba fissa annua al tasso
+$s$, gamba variabile semestrale indicizzata all'\textbf{EURIBOR~6M} (il tasso interbancario a
+6 mesi). Ogni 6 mesi la gamba floating paga su $N$ l'EURIBOR~6M osservato a inizio semestre;
+una volta l'anno la gamba fissa paga $s\,N$. Alla stipula nessuna delle due parti versa
+capitale: il valore dello swap \`e nullo se e solo se $s$ coincide col tasso par $s_T$ della
+Definizione~\ref{def:par} per $T=5$ anni. \`E esattamente questo tasso $s$ --- quotato
+quotidianamente sul mercato interbancario per scadenze da 1 a 50 anni --- che EIOPA usa come
+input della curva EUR: i \textbf{par swap EUR contro EURIBOR~6M}.
+\end{esempio}
+
+Sono proprio questi tassi swap, quotati alle 15 scadenze DLT ufficiali, il dato numerico di
+partenza della ricostruzione: la Tabella~\ref{tab:input-main-dic} (§\ref{sec:dati-input-dic})
+riporta i valori usati pi\`u avanti per la ricostruzione di dicembre~2025.
+
+%% ============================================================
+%\section{Perch\'e non bastano le spline: il problema dell'estrapolazione}
+%\label{sec:spline}
+%% ============================================================
+%
+%La \textbf{spline cubica naturale} --- polinomio a tratti di grado~3, continuo fino alla
+%derivata seconda, che passa esattamente per i nodi --- \`e uno strumento di interpolazione
+%adatto ai pochi punti liquidi: non soffre di fenomeni di Runge e produce una curva regolare.
+%Il suo \textbf{limite} emerge non nell'interpolazione ma nell'\textbf{estrapolazione}: per
+%$T>\FSP$ non esistono dati, e oltre l'ultimo nodo la spline prosegue in modo
+%\emph{sostanzialmente lineare}, dettato dalla condizione al contorno --- una convenzione
+%matematica, non un vincolo economico. In particolare \textbf{non converge} ad alcun asintoto.
+%
+%La Figura~\ref{fig:confronto-spline} confronta la spline cubica naturale con il metodo EIOPA
+%(bootstrap + FSP/LLFR) sugli stessi dati: nella zona liquida ($T\le\FSP$) le due curve
+%coincidono, ma oltre l'FSP la spline diverge mentre il metodo EIOPA converge per costruzione
+%all'$\UFR$.
+%
+%\begin{figure}[H]
+%\centering
+%\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig08_confronto_spline.pdf}
+%\caption{Estrapolazione: spline cubica naturale vs metodo EIOPA (bootstrap + FSP/LLFR),
+%dicembre~2025. Nella zona interpolata ($T\le 20$) entrambe seguono i nodi; oltre
+%l'FSP (zona grigia) la spline estrapola senza vincolo mentre il metodo EIOPA converge
+%all'$\UFR=3.30\%$ (linea viola).}
+%\label{fig:confronto-spline}
+%\end{figure}
+%
+%La vigilanza \textbf{impone} che il forward converga all'$\UFR$: un requisito che nessuna
+%spline soddisfa per costruzione. Serve dunque un algoritmo \emph{mirato}, che incorpori
+%l'$\UFR$ nella famiglia di curve ammissibili e garantisca a priori la convergenza --- \`e
+%ci\`o che fa il metodo a bootstrap di EIOPA, oggetto della Sezione~\ref{sec:metodo}.
+
+% ============================================================
+\section{Struttura matematica del metodo: bootstrap ed estrapolazione}
+\label{sec:metodo}
+% ============================================================
+
+%Con gli strumenti di Sez.~2 --- fattori di sconto, tasso spot, tasso forward, condizione par --- possiamo ora affrontare concretamente i due sotto-problemi individuati in Sez.~1.2: \emph{interpolare} i tassi di mercato fino all'$\FSP$ ed \emph{estrapolarli} oltre, fino all'$\UFR$. 
+La determinazione della curva risk-free EIOPA si sviluppa in due fasi: \textbf{Bootstrap}
+(sez.~3.7 e Annex~D di~\cite{eiopa2026}), un algoritmo ricorsivo che ricostruisce i fattori di
+sconto $d_1,\ldots,d_{\FSP}$ per tutte le scadenze intere fino all'FSP, sotto l'ipotesi di
+\emph{forward costante} tra scadenze DLT non consecutive; ed \textbf{Estrapolazione}
+(sez.~8.5 di~\cite{eiopa2026}), che oltre l'FSP fa convergere il forward all'$\UFR$ con una formula in forma
+chiusa. La determinanzione della curva con per le due sezioni sopra descritte \`e condotta in capitalizzazione continua: la conversione al
+tasso annuo composto~\eqref{eq:conv-ann-cont}, quello effettivamente pubblicato da EIOPA,
+viene applicata solo alla fine, sui risultati (Sez.~\ref{sec:ricostruzione}).
+
+% ------------------------------------------------------------
+\subsection{Il Credit Risk Adjustment}
+\label{sec:cra}
+% ------------------------------------------------------------
+
+Gli swap di tasso di interesse usati come sorgente dati incorporano un piccolo \textbf{premio
+per il rischio di controparte}: la parte che riceve i pagamenti sopporta il rischio che la
+controparte non onori il contratto, e i tassi di mercato riflettono questa maggiorazione.
+Poich\'e la curva che si stima deve essere \emph{priva di rischio} (risk-free), il premio va dunque
+rimosso.
+
+Per ottenere un tasso \emph{privo di rischio} EIOPA sottrae un \textbf{Credit Risk
+Adjustment} ($\CRA = 10$ bps per l'euro) da ciascun tasso par swap $s_{T_k}$ (il tasso swap di
+Sez.~\ref{sec:swap}, alla $k$-esima scadenza DLT $T_k$) \emph{prima} di ricostruire la curva.
+D'ora in poi scriviamo
+\begin{equation}
+  \label{eq:cra-def}
+  s_k \defeq s_{T_k} - \CRA
+\end{equation}
+per il tasso \emph{after-CRA}, indicizzato per comodit\`a con l'ordinale $k$ del tenor
+(anzich\'e col valore $T_k$): sono questi $s_k$, e non i tassi swap lordi $s_{T_k}$, l'input
+effettivo del bootstrap. La stima del $\CRA$ non \`e tema di questa dispensa; il dettaglio
+metodologico \`e nella documentazione tecnica EIOPA.
+
+% ------------------------------------------------------------
+\subsection{First Smoothing Point e scadenze liquide}
+\label{sec:fsp-dlt}
+% ------------------------------------------------------------
+
+\begin{definizione}[First Smoothing Point]
+\label{def:fsp}
+L'$\FSP$ \`e la scadenza pi\`u lunga $t_F$ che soddisfa due criteri: (a) \`e DLT; (b) la
+percentuale di obbligazioni in essere di scadenza pari o superiore \`e sufficientemente alta
+(\emph{Residual Volume Criterion}). Fino all'FSP la curva \`e calcolata direttamente dai tassi swap (bootstrap)
+. Per la curva EURO $\FSP=20$ anni. 
+\end{definizione}
+
+Per l'EUR le scadenze DLT --- la lista delle maturit\`a liquide fissata dal regolatore, su cui
+la curva viene fatta passare esattamente --- sono le $n=15$
+\[
+  \{1,2,3,4,5,6,7,8,9,10,11,12,13,15,20\}\ \text{anni},
+\]
+che si fermano appunto all'$\FSP$. Non sono tutte consecutive: tra 13 e 15 e tra 15 e 20 vi
+sono due \textbf{gap} (scadenze intere non quotate); vedremo in seguito come l'ipotesi di
+forward costante permetta di determinare anche i tassi in questi gap.
+% ------------------------------------------------------------
+\subsection{La condizione par e il bootstrap}
+\label{sec:bootstrap}
+% ------------------------------------------------------------
+
+D'ora in poi scriviamo $d_t \defeq P(0,t)$ per il fattore di sconto al tenor intero $t$
+(Definizione~\ref{def:sconto}). Il metodo si articola come segue:
+\paragraph{Step 1 --- il primo tenor (Annex~D.4).}
+Per la scadenza pi\`u breve $T_1=1$ la~\eqref{eq:tasso_par} si riduce a $s_1 d_1+d_1=1$, da
+cui immediatamente
 \begin{equation}
   \label{eq:step1}
-  d_1 = \frac{1}{1+r_1}, \qquad z_1 = r_1.
+  d_1 = \frac{1}{1+s_1}, \qquad z_1 = s_1.
 \end{equation}
 
-\subsection{Step 2a: scadenze consecutive (equazione lineare)}
-
-Se la scadenza osservata $t_{k+1}$ \`e consecutiva alla precedente ($t_{k+1}=t_k+1$),
-tutti i fattori di sconto $d_1,\dots,d_{t_k}$ sono gi\`a noti e la condizione par
-\`e \textbf{lineare} in $d_{t_{k+1}}$:
+\paragraph{Step 2a --- scadenze consecutive (equazione lineare, Annex~D.5).}
+Se la scadenza osservata $T_{k}$ \`e consecutiva alla precedente ($T_{k}=T_{k-1}+1$), tutti i
+fattori di sconto $d_1,\dots,d_{T_{k-1}}$ sono gi\`a noti e la condizione par \`e
+\textbf{lineare} in $d_{T_k}$:
 \begin{equation}
-  \label{eq:step2_lin}
-  r_{k+1}\Bigl(\underbrace{\textstyle\sum_{j=1}^{t_k} d_j}_{S_k} + d_{t_{k+1}}\Bigr)
-  + d_{t_{k+1}} = 1
+  \label{eq:step2-lin}
+  s_{k}\Bigl(\underbrace{\textstyle\sum_{j=1}^{T_{k-1}} d_j}_{S_{k-1}} + d_{T_k}\Bigr)
+  + d_{T_k} = 1
   \;\Longrightarrow\;
-  d_{t_{k+1}} = \frac{1 - r_{k+1}\,S_k}{1 + r_{k+1}}.
+  d_{T_k} = \frac{1 - s_{k}\,S_{k-1}}{1 + s_{k}}.
 \end{equation}
-Nessuna ricerca di zeri: una semplice divisione. Cos\`i si ricavano i tenor
-$2,3,\dots,8$.
 
-\subsection{Step 2b: scadenze non consecutive (equazione non lineare)}
-\label{sec:step2_nonlin}
+Il \textbf{tasso zero coupon annuo composto} $z_t \defeq d_t^{-1/t}-1$ associato a ciascun
+$d_t$ cos\`i ricostruito si ottiene dal tasso spot continuo $r(t)$ di
+Definizione~\ref{def:spot} tramite la conversione annuo/continuo~\eqref{eq:conv-ann-cont}.
 
-Quando tra $t_k$ e $t_{k+1}$ c'\`e un ``buco'' di ampiezza $g = t_{k+1}-t_k > 1$ (per
-l'EUR: $8\!\to\!10$, $10\!\to\!12$, $12\!\to\!15$, $15\!\to\!20$), i fattori di sconto
-intermedi sono incogniti. L'\textbf{ipotesi di forward costante} (Annex~D.5
-di~\cite{eiopa2026}) impone che il forward annuale $f$ sia lo stesso su tutto il buco:
+Questa procedura richiede che i tassi swap siano consecutivi, ovvero non esistano gap tra di essi. Quindi si applica per ricavare la curva risk-free per i tenor $2,3,\dots,13$.
+
+\paragraph{Una lettura matriciale.}
+Il metodo sopra descritto pu\`o essere scritto sinteticamente come un \textbf{sistema lineare}
+nelle incognite $\mathbf d=(d_1,d_2,\ldots)^\top$. Ad esempio per i primi tre tenor:
+\begin{equation}
+  \label{eq:boot-tri}
+  \underbrace{%
+  \begin{pmatrix}
+    1+s_1 & 0     & 0     \\
+    s_2   & 1+s_2 & 0     \\
+    s_3   & s_3   & 1+s_3
+  \end{pmatrix}}_{\displaystyle L}
+  \begin{pmatrix} d_1 \\ d_2 \\ d_3 \end{pmatrix}
+  =
+  \begin{pmatrix} 1 \\ 1 \\ 1 \end{pmatrix},
+\end{equation}
+e in generale la riga $k$ ha $s_k$ nelle colonne $1,\dots,T_k-1$ e $(1+s_k)$ sulla diagonale.
+La matrice $L$ \`e \textbf{triangolare inferiore}: \`e esattamente questa struttura a rendere il
+bootstrap una \textbf{sostituzione in avanti} --- si ricava un'incognita alla volta usando solo
+quelle gi\`a note --- senza mai invertire una matrice densa. Questo per\`o vale solo finch\'e
+la successione dei tenor osservati \`e consecutiva: cosa succede quando, come per l'EUR, la
+successione presenta dei gap?
+
+% ------------------------------------------------------------
+\subsection{Scadenze non consecutive: l'equazione non lineare}
+\label{sec:nonlin}
+% ------------------------------------------------------------
+
+Quando tra $T_{k-1}$ e $T_k$ c'\`e un \textbf{gap} di ampiezza $g=T_k-T_{k-1}>1$ (per l'EUR:
+$13\!\to\!15$, $15\!\to\!20$), i fattori di sconto intermedi
+$d_{T_{k-1}+1},\ldots,d_{T_{k-1}+g-1}$ sono incogniti e nessuno strumento di mercato li
+vincola direttamente: la condizione par a $T_k$ \`e una sola equazione in $g$ incognite, e lo
+Step~1/2a non basta pi\`u.
+
+\paragraph{Perch\'e il forward costante?}
+Tra due tenor consecutivi (Step~2a) il forward a un anno \`e determinato univocamente da
+un'unica equazione: non c'\`e scelta da fare. Nel gap mancano invece dati per $g-1$ anni
+intermedi: qualunque regola si scelga per riempirli sta di fatto \emph{aggiungendo}
+un'informazione che il mercato non fornisce, e regole diverse (forward costante, zero rate
+lineare, spline cubica, \ldots) darebbero curve diverse. Sappiamo per\`o, dalla relazione
+spot--forward~\eqref{eq:spot-media-fwd}, che il forward \`e il tasso ``locale'' di cui lo
+spot \`e la media: l'ipotesi \textbf{pi\`u semplice e meno arbitraria} \`e allora che questo
+tasso locale resti \emph{piatto} nel tratto non osservato, invece di introdurre una curvatura
+non giustificata da alcun dato. \`E anche la scelta che generalizza pi\`u naturalmente lo
+Step~2a: l\`i il forward su un solo anno era gi\`a univocamente determinato da un'equazione;
+qui lo stesso principio --- \emph{un unico} forward costante sul tratto non osservato ---
+viene esteso a un gap di pi\`u anni, riducendo le $g-1$ incognite a una sola, $f$. Sul piano
+regolamentare, imporre un'unica regola deterministica (Annex~D.5 di~\cite{eiopa2026}), uguale
+per ogni utilizzatore, \`e anche ci\`o che garantisce che la curva EIOPA sia
+\textbf{riproducibile univocamente} da chiunque parta dagli stessi 15 tassi di input --- un
+requisito imposto dalla stessa Solvency~II.
+
+\paragraph{Dalla definizione di forward alla~\eqref{eq:cf}.}
+Lo stesso argomento di non arbitraggio gi\`a usato per introdurre il tasso forward
+(Definizione~\ref{def:noarb}), qui in capitalizzazione annua anzich\'e continua, lega il
+forward a un anno tra $t$ e $t+1$ al rapporto tra fattori di sconto consecutivi:
+\begin{equation}
+  \label{eq:fwd-annuo-1p}
+  1 + f_{t,t+1} = \frac{d_t}{d_{t+1}}
+  \quad\Longleftrightarrow\quad
+  d_{t+1} = d_t\,(1+f_{t,t+1})^{-1}.
+\end{equation}
+L'ipotesi di forward costante impone $f_{T_{k-1}+i-1,\,T_{k-1}+i} = f$ per ogni
+$i=1,\ldots,g$: applicando la~\eqref{eq:fwd-annuo-1p} ricorsivamente,
+\[
+  d_{T_{k-1}+1} = d_{T_{k-1}}(1+f)^{-1},
+  \qquad
+  d_{T_{k-1}+2} = d_{T_{k-1}+1}(1+f)^{-1} = d_{T_{k-1}}(1+f)^{-2},
+\]
+e per induzione su $i$ si ottiene la relazione cercata:
 \begin{equation}
   \label{eq:cf}
-  d_{t_k+i} = d_{t_k}\,(1+f)^{-i}, \qquad i = 1,\ldots,g.
+  d_{T_{k-1}+i} = d_{T_{k-1}}\,(1+f)^{-i}, \qquad i=1,\ldots,g.
 \end{equation}
-L'unica incognita \`e $f$. Sostituendo~\eqref{eq:cf} nella condizione par per
-$t_{k+1}$ e usando la condizione par a $t_k$ per eliminare la somma $S_k$, si ottiene
-(Annex~D.6.1 di~\cite{eiopa2026}) l'equazione \textbf{non lineare}:
+L'unica incognita \`e $f$.
+
+\paragraph{Dalla~\eqref{eq:cf} all'equazione non lineare~\eqref{eq:boot-nl}.}
+La condizione par~\eqref{eq:tasso_par} al tenor $T_k$ (in notazione $d_t$,
+Sez.~\ref{sec:bootstrap}) \`e $s_k\sum_{j=1}^{T_k} d_j + d_{T_k} = 1$, con la somma spezzata
+in parte nota e parte nel gap:
+\[
+  \sum_{j=1}^{T_k} d_j = \underbrace{\sum_{j=1}^{T_{k-1}} d_j}_{S_{k-1}} + \sum_{i=1}^{g} d_{T_{k-1}+i}.
+\]
+Sostituendo la~\eqref{eq:cf} nella somma sul gap si riconosce una serie geometrica troncata di
+ragione $(1+f)^{-1}$:
+\[
+  \sum_{i=1}^{g} d_{T_{k-1}+i}
+  = d_{T_{k-1}} \sum_{i=1}^{g} (1+f)^{-i}
+  = d_{T_{k-1}}\,\frac{1-d^\star}{f},
+  \qquad d^\star \defeq (1+f)^{-g},
+\]
+e in particolare, per $i=g$, $d_{T_k}=d_{T_{k-1}}\,d^\star$. La condizione par a $T_k$
+diventa dunque
 \begin{equation}
-  \label{eq:boot_nl}
-  g(f) \defeq r_{k+1}\,\frac{1 - d^\star}{f}
+  \label{eq:boot-nl-step1}
+  s_k\left[S_{k-1} + d_{T_{k-1}}\,\frac{1-d^\star}{f}\right] + d_{T_{k-1}}\,d^\star = 1.
+\end{equation}
+Resta la somma nota $S_{k-1}$, che per\`o \`e gi\`a vincolata dalla condizione par al tenor
+precedente $T_{k-1}$: $s_{k-1}S_{k-1}+d_{T_{k-1}}=1$, da cui
+$S_{k-1}=\frac{1-d_{T_{k-1}}}{s_{k-1}}$. Sostituendo in~\eqref{eq:boot-nl-step1} e dividendo
+per $d_{T_{k-1}}$:
+\[
+  \frac{s_k}{s_{k-1}}\cdot\frac{1-d_{T_{k-1}}}{d_{T_{k-1}}}
+  + s_k\,\frac{1-d^\star}{f} + d^\star = \frac{1}{d_{T_{k-1}}}.
+\]
+Portando tutto a sinistra e usando l'identit\`a
+$\frac{1}{d_{T_{k-1}}}-1=\frac{1-d_{T_{k-1}}}{d_{T_{k-1}}}$ per raccogliere il termine
+correttivo, si ottiene (Annex~D.5.9 di~\cite{eiopa2026}) l'equazione \textbf{non lineare}
+\begin{equation}
+  \label{eq:boot-nl}
+  g(f) \defeq s_{k}\,\frac{1 - d^\star}{f}
             + d^\star
-            + \frac{r_{k+1} - r_k}{r_k}\cdot\frac{1 - d_{t_k}}{d_{t_k}}
+            + \frac{s_{k} - s_{k-1}}{s_{k-1}}\cdot\frac{1 - d_{T_{k-1}}}{d_{T_{k-1}}}
             - 1 = 0,
   \qquad d^\star = (1+f)^{-g}.
 \end{equation}
-
-\begin{osservazione}[Derivazione equivalente]
-La~\eqref{eq:boot_nl} \`e \emph{equivalente} alla forma diretta ottenuta sostituendo
-$\sum_{i=1}^{g}(1+f)^{-i} = (1-d^\star)/f$ nella condizione par e dividendo per
-$d_{t_k}$. La forma~\eqref{eq:boot_nl} \`e quella usata da EIOPA perch\'e isola i
-termini noti (l'ultimo addendo \`e una costante rispetto a $f$).
-\end{osservazione}
-
-La sua derivata analitica (Annex~D.6.2 di~\cite{eiopa2026}) \`e:
+la cui \textbf{derivata analitica} (Annex~D.6 di~\cite{eiopa2026}) \`e
 \begin{equation}
-  \label{eq:boot_nl_der}
-  g'(f) = r_{k+1}\,\frac{-\,(d^\star)'\,f - (1 - d^\star)}{f^2} + (d^\star)',
+  \label{eq:boot-nl-der}
+  g'(f) = s_{k}\,\frac{-\,(d^\star)'\,f - (1 - d^\star)}{f^2} + (d^\star)',
   \qquad (d^\star)' = -\,g\,(1+f)^{-g-1}.
 \end{equation}
-(Il terzo addendo di~\eqref{eq:boot_nl}, costante in $f$, ha derivata nulla.)
-Una volta trovato $f^\star$, si completano i fattori di sconto del buco con
-la~\eqref{eq:cf} e si calcolano gli zero rate $z_t = d_t^{-1/t}-1$.
+(Il terzo addendo di~\eqref{eq:boot-nl}, costante in $f$, ha derivata nulla.) Trovato
+$f^\star$, si completano i fattori di sconto del gap con la~\eqref{eq:cf} e si calcolano gli
+zero rate $z_t=d_t^{-1/t}-1$.
 
-\begin{esempio}[Il buco $15\!\to\!20$]
-\label{ex:gap}
-Per l'EUR il buco pi\`u ampio \`e $15\!\to\!20$ ($g=5$). Noti $d_{15}$, $r_{15}$, $r_{20}$,
-la~\eqref{eq:boot_nl} ha un'unica radice $f^\star \approx 3.3000\%$: il forward costante
-che, ripetuto su $16,17,18,19,20$, riprezza esattamente lo swap par a 20 anni. La
-risolveremo nella Sezione~\ref{sec:numerici}.
-\end{esempio}
+I gap della sezione di interpolazione sono dunque determinati risolvendo l'equazione del
+bootstrap~\eqref{eq:boot-nl} tramite una ricerca degli zeri: in generale \`e efficiente l'uso
+del metodo di Newton, che adotteremo nel seguito (Sez.~\ref{sec:zeri}).
 
+Ripetendo lo Step~1 e lo Step~2 (lineare o non lineare a seconda del gap) su tutte le
+scadenze osservate si completano i fattori di sconto $d_1,\ldots,d_{20}$: la curva liquida
+\`e cos\`i determinata esattamente fino a $t=20$, il $\FSP$ (Definizione~\ref{def:fsp}). Da qui
+in avanti non ci sono pi\`u dati di mercato: serve l'estrapolazione.
+
+% ------------------------------------------------------------
+\subsection{Ricerca di zeri: il metodo di Newton}
+\label{sec:zeri}
+% ------------------------------------------------------------
+
+L'equazione~\eqref{eq:boot-nl} \`e il cuore numerico del metodo. Per risolverla useremo il
+\textbf{metodo di Newton}.
+
+\begin{definizione}[Metodo di Newton]
+Data $g\in C^1$ e una stima iniziale $x_0$, si itera
+\begin{equation}
+  \label{eq:newton}
+  x_{n+1} = x_n - \frac{g(x_n)}{g'(x_n)}, \qquad n=0,1,2,\ldots
+\end{equation}
+geometricamente: $x_{n+1}$ \`e l'intersezione con l'asse delle ascisse della retta tangente a
+$g$ in $x_n$. L'iterazione richiede una funzione derivabile e una derivata non nulla in un
+intorno della radice.
+\end{definizione}
+
+\begin{osservazione}[Il metodo \`e applicabile]
+Nel nostro caso le ipotesi sono soddisfatte: la $g(f)$ della~\eqref{eq:boot-nl} \`e regolare
+($C^\infty$) per $f>0$ e ne conosciamo la \textbf{derivata analitica}~\eqref{eq:boot-nl-der},
+che non si annulla in un intorno della radice cercata. Avere $g'$ in forma chiusa rende ogni
+iterazione di Newton immediata; come stima iniziale $x_0$ basta il forward osservato sul tenor
+precedente. In pratica bastano poche iterazioni per raggiungere la precisione macchina, come
+verificheremo nella ricostruzione (Sez.~\ref{sec:ricostruzione}).
+\end{osservazione}
+
+\begin{algobox}[Bootstrap della curva zero (Annex~D di~\cite{eiopa2026})]
 \begin{algorithm}[H]
-\caption{Bootstrap della curva zero (Annex~D di~\cite{eiopa2026})}
-\label{alg:bootstrap}
 \DontPrintSemicolon
 \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
-\Input{scadenze osservate $\{T_k\}$, tassi after-CRA $\{r_k\}$, $\FSP$}
+\Input{scadenze osservate $\{T_k\}$, tassi after-CRA $\{s_k\}$, $\FSP$}
 \Output{fattori di sconto $d_1,\ldots,d_{\FSP}$ e zero rate $z_1,\ldots,z_{\FSP}$}
-$d_1 \leftarrow 1/(1+r_1)$ \tcp*{Step 1}
+$d_1 \leftarrow 1/(1+s_1)$ \tcp*{Step 1}
 \For{$k=2,\ldots,N$}{
   $g \leftarrow T_k - T_{k-1}$\;
   \eIf{$g = 1$}{
-    $d_{T_k} \leftarrow (1 - r_k\sum_{j=1}^{T_{k-1}} d_j)/(1+r_k)$ \tcp*{Step 2a (lineare)}
+    $d_{T_k} \leftarrow (1 - s_k\sum_{j=1}^{T_{k-1}} d_j)/(1+s_k)$ \tcp*{Step 2a (lineare)}
   }{
-    risolvi $g(f)=0$ \eqref{eq:boot_nl} con Newton--Raphson \tcp*{Step 2b (non lineare)}
+    risolvi $g(f)=0$ \eqref{eq:boot-nl} con Newton--Raphson \tcp*{Step 2b (non lineare)}
     \lFor{$i=1,\ldots,g$}{$d_{T_{k-1}+i} \leftarrow d_{T_{k-1}}(1+f^\star)^{-i}$}
   }
 }
 $z_t \leftarrow d_t^{-1/t} - 1$ \quad per $t=1,\ldots,\FSP$\;
-\Return{$\{d_t\}, \{z_t\}$}\;
+\Return{$\{d_t\},\{z_t\}$}\;
 \end{algorithm}
+\end{algobox}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf}
-\caption{Curva zero ricostruita per bootstrap (1--20 anni). I cerchi pieni sono i tenor
-DLT osservati; i cerchi vuoti i tenor non osservati (9,11,13,14,16--19) ricavati
-dall'ipotesi di forward costante.}
-\label{fig:bootstrap}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf}
-\caption{Forward annuali $f_{t-1,t}$. Nei tratti tra tenor non consecutivi il forward
-\`e costante per costruzione (ipotesi di constant forward): si vedono i ``gradini''
-piatti in corrispondenza dei buchi $8\!\to\!10$, $10\!\to\!12$, $12\!\to\!15$,
-$15\!\to\!20$.}
-\label{fig:cf}
-\end{figure}
-
-% ============================================================
-\section{Risoluzione numerica del bootstrap: Newton vs bisezione}
-\label{sec:numerici}
-% ============================================================
-
-Risolviamo l'equazione~\eqref{eq:boot_nl} dell'Esempio~\ref{ex:gap} (buco
-$15\!\to\!20$) con entrambi i metodi della Sezione~\ref{sec:prerequisiti}.
-
-\subsection{Newton--Raphson con derivata analitica}
-
-L'algoritmo EIOPA (Annex~D.6.3--D.6.5 di~\cite{eiopa2026}) inizializza $f_0$ al forward
-dell'ultimo periodo gi\`a calcolato e itera la~\eqref{eq:newton} con $g$ e $g'$ date
-da~\eqref{eq:boot_nl}--\eqref{eq:boot_nl_der} fino a $\abs{g(f_n)} < 10^{-15}$.
-
-\begin{algorithm}[H]
-\caption{Newton--Raphson per il forward del buco (Annex~D.6)}
-\label{alg:newton}
-\DontPrintSemicolon
-\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
-\Input{$r_{k+1}, r_k, d_{t_k}, g$, stima iniziale $f_0$, tol $=10^{-15}$}
-\Output{$f^\star$ tale che $g(f^\star)=0$}
-$f \leftarrow f_0$\;
-\Repeat{$\abs{g(f)} < \text{tol}$}{
-  $f \leftarrow f - g(f)/g'(f)$ \tcp*{\eqref{eq:boot_nl}, \eqref{eq:boot_nl_der}}
-}
-\Return{$f$}\;
-\end{algorithm}
-
-\subsection{Bisezione (alternativa robusta)}
-
-In alternativa si applica la bisezione su un intervallo $[a,b]$ in cui $g$ cambia segno
-(ad es.\ $[10^{-6},\,1]$): nessuna derivata, convergenza garantita ma lineare.
-
-\subsection{Confronto}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{../output/01_eiopa_rfr_bootstrap/fig04a_g_function.pdf}
-\caption{La funzione $g(f)$ del bootstrap per il buco $15\!\to\!20$. Lo zero
-$f^\star \approx 3.3000\%$ \`e il forward costante che riprezza il par swap a 20 anni.}
-\label{fig:g_function}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{../output/01_eiopa_rfr_bootstrap/fig04b_newton_vs_bisezione.pdf}
-\caption{Convergenza dei due metodi (scala logaritmica dell'errore $\abs{f_k-f^\star}$).
-Newton--Raphson converge in \textbf{3 iterazioni} (ordine 2: l'errore si quadra a ogni
-passo), la bisezione in \textbf{50 iterazioni} (ordine 1) per la stessa tolleranza.}
-\label{fig:nr_vs_bis}
-\end{figure}
-
-\begin{keybox}[Esito numerico]
-Entrambi i metodi trovano $f^\star = 0.033000523638$ (a meno della tolleranza). Il
-numero di iterazioni evidenzia la differenza di ordine:
-\begin{center}\small
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Metodo} & \textbf{Iterazioni} & \textbf{Ordine di convergenza}\\
-\midrule
-Newton--Raphson & $\mathbf{3}$  & 2 (quadratico)\\
-Bisezione       & $50$          & 1 (lineare)\\
-\bottomrule
-\end{tabular}
-\end{center}
-La derivata analitica~\eqref{eq:boot_nl_der} rende Newton la scelta naturale per il
-codice di produzione; la bisezione \`e preziosa come controllo indipendente.
-\end{keybox}
-
-\paragraph{Verifica della calibrazione.}
-Il bootstrap \`e corretto se i fattori di sconto ricostruiti riprezzano esattamente i
-par swap osservati: per ogni $i$, $r_i \sum_{j=1}^{T_i} d_j + d_{T_i} = 1$. Il codice R
-verifica che l'errore massimo \`e dell'ordine di $10^{-16}$ (precisione macchina).
-
-% ============================================================
-\section{First Smoothing Point, LLFR ed estrapolazione}
+% ------------------------------------------------------------
+\subsection{Estrapolazione: dall'LLFR all'UFR}
 \label{sec:estrapolazione}
-% ============================================================
+% ------------------------------------------------------------
 
-Completato il bootstrap fino all'FSP, si estende la curva oltre l'FSP facendo
-convergere il forward all'UFR (sez.~8.2--8.5 di~\cite{eiopa2026}).
+Completato il bootstrap, la curva liquida arriva fino all'$\FSP$ (20 anni); oltre non esistono
+dati e va \emph{estrapolata} (sez.~8.2--8.5 di~\cite{eiopa2026}). L'idea del metodo si legge in
+tre momenti: \emph{dove} la curva deve arrivare (l'$\UFR$), \emph{da dove} parte
+l'estrapolazione (l'$\LLFR$) e \emph{come} si passa gradualmente dall'uno all'altro (il peso di
+convergenza). Sviluppiamoli in quest'ordine.
 
-\subsection{First Smoothing Point (FSP)}
+\paragraph{Dove arrivare: l'UFR.}
+Come estendere la curva oltre i 20 anni? Un approccio semplice, suggerito ad esempio
+in~\cite{hull2018} per la gestione del rischio di tasso, consiste nel prolungare l'ultimo tasso
+osservato rendendo la curva piatta oltre i 20 anni. Questa soluzione risulta per\`o fragile: una
+piccola variazione nel tasso a 20 anni si propagherebbe invariata su tutti gli anni successivi,
+amplificando le oscillazioni nei bilanci assicurativi e rendendo difficili confronti e
+riconciliazioni delle proiezioni. La scelta del regolatore EIOPA \`e invece di \textbf{agganciare
+la curva a un tasso di equilibrio di lungo periodo}: l'\textbf{Ultimate Forward Rate}
+($\UFR = 3.30\%$ per l'euro), gi\`a incontrato come nome in Sez.~1.2. L'$\UFR$ rappresenta la
+stima regolamentare del tasso reale di crescita economica di lungo periodo sommato
+all'inflazione attesa; cambia molto lentamente nel tempo ed \`e quindi un'\textbf{ancora
+stabile} verso cui il forward, superato l'$\FSP$, deve convergere.
 
-\begin{definizione}[First Smoothing Point --- sez.~8.2 di~\cite{eiopa2026}]
-L'FSP \`e la scadenza pi\`u lunga $t_F$ per cui valgono due criteri: (a) \`e DLT; (b) la
-percentuale di obbligazioni in essere di scadenza pari o superiore \`e sufficientemente
-alta (\emph{Residual Volume Criterion}). Fino all'FSP la curva \`e \emph{interpolata}
-(bootstrap); oltre, \`e \emph{estrapolata}. Per l'EUR, $\FSP = 20$ anni.
-\end{definizione}
+\paragraph{Da dove partire: l'LLFR.}
+L'estrapolazione non pu\`o per\`o ``saltare'' di colpo all'$\UFR$ appena oltre l'$\FSP$: deve
+ripartire dal livello di forward gi\`a raggiunto dalla curva liquida, per non creare
+discontinuit\`a. Questo livello di partenza \`e il \textbf{Last Liquid Forward Rate} (sez.~8.3,
+8.5.6 di~\cite{eiopa2026}). Se lo si prendesse da un solo dato --- il forward appena prima
+dell'$\FSP$ --- l'intera coda dipenderebbe da un'unica osservazione di mercato, potenzialmente
+rumorosa. Per questo la documentazione ufficiale EIOPA definisce l'$\LLFR$ in generale come una
+\textbf{media pesata} dei forward attorno all'$\FSP$, che incorpora anche l'informazione
+(seppure meno liquida) delle scadenze DLT oltre l'$\FSP$, quando esistono: cos\`i l'estrapolazione
+non resta vincolata a un solo dato di mercato ma riflette la parte pi\`u lunga, per quanto
+sottile, della struttura a termine osservabile. Formalmente:
 
-L'FSP sostituisce il concetto di \emph{Last Liquid Point} del precedente metodo
-Smith--Wilson.
-
-\subsection{Last Liquid Forward Rate (LLFR)}
-
-\begin{definizione}[LLFR --- sez.~8.3 e 8.5.6 di~\cite{eiopa2026}]
-Il \textbf{Last Liquid Forward Rate} \`e il livello del forward istantaneo all'FSP, da
-cui parte l'estrapolazione. In generale \`e una media pesata dei forward attorno
-all'FSP (pesi proporzionali ai volumi nozionali degli swap). Nel caso in cui l'FSP
-coincide con l'ultima scadenza DLT (come per l'EUR, dove $\FSP=20$ \`e l'ultimo tenor),
-non vi sono forward oltre l'FSP e la formula si riduce a
+\begin{definizione}[Last Liquid Forward Rate --- sez.~8.3, 8.5.6]
+\label{def:llfr}
+Il \textbf{Last Liquid Forward Rate} \`e il livello del forward istantaneo all'FSP, da cui
+parte l'estrapolazione. Siano $t_1<\cdots<t_L$ le scadenze DLT della valuta e $t_F=\FSP$. In
+generale (sez.~8.5.6, Art.~46(1c) del Reg.~Delegato) l'$\LLFR$ \`e una \textbf{media pesata}
+del forward appena prima dell'FSP e dei forward tra l'FSP e le eventuali scadenze DLT pi\`u
+lunghe:
 \begin{equation}
   \label{eq:llfr}
-  \LLFR^c = f^c_{t_F-1,\,t_F} = t_F\,z^c_{t_F} - (t_F-1)\,z^c_{t_F-1},
+  \LLFR^c = w_{t_F}\,f^c_{t_{F-1},t_F} + \sum_{k=F+1}^{L} w_{t_k}\,f^c_{t_F,t_k},
+  \qquad
+  f^c_{a,b} = \frac{b\,z^c_b - a\,z^c_a}{b-a},
 \end{equation}
-cio\`e il forward continuo annuale tra $19$ e $20$ anni, calcolato dagli zero rate
-continui $z^c_t = \ln(1+z_t)$ ricavati dal bootstrap.
+con pesi $w_{t_k}=V_{t_k}/\sum_j V_{t_j}$ proporzionali al notional medio annuo di swap
+scambiati al tenor $t_k$ ($\sum_k w_{t_k}=1$) e $z^c_t=\ln(1+z_t)$ gli zero rate continui.
+Quando l'FSP \`e l'ultima scadenza DLT ($L=F$), la somma ha un solo termine con peso $100\%$ e
+$\LLFR^c=f^c_{t_{F-1},t_F}$, il forward continuo appena prima dell'FSP.
 \end{definizione}
 
-Numericamente, con i dati del 29/05/2026 si ottiene $z^c_{20} \approx 2.9618\%$ e
-$\LLFR^c \approx 3.2468\%$ (vicino all'$\UFR^c \approx 3.2467\%$).
-
-\subsection{Estrapolazione verso l'UFR}
-
-\begin{definizione}[Parametro di convergenza $\alpha$ --- sez.~8.1.5 di~\cite{eiopa2026}]
-Il parametro $\alpha$ controlla la \emph{velocit\`a} di convergenza all'UFR. A
-differenza del precedente metodo Smith--Wilson, \textbf{non viene calibrato}: \`e fissato
-per legge (Art.~46(1b), 46a del Reg.~Delegato) a $\alpha = 11\%$ per tutte le valute
-($40\%$ per la corona svedese). \`E previsto un \emph{phasing-in} (Table~4
-di~\cite{eiopa2026}):
-\begin{center}\small
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lcccccc}
-\toprule
-Anno & 2027 & 2028 & 2029 & 2030 & 2031 & 2032$+$\\
-\midrule
-$\alpha$ (tutte le valute) & 20.0\% & 18.2\% & 16.4\% & 14.6\% & 12.8\% & 11.0\%\\
-\bottomrule
-\end{tabular}
-\end{center}
-Negli esempi numerici usiamo $\alpha = 20\%$ (valore di phasing-in 2027) e analizziamo
-la sensitivit\`a verso il valore a regime $11\%$.
-\end{definizione}
+\paragraph{Come passare dall'uno all'altro: convergenza graduale.}
+Noti i due estremi --- l'$\LLFR$ (dove parte l'estrapolazione, all'$\FSP$) e l'$\UFR$ (dove deve
+arrivare, all'infinito) --- il forward oltre l'$\FSP$ \`e semplicemente una \textbf{media pesata}
+tra i due, con un peso che scivola con continuit\`a da uno a zero all'aumentare
+dell'orizzonte $h$:
 
 \begin{keybox}[Estrapolazione EIOPA --- sez.~8.5.5--8.5.8 di~\cite{eiopa2026}]
-Per orizzonti $h = 1,2,\ldots,150-t_F$ oltre l'FSP, il forward continuo \`e una media
-pesata tra LLFR e UFR:
-\begin{align}
-  f^c_{t_F,\,t_F+h} &= \UFR^c + (\LLFR^c - \UFR^c)\,B(\alpha,h),
-  &\text{con}\quad
-  B(\alpha,h) &= \frac{1 - e^{-\alpha h}}{\alpha h}.
-  \label{eq:extrap_fwd}
-\end{align}
+Per orizzonti $h=1,2,\ldots,150-t_F$ oltre l'FSP, il forward continuo \`e una media pesata tra
+$\LLFR$ e $\UFR$:
+\begin{equation}
+  f^c_{t_F,\,t_F+h} = \UFR^c + (\LLFR^c - \UFR^c)\,B(\alpha,h),
+  \qquad
+  B(\alpha,h) = \frac{1 - e^{-\alpha h}}{\alpha h}.
+  \label{eq:extrap-fwd}
+\end{equation}
 Lo zero rate continuo oltre l'FSP \`e quindi
 \begin{equation}
-  \label{eq:extrap_zero}
+  \label{eq:extrap-zero}
   z^c_{t_F+h} = \frac{t_F\,z^c_{t_F} + h\,f^c_{t_F,t_F+h}}{t_F+h},
   \qquad
   z_{t_F+h} = e^{\,z^c_{t_F+h}} - 1.
 \end{equation}
 \end{keybox}
 
+Tutto il filo narrativo \`e racchiuso nel peso $B(\alpha,h)$: all'$\FSP$ ($h=0$) vale $1$, e la
+\eqref{eq:extrap-fwd} d\`a $f^c=\LLFR^c$ --- si \emph{parte} dall'$\LLFR$; per $h\to\infty$ vale
+$0$ e $f^c\to\UFR^c$ --- si \emph{arriva} all'$\UFR$. Fra i due estremi il forward transita in
+modo monotono e regolare. La proposizione seguente formalizza queste propriet\`a.
+
 \begin{proposizione}[Propriet\`a del peso $B(\alpha,h)$]
 \label{prop:Bah}
-La funzione $B(\alpha,h) = (1-e^{-\alpha h})/(\alpha h)$ soddisfa:
+La funzione $B(\alpha,h)=(1-e^{-\alpha h})/(\alpha h)$ soddisfa:
 \begin{enumerate}
-  \item $\displaystyle\lim_{h\to 0} B(\alpha,h) = 1
-        \;\Rightarrow\; f^c_{t_F,t_F} = \LLFR^c$ (continuit\`a del forward all'FSP);
-  \item $\displaystyle\lim_{h\to \infty} B(\alpha,h) = 0
-        \;\Rightarrow\; f^c_{t_F,t_F+h} \to \UFR^c$ (convergenza all'UFR);
-  \item per la simmetria in $\alpha h$, un $\alpha$ pi\`u grande accelera la
-        convergenza.
+  \item $\lim_{h\to 0} B(\alpha,h)=1 \Rightarrow f^c_{t_F,t_F}=\LLFR^c$ (continuit\`a del
+        forward all'FSP);
+  \item $\lim_{h\to\infty} B(\alpha,h)=0 \Rightarrow f^c_{t_F,t_F+h}\to\UFR^c$ (convergenza
+        all'$\UFR$);
+  \item per la simmetria in $\alpha h$, un $\alpha$ pi\`u grande accelera la convergenza.
 \end{enumerate}
 \end{proposizione}
 
+\begin{osservazione}[Perch\'e la convergenza \`e formulata sul forward, non sullo spot]
+La~\eqref{eq:extrap-fwd} e la Proposizione~\ref{prop:Bah} riguardano il forward istantaneo
+$f^c$, non lo spot $z^c$. Non \`e un dettaglio: il forward \`e la quantit\`a ``locale'', priva
+di memoria del passato (Definizione~\ref{def:forward}), ed \`e su di esso che EIOPA definisce
+direttamente l'estrapolazione. Lo spot $z^c_{t_F+h}$~\eqref{eq:extrap-zero} \`e invece una
+\textbf{media pesata} tra lo zero rate liquido a $t_F$ e il forward estrapolato --- coerente
+con la relazione spot-media-dei-forward~\eqref{eq:spot-media-fwd} gi\`a stabilita --- e quindi
+eredita la convergenza all'$\UFR$ del forward, ma con un
+ritardo: come lo spot segue sempre il forward con ritardo (Figura~\ref{fig:spot-fwd-media}),
+cos\`i converge all'$\UFR$ pi\`u lentamente. Per questo conviene enunciare la convergenza sul
+forward: \`e la proposizione pi\`u pulita, e quella (pi\`u lenta) sullo spot ne \`e conseguenza
+immediata.
+\end{osservazione}
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf}
-\caption{Il peso di convergenza $B(\alpha,h)$ per tre valori di $\alpha$. Parte da $1$
-all'FSP ($h=0$, forward $=\LLFR$) e tende a $0$ ($h\to\infty$, forward $=\UFR$). Un
-$\alpha$ maggiore (es.\ $40\%$ per SEK) produce convergenza pi\`u rapida.}
+\includegraphics[width=0.88\textwidth]{../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf}
+\caption{Il peso di convergenza $B(\alpha,h)$ per tre valori di $\alpha$. Parte da $1$ all'FSP
+($h=0$, forward $=\LLFR$) e tende a $0$ ($h\to\infty$, forward $=\UFR$). Un $\alpha$ maggiore
+(es.\ $40\%$ per SEK) produce convergenza pi\`u rapida.}
 \label{fig:Bah}
 \end{figure}
 
+% ------------------------------------------------------------
+\subsection{Il parametro di convergenza \texorpdfstring{$\alpha$}{alpha}}
+\label{sec:alpha}
+% ------------------------------------------------------------
+
+Il parametro $\alpha$ controlla la \emph{velocit\`a} di convergenza all'$\UFR$. A differenza
+del precedente metodo Smith--Wilson (dove $\alpha$ era \emph{calibrato} risolvendo un problema
+di ricerca di zeri, cfr.\ dispensa~03), qui $\alpha$ \textbf{non viene calibrato}: \`e fissato
+per legge (Art.~46(1b), 46a del Reg.~Delegato) a $\alpha=11\%$ per tutte le valute ($40\%$ per
+la corona svedese). \`E previsto un \emph{phasing-in} (Table~4 di~\cite{eiopa2026}) a partire
+dal $01/01/2027$:
+\begin{center}\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lcccccc}
+\toprule
+Anno & 2027 & 2028 & 2029 & 2030 & 2031 & 2032$+$\\
+\midrule
+$\alpha$ (valute $\neq$ SEK) & 20.0\% & 18.2\% & 16.4\% & 14.6\% & 12.8\% & 11.0\%\\
+\bottomrule
+\end{tabular}
+\end{center}
+Negli esempi numerici useremo $\alpha=20\%$ (valore di phasing-in 2027) e analizzeremo la
+sensitivit\`a verso il valore a regime $11\%$.
+
 % ============================================================
-\section{Risultati: la curva EIOPA completa}
-\label{sec:risultati}
+\section{Ricostruzione: dicembre 2025}
+\label{sec:ricostruzione}
 % ============================================================
 
-Unendo la parte interpolata (bootstrap, $t\le\FSP$) e la parte estrapolata
-($t>\FSP$) si ottiene la curva spot $z(0,T)$ per $T=1,\dots,150$ anni.
+Applichiamo ora il metodo della Sezione~\ref{sec:metodo} per ricostruire la curva EUR di
+\textbf{dicembre~2025} e la confrontiamo con la curva ufficiale EIOPA dello stesso mese
+(ricalcolata con lo stesso metodo a bootstrap, \texttt{dati/dec25\_eiopa\_rfr\_newapproach.csv}):
+un confronto \emph{like-for-like}, stesso metodo su entrambi i lati. La curva ufficiale che
+vogliamo riprodurre \`e interpolata esattamente fino all'$\FSP$ (20 anni) e poi estrapolata
+verso l'$\UFR$, con convergenza lenta fino a 150 anni: in zona liquida lo spot pu\`o benissimo
+superare l'$\UFR$ (riflette le condizioni di mercato \emph{correnti}, mentre l'$\UFR$ \`e
+un'ancora di equilibrio di \emph{lunghissimo} periodo, non un tetto sui tassi osservati oggi); ci\`o
+che converge all'$\UFR$ \`e il forward estrapolato per $T\to150$, non il livello dei tassi di
+mercato a breve.
+
+\begin{osservazione}[Una nota sui dati di input]
+Come dato di input usiamo i \textbf{par swap di input EIOPA originali}
+(\texttt{eiopa\_input\_swap\_dec2025.csv}): i tassi di mercato ai 15 tenor DLT effettivamente usati da
+EIOPA, dopo sottrazione del $\CRA$. La scelta della \emph{fonte} dei dati (questo feed, un
+proxy Bloomberg, o i par impliciti dalla curva ufficiale) sposta la ricostruzione solo di
+frazioni di bp in zona liquida; qui usiamo direttamente il dato autentico.
+\end{osservazione}
+
+% ----------------------------------------------------------
+\subsection{Dati di input}
+\label{sec:dati-input-dic}
+% ----------------------------------------------------------
+
+La Tabella~\ref{tab:input-main-dic} riporta i par lordi e after-CRA ai 15 tenor DLT. I tenor
+$14,16$--$19$ non sono osservati e verranno ricostruiti per bootstrap; i tenor $15$ e $20$
+chiudono i due gap ($13\!\to\!15$, $15\!\to\!20$).
+
+\input{../output/01_eiopa_rfr_bootstrap/tab_input_main_dic.tex}
+
+% ----------------------------------------------------------
+\subsection{Il bootstrap in azione}
+\label{sec:boot-azione}
+% ----------------------------------------------------------
+
+La Figura~\ref{fig:input} mostra i par di input EIOPA lordi e after-CRA. Applicando
+lo Step~1~\eqref{eq:step1}, lo Step~2a~\eqref{eq:step2-lin} per i tenor consecutivi $2$--$13$
+e l'equazione non lineare~\eqref{eq:boot-nl} per i due gap, si ricostruiscono i fattori di
+sconto $d_1,\dots,d_{20}$ e quindi gli zero rate (Figura~\ref{fig:bootstrap}); i tenor non DLT
+$14,16$--$19$ nascono dall'ipotesi di forward costante (Figura~\ref{fig:cf}).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{../output/01_eiopa_rfr_bootstrap/fig06_curva_spot_forward.pdf}
-\caption{Curva EIOPA EUR completa: tasso spot $z(0,T)$ (blu continuo) e forward
-$f(0,T)$ (rosso tratteggiato). I punti neri sono gli spot ai tenor osservati. La linea
-verticale indica l'FSP (20 anni). Oltre l'FSP il forward converge all'UFR$=3.30\%$.}
-\label{fig:curva_completa}
+\includegraphics[width=0.90\textwidth]{../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf}
+\caption{Par swap di input EIOPA lordi e after-CRA per le 15 scadenze DLT EUR al
+31/12/2025. La curva \`e crescente e si appiattisce sulle scadenze brevi.}
+\label{fig:input}
 \end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf}
+\caption{Curva zero ricostruita per bootstrap (1--20 anni). Cerchi pieni: tenor DLT
+osservati; cerchi vuoti: tenor non osservati ($14,16$--$19$) ricavati dall'ipotesi di forward
+costante.}
+\label{fig:bootstrap}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf}
+\caption{Forward annuali $f_{t-1,t}$. Nei tratti tra tenor non consecutivi il
+forward \`e costante per costruzione: si vedono i ``gradini'' piatti in corrispondenza dei
+gap $13\!\to\!15$ e $15\!\to\!20$.}
+\label{fig:cf}
+\end{figure}
+
+\paragraph{Il gap $15\!\to\!20$ con Newton.}
+Il gap pi\`u ampio \`e $15\!\to\!20$ ($g=5$). Noti $d_{15}$, $s_{15}$ e $s_{20}$,
+l'equazione~\eqref{eq:boot-nl} ha un'unica radice $f^\star\approx 3.5147\%$: il forward
+costante che, ripetuto su $16,17,18,19,20$, riprezza esattamente lo swap par a 20 anni. Applicando
+il metodo di Newton~\eqref{eq:newton} --- da un punto iniziale $x_0$, ogni retta tangente a $g$
+interseca l'asse delle ascisse nel punto successivo $x_{k+1}$ --- si raggiunge $f^\star$ in pochi
+passi. Che $f^\star$ sia \emph{la} radice giusta lo conferma la verifica di re-pricing: per
+costruzione i fattori di sconto ricostruiti riprezzano \emph{esattamente} ogni par swap osservato
+(per ogni $i$, $s_i\sum_{j=1}^{T_i}d_j+d_{T_i}=1$), e lo script R misura un errore massimo di
+$\sim 10^{-16}$ (precisione macchina), con Newton che raggiunge $f^\star$ a meno di $10^{-15}$ in
+$3$ iterazioni. L'interpolazione ai nodi liquidi \`e dunque esatta.
+
+% ----------------------------------------------------------
+\subsection{Il calcolo del LLFR}
+\label{sec:llfr-calcolo}
+% ----------------------------------------------------------
+
+Completato il bootstrap, la curva liquida $1$--$20$ va estesa fino a 150 anni: serve il valore
+dell'$\LLFR$ (Definizione~\ref{def:llfr}). Per dicembre~2025 lo si calcola con la formula a
+media pesata~\eqref{eq:llfr}: pesi $w$ proporzionali al notional medio annuo di swap scambiati
+e forward continui $f^c$ tra l'FSP e i tenor DLT fino a 50 anni. La
+Tabella~\ref{tab:llfr-weighted} riporta i cinque contributi e la loro somma.
+
+\input{../output/01_eiopa_rfr_bootstrap/tab_llfr_weighted.tex}
+
+Il risultato \`e $\LLFR^c = 3.2249\%$ (capitalizzazione continua) --- appena \emph{sotto}
+l'$\UFR^c\approx 3.2467\%$: i forward a 25--50 anni, gi\`a vicini all'UFR, abbassano la media.
+
+% ----------------------------------------------------------
+\subsection{Curva ricostruita e confronto col benchmark}
+\label{sec:ricostr-confronto}
+% ----------------------------------------------------------
+
+Con l'$\LLFR$ della Tabella~\ref{tab:llfr-weighted} e
+l'estrapolazione~\eqref{eq:extrap-fwd}--\eqref{eq:extrap-zero} ($\alpha=20\%$, $h=1,\dots,130$)
+si completa la curva fino a 150 anni (Figura~\ref{fig:ricostruzione}): lo spot $z_t$ e il
+forward $f_t$ (entrambi in convenzione annua composta, vedi sotto), con quest'ultimo che
+converge all'$\UFR$.
+
+Ogni calcolo fin qui --- Step~1~\eqref{eq:step1}, Step~2~\eqref{eq:step2-lin}--\eqref{eq:boot-nl},
+estrapolazione~\eqref{eq:extrap-zero} --- \`e condotto in \textbf{tassi continui} $z^c_t$,
+gli unici su cui forward e fattori di sconto si compongono in modo additivo
+(Sez.~\ref{sec:metodo}). La curva ufficiale EIOPA, il benchmark con cui confrontiamo, e i
+grafici seguenti sono invece nella convenzione \textbf{annua composta} adottata dall'$\UFR$: la
+conversione $z_{\rm ann} = e^{z^c}-1$~\eqref{eq:conv-ann-cont} viene applicata \emph{una sola
+volta}, alla fine, sui risultati.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_ricostruzione_dic.pdf}
+\caption{Curva EIOPA EUR ricostruita (bootstrap + FSP/LLFR), dicembre~2025: spot $z_t$
+(blu) e forward $f_t$ (rosso), tenor $1$--$60$ --- la stessa curva gi\`a anticipata in
+Figura~\ref{fig:spot-fwd-media}. I punti neri sono gli spot ai tenor DLT osservati; la linea
+verticale \`e l'FSP (20 anni). Il forward ha il consueto andamento a gradini fino all'FSP (ipotesi
+di forward costante nei gap, Sez.~\ref{sec:nonlin}) e oltre converge all'$\UFR = 3.30\%$
+(l'avvicinamento prosegue, pi\`u lentamente, fino a 150 anni: si veda la Figura~\ref{fig:convufr}).}
+\label{fig:ricostruzione}
+\end{figure}
+
+La Figura~\ref{fig:vs-benchmark} sovrappone lo spot ricostruito alla curva ufficiale EIOPA di
+dicembre~2025 (ricalcolata con lo stesso metodo a bootstrap): un confronto
+\emph{like-for-like}, stesso metodo su entrambi i lati.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf}
+\caption{Ricostruzione vs curva ufficiale EIOPA, dicembre~2025. \emph{Sopra}: spot ricostruito
+(blu) e ufficiale (rosso, cerchi aperti), tenor $1$--$60$ (vista; le statistiche RMSE/max sono
+calcolate sull'intero orizzonte disponibile, 1--120). \emph{Sotto}: scarti in bps; blu =
+zona liquida ($T\le\FSP$), rosso = estrapolazione.}
+\label{fig:vs-benchmark}
+\end{figure}
+
+L'accordo \`e a frazioni di bp \textbf{ovunque}: RMSE $0.03$ bps in zona liquida e $0.09$ bps
+in estrapolazione (max $0.09$ e $0.12$ bps). La Tabella~\ref{tab:delta-dic} riporta il delta
+puntuale ai 15 nodi DLT.
+
+\input{../output/01_eiopa_rfr_bootstrap/tab_delta_dic.tex}
+
+\begin{osservazione}[La fonte dei dati e la scelta dell'LLFR]
+Due scelte determinano questo accordo quasi perfetto. In \textbf{zona liquida} conta la
+\emph{fonte dei dati}: usando il vero input EIOPA il bootstrap riproduce gli zero rate
+ufficiali a $0.03$ bps (con un proxy Bloomberg ci si fermerebbe a $\sim0.3$ bps). In
+\textbf{estrapolazione} conta la \emph{definizione dell'LLFR}: la media pesata
+(Tabella~\ref{tab:llfr-weighted}) \`e ci\`o che allinea la coda alla curva ufficiale, mentre
+la definizione ingenua a singolo forward lascerebbe un residuo di $\sim2$ bps.
+\end{osservazione}
+
+\paragraph{Convergenza e sensitivit\`a.}
+La Figura~\ref{fig:convufr} mostra la convergenza del forward all'$\UFR$ in valore assoluto; la
+Figura~\ref{fig:sensalpha} isola l'effetto del parametro $\alpha$ (phasing-in $20\%$, regime
+$11\%$, SEK $40\%$) sulla \emph{velocit\`a} di convergenza: fino all'FSP le curve coincidono
+(dipendono solo dai dati), oltre, un $\alpha$ maggiore avvicina lo spot all'$\UFR$ molto pi\`u
+rapidamente.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{../output/01_eiopa_rfr_bootstrap/fig06b_convergenza_ufr.pdf}
-\caption{Distanza $\abs{f^c(t_F,t_F+h) - \UFR^c}$ in bps (scala logaritmica). Il forward
-estrapolato converge monotonicamente all'UFR, con velocit\`a governata dal peso
+\caption{Distanza $\abs{f^c(t_F,t_F+h)-\UFR^c}$ in bps (scala logaritmica). Il
+forward estrapolato converge monotonicamente all'$\UFR$, con velocit\`a governata dal peso
 $B(\alpha,h)$.}
-\label{fig:conv_ufr}
+\label{fig:convufr}
 \end{figure}
-
-\subsection{Tabella riepilogativa}
-
-\begin{center}\small
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{rrr|rrr}
-\toprule
-$T$ & Spot (\%) & Fwd (\%) & $T$ & Spot (\%) & Fwd (\%)\\
-\midrule
-1  & 2.2933 & 2.2933 & 30  & 3.1040 & 3.3000\\
-5  & 2.4038 & 2.5356 & 50  & 3.1823 & 3.3000\\
-10 & 2.6737 & 3.1177 & 80  & 3.2264 & 3.3000\\
-15 & 2.9083 & 3.4243 & 100 & 3.2412 & 3.3000\\
-20 & 3.0061 & 3.3001 & 150 & 3.2608 & 3.3000\\
-\bottomrule
-\end{tabular}
-\end{center}
-Il forward raggiunge l'UFR ($3.30\%$) gi\`a poco oltre l'FSP, mentre lo spot vi
-converge pi\`u lentamente (media dei forward), avvicinandosi a $3.26\%$ a 150 anni.
-
-% ============================================================
-\section{Confronto: estrapolazione EIOPA vs spline cubica}
-\label{sec:confronto}
-% ============================================================
-
-L'estrapolazione \`e il vero problema critico. Un metodo classico di interpolazione
-come la \textbf{spline cubica naturale} interpola perfettamente i nodi, ma oltre
-l'ultimo nodo estrapola in modo lineare, \emph{senza alcuna convergenza} a un asintoto
-economico. Il metodo EIOPA, al contrario, converge per costruzione all'UFR.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig08_confronto_spline.pdf}
-\caption{Estrapolazione: spline cubica naturale vs metodo EIOPA (bootstrap + FSP/LLFR).
-Nella zona interpolata ($T\le 20$) entrambe seguono i nodi; oltre l'FSP la spline
-diverge linearmente mentre il metodo EIOPA converge all'UFR.}
-\label{fig:confronto}
+\includegraphics[width=0.90\textwidth]{../output/01_eiopa_rfr_bootstrap/fig07a_sensitivita_alpha.pdf}
+\caption{Sensitivit\`a della velocit\`a di convergenza al parametro $\alpha$: distanza (in bps,
+scala log) dello spot dall'$\UFR$ per tre valori di $\alpha$ (regime $11\%$, phasing-in $20\%$,
+SEK $40\%$). A parit\`a di scadenza un $\alpha$ maggiore riduce la distanza pi\`u rapidamente,
+ma lo scarto tra le tre curve resta qui di pochi bps: a dicembre~2025 l'$\LLFR$ \`e gi\`a a soli
+$\sim\!2$ bps dall'$\UFR$ (Sez.~\ref{sec:llfr-calcolo}), quindi c'\`e poco ``gap'' residuo da
+chiudere a velocit\`a diverse. L'effetto di $\alpha$ nella sua forma pura, indipendente
+dall'ampiezza del gap, \`e quello del peso $B(\alpha,h)$ di Figura~\ref{fig:Bah}.}
+\label{fig:sensalpha}
 \end{figure}
 
-\begin{center}\small
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Propriet\`a} & \textbf{Spline cubica} & \textbf{EIOPA (bootstrap+FSP/LLFR)} \\
-\midrule
-Sistema lineare & Tridiagonale (Thomas, $O(n)$) & --- (bootstrap sequenziale) \\
-Interpolazione ai nodi & \checkmark & \checkmark \\
-Estrapolazione con conv.\ a UFR & $\times$ & \checkmark \\
-Convergenza all'asintoto economico & no & s\`i (peso $B(\alpha,h)$) \\
-\bottomrule
-\end{tabular}
-\end{center}
-
 % ============================================================
-\section{Analisi di sensitivit\`a}
-\label{sec:sensitivita}
+\section{Confronto con il metodo Smith--Wilson}
+\label{sec:confronto-sw}
 % ============================================================
 
-\subsection{Sensitivit\`a al parametro di convergenza $\alpha$}
+Il metodo a bootstrap che abbiamo descritto \`e, come detto in Sez.~\ref{sec:metodo}, il frutto
+della revisione di Solvency~II e sostituisce il precedente metodo \textbf{Smith--Wilson}
+(la costruzione variazionale a energia minima trattata nella dispensa~03, che qui \emph{non}
+ridefiniamo). \`E naturale chiedersi \emph{quanto} le due metodologie differiscano sulla stessa
+curva. Possiamo misurarlo in modo pulito perch\'e EIOPA, per dicembre~2025, fornisce
+\textbf{due curve ufficiali} costruite sugli stessi dati di mercato: quella pubblicata col
+metodo Smith--Wilson e quella ricalcolata col nuovo metodo a bootstrap
+(\texttt{dati/dec25\_eiopa\_rfr\_newapproach.csv}). Il loro scarto isola quindi l'effetto della
+\emph{sola} metodologia, a parit\`a di input.
+
+La Figura~\ref{fig:sw-vs-new-curves} sovrappone le due curve di livello (fino a 60 anni, dove si
+concentra tutta l'informazione rilevante); la Tabella~\ref{tab:sw-vs-new} e la
+Figura~\ref{fig:sw-vs-new} riportano poi lo scarto $\Delta$ (nuovo metodo $-$ Smith--Wilson) in
+bps, tenor per tenor.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig07a_sensitivita_alpha.pdf}
-\caption{Forward per tre valori di $\alpha$ (phasing-in $20\%$, regime $11\%$, SEK
-$40\%$). Fino all'FSP le curve coincidono (dipendono solo dai dati); oltre, un $\alpha$
-maggiore fa convergere il forward all'UFR pi\`u rapidamente.}
-\label{fig:sens_alpha}
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_curves.pdf}
+\caption{Curva spot EUR di dicembre~2025: nuovo metodo (bootstrap) vs Smith--Wilson, tenor
+$1$--$60$. Fino all'$\FSP$ (20 anni, linea verticale) le due curve sono sovrapposte; oltre,
+si separano leggermente nell'avvicinarsi all'$\UFR$ (linea viola).}
+\label{fig:sw-vs-new-curves}
 \end{figure}
 
-\subsection{Sensitivit\`a all'UFR}
+\input{../output/01_eiopa_rfr_bootstrap/tab_sw_vs_new.tex}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig07b_sensitivita_ufr.pdf}
-\caption{Curva spot per tre valori dell'UFR ($3.15\%$, $3.30\%$, $3.45\%$). Le curve
-coincidono fino all'FSP (sono il risultato del bootstrap dai dati) e divergono nella
-zona estrapolata, ciascuna verso il proprio UFR.}
-\label{fig:sens_ufr}
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new.pdf}
+\caption{Scarto tra la curva spot EUR di dicembre~2025 costruita col nuovo metodo (bootstrap) e
+quella col metodo Smith--Wilson, in bps, tenor $1$--$60$ (oltre, lo scarto si riassorbe
+lentamente senza aggiungere informazione). Fino all'$\FSP$ (20 anni) le due curve coincidono a
+frazioni di bp (interpolano gli stessi nodi liquidi); oltre l'$\FSP$ (zona grigia) divergono,
+con un massimo di $\sim\!5.5$ bps attorno ai 38 anni (punto evidenziato).}
+\label{fig:sw-vs-new}
 \end{figure}
 
-% ============================================================
-\section{Implementazione in R}
-\label{sec:codice}
-% ============================================================
-
-Il codice completo \`e nel file \texttt{R/curva\_eiopa\_rfr\_CN.R}. Qui presentiamo le
-funzioni principali.
-
-\subsection{Setup, parametri e dati}
-
-\begin{codebox}[Parametri EIOPA e lettura dei dati €STR]
-\begin{Verbatim}[fontsize=\small]
-UFR_ann <- 0.0330                  # UFR annuo composto (EUR)
-UFR_c   <- log(1 + UFR_ann)        # UFR continuo ~ 3.2467%
-FSP     <- 20                      # First Smoothing Point (anni)
-CRA     <- 0.0010                  # Credit Risk Adjustment = 10 bps
-m1      <- 1                       # frequenza cedolare OIS (annuale)
-alpha   <- 0.20                    # parametro di convergenza (phasing-in 2027)
-
-# Scadenze DLT e tassi par OIS €STR (ticker Bloomberg EESWE*, 29/05/2026)
-T_mkt <- c(1,2,3,4,5,6,7,8,10,12,15,20)
-# (s_mkt letti da dati/01_eeswe.xlsx con openxlsx::read.xlsx)
-r_mkt <- s_mkt - CRA               # tassi after-CRA -> input del bootstrap
-\end{Verbatim}
-\end{codebox}
-
-\subsection{Equazione del bootstrap e derivata (Annex~D.6)}
-
-\begin{codebox}[Equazione non lineare g(f) e sua derivata]
-\begin{Verbatim}[fontsize=\small]
-g_boot  <- function(f, s2, s1, d_tk, gap) {
-  d_star <- (1 + f)^(-gap)
-  s2*(1 - d_star)/f + d_star + (s2 - s1)/s1 * (1 - d_tk)/d_tk - 1
-}
-gp_boot <- function(f, s2, s1, d_tk, gap) {
-  d_star  <- (1 + f)^(-gap)
-  d_starp <- -gap * (1 + f)^(-gap - 1)
-  s2 * ((-d_starp*f - (1 - d_star))/f^2) + d_starp
-}
-\end{Verbatim}
-\end{codebox}
-
-\subsection{Newton--Raphson e bootstrap}
-
-\begin{codebox}[Newton--Raphson e ciclo di bootstrap]
-\begin{Verbatim}[fontsize=\small]
-nr_solve <- function(s2, s1, d_tk, gap, f0, tol = 1e-15, nmax = 50) {
-  f <- f0
-  for (k in seq_len(nmax)) {
-    gv <- g_boot(f, s2, s1, d_tk, gap)
-    if (abs(gv) < tol) break
-    f <- f - gv / gp_boot(f, s2, s1, d_tk, gap)   # passo di Newton
-  }
-  f
-}
-# Per tenor consecutivi: d_n = (1 - r_n * S_{n-1}) / (1 + r_n)      [lineare]
-# Per tenor con buco   : risolvi g(f)=0, poi d_{tk+i} = d_tk*(1+f)^(-i)
-\end{Verbatim}
-\end{codebox}
-
-\subsection{Estrapolazione FSP/LLFR}
-
-\begin{codebox}[LLFR, peso B(alpha,h) ed estrapolazione]
-\begin{Verbatim}[fontsize=\small]
-zc     <- log(1 + z)                       # zero rate continui
-LLFR_c <- FSP*zc[FSP] - (FSP-1)*zc[FSP-1]  # LLFR = f^c_{19,20}  (FSP=20)
-
-B_weight <- function(a, h) ifelse(h == 0, 1, (1 - exp(-a*h))/(a*h))
-
-h    <- 1:(150 - FSP)
-fc   <- UFR_c + (LLFR_c - UFR_c) * B_weight(alpha, h)   # forward estrapolato
-zc_e <- (FSP*zc[FSP] + h*fc) / (FSP + h)                # zero continuo
-z_e  <- exp(zc_e) - 1                                   # zero discreto annuo
-\end{Verbatim}
-\end{codebox}
-
-\begin{osservazione}
-La lettura del file \texttt{dati/01_eeswe.xlsx} usa \texttt{openxlsx::read.xlsx}; in
-mancanza del pacchetto o del file, lo script usa un vettore di fallback con i valori del
-29/05/2026 riportati in Tabella~\ref{tab:ois_eur}.
-\end{osservazione}
+Il quadro conferma l'intuizione. Nella \textbf{zona liquida} ($T\le\FSP$) le due curve sono
+di fatto \emph{indistinguibili} (scarto sotto $0.1$ bps): entrambe passano per gli stessi par
+swap di mercato, e i due schemi di interpolazione --- forward costante contro kernel di
+Smith--Wilson --- coincidono ai nodi. La differenza \`e tutta nell'\textbf{estrapolazione}: oltre
+i 20 anni lo scarto cresce fino a $\sim\!5.5$ bps attorno a 38 anni, per poi riassorbirsi
+lentamente. \`E l'effetto atteso della revisione: ancorando l'estrapolazione all'$\LLFR$ (che
+incorpora i forward oltre l'$\FSP$) invece che al solo kernel Smith--Wilson, il nuovo metodo
+produce una coda leggermente pi\`u bassa, pi\`u aderente all'informazione di mercato di lungo
+periodo. Lo scarto resta comunque contenuto (pochi bps): le due metodologie condividono lo
+stesso $\UFR$ e gli stessi dati, e differiscono solo nel \emph{come} raccordare la parte liquida
+all'ancora di lungo periodo.
 
 % ============================================================
-\section*{Riepilogo degli algoritmi}
-\addcontentsline{toc}{section}{Riepilogo degli algoritmi}
+\section{Conclusioni}
+\label{sec:conclusioni}
 % ============================================================
 
-\begin{center}\small
-\renewcommand{\arraystretch}{1.35}
-\begin{tabular}{llllc}
-\toprule
-\textbf{Fase} & \textbf{Problema numerico} & \textbf{Algoritmo} & \textbf{Convergenza} & \textbf{Rif.\ EIOPA}\\
-\midrule
-Bootstrap (consecutivi) & equazione lineare & divisione diretta & --- & Annex~D.5\\
-Bootstrap (buchi) & $g(f)=0$ non lineare & Newton--Raphson & quadratica & Annex~D.6\\
-\emph{Confronto} & $g(f)=0$ non lineare & Bisezione & lineare & ---\\
-Estrapolazione & forma chiusa & peso $B(\alpha,h)$ & --- & sez.~8.5\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-% ============================================================
-\section{Esercizi}
-\label{sec:esercizi}
-% ============================================================
-
-\begin{esercizio}[Bootstrap a mano]
-Considerare $N=3$ swap par a scadenze $T=(1,2,3)$ anni con tassi after-CRA
-$r=(2.30,\,2.40,\,2.45)\%$, cedola annuale.
-\begin{enumerate}[label=(\alph*)]
-  \item Calcolate $d_1$ e $z_1$ dallo Step~1~\eqref{eq:step1}.
-  \item Usando lo Step~2a~\eqref{eq:step2_lin} (scadenze consecutive), calcolate
-        $d_2, d_3$ e i corrispondenti $z_2, z_3$.
-  \item Verificate la condizione par~\eqref{eq:tasso_par} per ciascuno swap.
-\end{enumerate}
-\end{esercizio}
-
-\begin{esercizio}[Bootstrap con un buco: Newton vs bisezione]
-Supponete di avere $d_{15}$ dal bootstrap e di osservare lo swap a 20 anni
-($r_{20}=2.944\%$, $r_{15}=2.858\%$, $\text{gap}=5$).
-\begin{enumerate}[label=(\alph*)]
-  \item Scrivete esplicitamente $g(f)$ e $g'(f)$ da~\eqref{eq:boot_nl}--\eqref{eq:boot_nl_der}.
-  \item Implementate Newton--Raphson con $f_0 = f_{14,15}$. Quante iterazioni per
-        $\abs{g}<10^{-12}$? Confrontate con la stima della
-        Proposizione~\ref{prop:newton}.
-  \item Implementate la bisezione su $[10^{-4},\,0.5]$ con $\varepsilon=10^{-12}$.
-        Quante iterazioni? Confrontate con la Proposizione~\ref{prop:bisez}.
-  \item Riproducete le Figure~\ref{fig:g_function} e~\ref{fig:nr_vs_bis}.
-\end{enumerate}
-\end{esercizio}
-
-\begin{esercizio}[LLFR ed estrapolazione]
-Con la curva zero ottenuta dal bootstrap (Figura~\ref{fig:bootstrap}):
-\begin{enumerate}[label=(\alph*)]
-  \item Calcolate $\LLFR^c$ dalla~\eqref{eq:llfr}.
-  \item Tracciate $B(\alpha,h)$ per $\alpha\in\{0.11,\,0.20,\,0.40\}$ e verificate i
-        limiti della Proposizione~\ref{prop:Bah}.
-  \item Estrapolate la curva fino a 150 anni con~\eqref{eq:extrap_fwd}--\eqref{eq:extrap_zero}
-        e individuate la scadenza $T^*$ a cui $\abs{f^c-\UFR^c}<0.1$~bps.
-\end{enumerate}
-\end{esercizio}
-
-\begin{esercizio}[Convergenza e parametro $\alpha$]
-\begin{enumerate}[label=(\alph*)]
-  \item Ripetete l'estrapolazione con $\alpha = 0.11$ e $\alpha = 0.40$ e confrontate i
-        profili di convergenza del forward (Figura~\ref{fig:sens_alpha}).
-  \item Spiegate, usando la~\eqref{eq:extrap_fwd}, perch\'e un $\alpha$ pi\`u grande
-        accelera la convergenza all'UFR.
-  \item Discutete l'effetto del \emph{phasing-in} (Table~4) sulla curva nei diversi
-        anni 2027--2032.
-\end{enumerate}
-\end{esercizio}
-
-\begin{esercizio}[Progetto: replica della curva EIOPA EUR]
-\begin{enumerate}[label=(\alph*)]
-  \item Eseguite \texttt{R/curva\_eiopa\_rfr\_CN.R} con i dati di
-        \texttt{dati/01_eeswe.xlsx} e producete la curva spot 1--150 anni.
-  \item Confrontate i tassi spot del bootstrap con quelli ottenuti da
-        un'interpolazione a forward costante implementata da voi.
-  \item \emph{Sfida}: scaricate il file Excel mensile EIOPA da
-        \url{https://www.eiopa.europa.eu/tools-and-data} e confrontate la vostra curva
-        spot con il foglio \texttt{RFR\_spot\_no\_VA}; verificate inoltre $\FSP$,
-        $\alpha$ e UFR nel foglio \texttt{Parameters}.
-\end{enumerate}
-\end{esercizio}
+\begin{itemize}
+  \item La curva EIOPA risk-free risolve un problema di \textbf{interpolazione ed
+        estrapolazione}: seguire i tassi di mercato fino all'FSP e convergere all'$\UFR$ oltre.
+  \item Il \textbf{nuovo metodo} (EIOPA-BoS-26-198) ricostruisce i fattori di sconto con un
+        \textbf{bootstrap} sotto l'ipotesi di \emph{forward costante}: per scadenze consecutive
+        un'equazione lineare, per i \textbf{gap} un'equazione \textbf{non lineare} nel forward.
+  \item Il nucleo numerico \`e una \textbf{ricerca di zeri}, risolta con il \textbf{metodo di
+        Newton}: la disponibilit\`a della \textbf{derivata analitica} rende ogni iterazione
+        immediata e sul gap $15\!\to\!20$ bastano poche iterazioni per la precisione macchina.
+  \item L'estrapolazione converge all'$\UFR$ tramite il peso in forma chiusa $B(\alpha,h)$;
+        a differenza di Smith--Wilson, $\alpha$ \`e un \textbf{parametro regolamentare fisso}
+        (phasing-in $20\%\!\to\!11\%$), non calibrato. L'ancora dell'estrapolazione \`e il
+        \textbf{LLFR}, media pesata dei forward attorno all'FSP (Tabella~\ref{tab:llfr-weighted}).
+  \item La ricostruzione di dicembre~2025 dai \textbf{dati di input EIOPA originali}, confrontata
+        \textbf{like-for-like} con la curva ufficiale, combacia a \textbf{frazioni di bp
+        ovunque} (RMSE $0.03$ bps in zona liquida, $0.09$ bps in estrapolazione): due scelte lo
+        rendono possibile --- la \emph{fonte dei dati} autentica (zona liquida) e la corretta
+        \emph{definizione dell'LLFR} a media pesata (estrapolazione).
+\end{itemize}
 
 % ============================================================
 \renewcommand{\refname}{Riferimenti bibliografici}
@@ -1069,9 +1282,17 @@ Con la curva zero ottenuta dal bootstrap (Figura~\ref{fig:bootstrap}):
 \bibitem{eiopa2026}
 EIOPA (2026).
 \textit{RFR Technical Documentation --- The methodology to derive EIOPA's risk-free
-interest rate term structures}.
-EIOPA-BoS-26-198, Maggio 2026.
+interest rate term structures}. EIOPA-BoS-26-198, Maggio 2026.
 \url{https://www.eiopa.europa.eu}
+
+\bibitem{eiopa2025sw}
+EIOPA (2025).
+\textit{RFR Technical Documentation}. EIOPA-BoS-25-599 (metodo Smith--Wilson, storico).
+
+\bibitem{eiopa2020opinion}
+EIOPA (2020).
+\textit{Opinion on the 2020 review of Solvency~II}. EIOPA-BoS-20-749, dicembre 2020
+(introduzione del metodo di estrapolazione alternativo con l'LLFR).
 
 \bibitem{dir2009}
 Parlamento Europeo e Consiglio UE (2009).
@@ -1085,27 +1306,24 @@ Parlamento Europeo e Consiglio UE (2024).
 Commissione Europea (2025).
 \textit{Regolamento Delegato (UE) 2026/269 che modifica il Reg.\ Delegato (UE) 2015/35}.
 
-\bibitem{smithwilson2001}
-Smith, A. e Wilson, T. (2001).
-\textit{Fitting Yield Curves with Long-Term Constraints}.
-Research Note, Bacon \& Woodrow. (Metodo precedentemente impiegato da EIOPA, ora superato.)
-
 \bibitem{deBoor1978}
 de Boor, C. (1978).
-\textit{A Practical Guide to Splines}.
-Springer-Verlag.
+\textit{A Practical Guide to Splines}. Springer-Verlag.
 
-\bibitem{quarteroni2014}
-Quarteroni, A., Saleri, F. e Gervasio, P. (2014).
+\bibitem{quarteroni2017}
+Quarteroni, A., Saleri, F. e Gervasio, P. (2017).
 \textit{Calcolo Scientifico}, 6\textsuperscript{a} ed., Springer.
+Fattorizzazioni, ricerca di zeri (bisezione, Newton).
 
-\bibitem{stoer2002}
-Stoer, J. e Bulirsch, R. (2002).
-\textit{Introduction to Numerical Analysis}, 3\textsuperscript{rd} ed., Springer.
+\bibitem{burden2016}
+Burden, R.L. e Faires, J.D. (2016).
+\textit{Numerical Analysis}, 10\textsuperscript{th} ed., Cengage.
+Bisezione, Newton e convergenza.
 
 \bibitem{hull2018}
 Hull, J. C. (2018).
 \textit{Options, Futures, and Other Derivatives}, 10\textsuperscript{th} ed., Pearson.
+Struttura a termine, tasso par, IRS.
 
 \end{thebibliography}
 

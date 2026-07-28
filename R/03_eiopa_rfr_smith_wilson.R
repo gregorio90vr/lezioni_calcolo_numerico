@@ -224,21 +224,90 @@ eusa <- eusa[order(eusa$date), ]
 cat(sprintf("Mesi nella finestra giu-dic 2025: %d\n", nrow(eusa)))
 cat("  ", paste(format(eusa$date), collapse = ", "), "\n\n")
 
-ref_date <- as.Date("2025-07-31")     # mese di riferimento per le figure 1-5 (lug 2025)
-ref_lab  <- format(ref_date, "%b %Y")
+ref_date <- as.Date("2025-12-31")     # mese di riferimento: DICEMBRE 2025 (input EIOPA)
+ref_lab  <- "Dicembre 2025"
 
-# --- Calibrazione del mese di riferimento -------------------------------------
+# Dati di input EIOPA originali (par swap lordi, dicembre 2025)
+read_input_ye25 <- function() {
+  f <- file.path(dirname(getwd()), "dati", "eiopa_input_swap_dec2025.csv")
+  if (!file.exists(f)) return(NULL)
+  tryCatch({
+    df <- read.csv(f, stringsAsFactors = FALSE)
+    tt <- as.integer(df$tenor); ss <- as.numeric(df$swap_inputEUR)
+    ok <- !is.na(tt) & !is.na(ss)
+    data.frame(t = tt[ok], s = ss[ok])
+  }, error = function(e) NULL)
+}
+inp_ye25 <- read_input_ye25()
+if (is.null(inp_ye25)) stop("Dati input EIOPA non trovati (dati/eiopa_input_swap_dec2025.csv)")
+
+# --- Calibrazione del mese di riferimento (input EIOPA, dicembre 2025) ---------
 off_ref  <- read_eiopa_official(ref_date)
 if (is.null(off_ref)) stop("Curva ufficiale EIOPA non trovata per ", ref_lab)
 CRA_ref  <- if (is.finite(off_ref$CRA)) off_ref$CRA / 1e4 else CRA
-s_ref    <- as.numeric(eusa[eusa$date == ref_date, -1])   # par EUSA (decimali)
+s_ref    <- inp_ye25$s[match(T_mkt, inp_ye25$t)]          # par input EIOPA lordi
 r_ref    <- s_ref - CRA_ref                                # input after-CRA
-a_ref    <- alpha_star_for_mat(r_ref, T_mkt)
+a_ref    <- if (is.finite(off_ref$alpha)) off_ref$alpha else alpha_star_for_mat(r_ref, T_mkt)
 cal_ref  <- sw_calibrate(T_mkt, r_ref, a_ref)
 Qb_ref   <- cal_ref$Qb
 
 cat(sprintf("Mese di riferimento: %s  (zip %s)\n", ref_lab, off_ref$zip))
-cat(sprintf("  CRA = %.0f bps,  alpha* (criterio) = %.4f\n\n", CRA_ref * 1e4, a_ref))
+cat(sprintf("  CRA = %.0f bps,  alpha ufficiale = %.4f\n\n", CRA_ref * 1e4, a_ref))
+
+# --- Asset condivisi con la dispensa 01 (Sez. 1-2 identiche) -------------------
+dir_shared <- file.path(dirname(getwd()), "output", "shared")
+if (!dir.exists(dir_shared)) dir.create(dir_shared, recursive = TRUE)
+
+# Tabella dati di input condivisa (Sez.2 identica in 01 e 03). Codice identico
+# nei due script; i valori vengono dallo stesso file eiopa_input_swap_dec2025.csv.
+{
+  lines <- c("% GENERATO da R (asset condiviso 01/03)",
+    "\\begin{table}[H]\\centering\\small",
+    paste0("\\caption{Par swap EUR di input EIOPA a dicembre~2025 ai 15 tenor DLT ",
+           "(\\texttt{eiopa\\_input\\_swap\\_dec2025.csv}), lordi e dopo la sottrazione del CRA. ",
+           "I tenor 15 e 20 chiudono un ``buco'' (13$\\to$15, 15$\\to$20).}"),
+    "\\label{tab:input-dic}\\renewcommand{\\arraystretch}{1.15}",
+    "\\begin{tabular}{rcc}", "\\toprule",
+    "$T_k$ (anni) & input EIOPA lordo (\\%) & after-CRA $r_k$ (\\%)\\\\",
+    "\\midrule")
+  for (i in seq_along(T_mkt)) {
+    tint <- if (i %% 2 == 1) "\\rowcolor{rowtint}" else ""
+    tag  <- if (T_mkt[i] == 20) "~\\textbf{(ultimo tenor liquido)}" else if (T_mkt[i] == 15) "~(buco)" else ""
+    lines <- c(lines, sprintf("%s%d%s & %.4f & %.4f\\\\", tint, T_mkt[i], tag,
+                              s_ref[i]*100, r_ref[i]*100))
+  }
+  lines <- c(lines, "\\bottomrule", "\\end{tabular}", "\\end{table}")
+  writeLines(lines, file.path(dir_shared, "tab_input_dic.tex"))
+  message("  [OK] output/shared/tab_input_dic.tex")
+}
+
+# Figure illustrative condivise (Sez.2): fattori di sconto e spot-vs-forward,
+# dalla curva ufficiale EIOPA di dicembre 2025 (method-agnostiche). Codice identico
+# in 01/03.
+{
+  mm <- off_ref$mat; zz <- off_ref$spot
+  sel <- mm >= 1 & mm <= 25
+  dfP <- data.frame(T = mm[sel], P = (1 + zz[sel])^(-mm[sel]))
+  pP <- ggplot(dfP, aes(x = T, y = P)) + geom_line(linewidth = 1, color = col_spot) +
+    labs(title = "Fattori di sconto P(0,T)",
+         subtitle = "P(0,T) = prezzo oggi di 1 unita' pagata in T; decresce con la scadenza",
+         x = "Scadenza T (anni)", y = "P(0,T)") + theme_dispensa +
+    scale_x_continuous(breaks = c(1,5,10,15,20,25))
+  ggsave(file.path(dir_shared, "fig_fattori_sconto.pdf"), plot = pP, width = 8, height = 5, device = "pdf")
+
+  s60 <- mm >= 1 & mm <= 60; m60 <- mm[s60]; z60 <- zz[s60]; zc <- log(1 + z60)
+  fc <- c(zc[1], m60[-1]*zc[-1] - m60[-length(m60)]*zc[-length(zc)])
+  dfSF <- rbind(data.frame(T = m60, val = z60*100, Serie = "Spot r(t)"),
+                data.frame(T = m60, val = (exp(fc)-1)*100, Serie = "Forward f(t)"))
+  pSF <- ggplot(dfSF, aes(x = T, y = val, color = Serie)) + geom_line(linewidth = 1) +
+    scale_color_manual(values = c("Spot r(t)" = col_spot, "Forward f(t)" = col_fwd)) +
+    labs(title = "Tasso spot r(t) e forward istantaneo f(t)",
+         subtitle = "Il forward si muove piu' rapidamente: lo spot ne e' la media su [0,t]",
+         x = "Scadenza T (anni)", y = "Tasso annuo (%)", color = NULL) + theme_dispensa +
+    scale_x_continuous(breaks = c(1,5,10,15,20,30,40,50,60))
+  ggsave(file.path(dir_shared, "fig_spot_fwd_media.pdf"), plot = pSF, width = 8, height = 5, device = "pdf")
+  message("  [OK] output/shared/fig_fattori_sconto.pdf, fig_spot_fwd_media.pdf")
+}
 
 # ==============================================================================
 # PARTE 1 — MOTIVAZIONI ECONOMICHE  (fig1)
@@ -246,26 +315,26 @@ cat(sprintf("  CRA = %.0f bps,  alpha* (criterio) = %.4f\n\n", CRA_ref * 1e4, a_
 # Spot e forward ricostruiti fino al Convergence Point: oltre il LLP il mercato
 # non quota, la curva e' ESTRAPOLATA e il forward converge all'UFR.
 
-# Fig 1: curva spot ufficiale EIOPA luglio 2026, tenor 1-150
-off1 <- read_eiopa_official(as.Date("2025-07-31"))
-if (is.null(off1)) stop("Curva ufficiale EIOPA non trovata per luglio 2026")
-df1 <- data.frame(T = off1$mat, val = off1$spot * 100)
-p1 <- ggplot(df1, aes(x = T, y = val)) +
-  annotate("rect", xmin = LLP, xmax = max(df1$T), ymin = -Inf, ymax = Inf,
+# Fig motivazione: curva spot ufficiale EIOPA di DICEMBRE 2025 (method-agnostica).
+# Salvata anche in output/shared/ per la Sez.1 condivisa con la dispensa 01.
+df1 <- data.frame(T = off_ref$mat, val = off_ref$spot * 100)
+p_mot <- ggplot(df1, aes(x = T, y = val)) +
+  annotate("rect", xmin = 20, xmax = max(df1$T), ymin = -Inf, ymax = Inf,
            fill = "gray85", alpha = 0.35) +
   geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed", linewidth = 0.7) +
-  geom_vline(xintercept = LLP, color = "gray55", linetype = "dashed", linewidth = 0.4) +
+  geom_vline(xintercept = 20, color = "gray55", linetype = "dashed", linewidth = 0.4) +
   geom_line(linewidth = 1, color = col_spot) +
-  annotate("text", x = LLP + 1, y = min(df1$val), label = "estrapolazione (T > LLP)",
+  annotate("text", x = 21, y = min(df1$val), label = "estrapolazione (T > 20a)",
            hjust = 0, color = "gray35", size = 3.4) +
   annotate("text", x = max(df1$T) - 1, y = UFR_ann * 100 + 0.06, label = "UFR = 3.30%",
            hjust = 1, color = col_ufr, size = 3.6) +
   scale_x_continuous(breaks = c(1, 10, 20, 40, 60, 80, 100, 120, 150)) +
-  labs(title = "Curva spot EUR ufficiale EIOPA — luglio 2026",
-       subtitle = "Zona grigia: estrapolazione (T > LLP = 20a); linea viola: UFR = 3.30%",
+  labs(title = "Curva spot EUR ufficiale EIOPA — dicembre 2025",
+       subtitle = "Zona grigia: estrapolazione (T > 20 anni); linea viola: UFR = 3.30%",
        x = "Scadenza T (anni)", y = "Tasso spot annuo (%)") +
   theme_dispensa
-save_fig("fig1_motivazione_estrapolazione", p1)
+save_fig("fig1_motivazione_estrapolazione", p_mot)
+ggsave(file.path(dir_shared, "fig_motivazione.pdf"), plot = p_mot, width = 9, height = 5.5, device = "pdf")
 
 # ==============================================================================
 # PARTE 2 — CURVA DEI TASSI E TASSI FORWARD  (fig2, fig2b)
@@ -291,25 +360,17 @@ p2 <- ggplot(df2, aes(x = T, y = val, color = Serie)) +
   theme_dispensa
 save_fig("fig2_spot_forward_par", p2)
 
-# fig_spot_fwd_media: spot e forward su orizzonte esteso (per la keybox §2.4)
+# fig_spot_fwd_media: forma di spot e forward (illustrazione §2.3, senza SW/UFR)
 grid_km <- seq(0.25, CP, by = 0.25)
 df_km <- rbind(
   data.frame(T = grid_km, val = sw_spot_ann(grid_km, Qb_ref, a_ref) * 100, Serie = "Spot r(t)"),
   data.frame(T = grid_km, val = sw_fwd_ann (grid_km, Qb_ref, a_ref) * 100, Serie = "Forward f(t)")
 )
 p_km <- ggplot(df_km, aes(x = T, y = val, color = Serie)) +
-  annotate("rect", xmin = LLP, xmax = CP, ymin = -Inf, ymax = Inf,
-           fill = "gray85", alpha = 0.30) +
-  geom_hline(yintercept = UFR_ann * 100, color = col_ufr, linetype = "dashed", linewidth = 0.7) +
-  geom_vline(xintercept = LLP, color = "gray55", linetype = "dashed", linewidth = 0.4) +
   geom_line(linewidth = 1) +
-  annotate("text", x = LLP + 0.6, y = min(df_km$val, na.rm = TRUE),
-           label = "estrapolazione (T > LLP)", hjust = 0, color = "gray35", size = 3.2) +
-  annotate("text", x = CP - 0.5, y = UFR_ann * 100 + 0.07, label = "UFR = 3.30%",
-           hjust = 1, color = col_ufr, size = 3.5) +
   scale_color_manual(values = c("Spot r(t)" = col_spot, "Forward f(t)" = col_fwd)) +
-  labs(title = sprintf("Spot e forward istantaneo — %s", ref_lab),
-       subtitle = "Il forward converge all'UFR prima dello spot: lo spot e' la media del forward su [0,t]",
+  labs(title = "Tasso spot r(t) e forward istantaneo f(t)",
+       subtitle = "Il forward si muove piu' rapidamente: lo spot ne e' la media su [0,t] e reagisce con ritardo",
        x = "Scadenza T (anni)", y = "Tasso annuo (%)", color = NULL) +
   scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 30, 40, 50, 60)) +
   theme_dispensa
@@ -317,9 +378,8 @@ save_fig("fig_spot_fwd_media", p_km)
 
 df2b <- data.frame(T = seq(0.5, 25, by = 0.25), P = sw_P(seq(0.5, 25, by = 0.25), Qb_ref, a_ref))
 p2b <- ggplot(df2b, aes(x = T, y = P)) +
-  geom_vline(xintercept = LLP, color = "gray70", linetype = "dashed", linewidth = 0.4) +
   geom_line(linewidth = 1, color = col_spot) +
-  labs(title = sprintf("Fattori di sconto P(0,T) — %s", ref_lab),
+  labs(title = "Fattori di sconto P(0,T)",
        subtitle = "P(0,T) = prezzo oggi di 1 unita' pagata in T; decresce con la scadenza",
        x = "Scadenza T (anni)", y = "P(0,T)") +
   scale_x_continuous(breaks = c(1, 5, 10, 15, 20, 25, 30)) +
@@ -392,15 +452,15 @@ save_fig("fig5_calibrazione_alpha", p5)
 # ==============================================================================
 # Dati luglio 2025 (mese di riferimento per la ricostruzione passo a passo)
 
-d_jul   <- as.Date("2025-07-31")
-off_jul <- read_eiopa_official(d_jul)
-if (is.null(off_jul)) stop("Curva ufficiale luglio 2025 non trovata in dati/eiopa_zips/")
-s_jul   <- as.numeric(eusa[eusa$date == d_jul, -1])
-CRA_jul <- if (is.finite(off_jul$CRA)) off_jul$CRA / 1e4 else CRA
-r_jul   <- s_jul - CRA_jul
-a_jul   <- if (is.finite(off_jul$alpha)) off_jul$alpha else alpha_star_for_mat(r_jul, T_mkt)
-Qb_jul  <- sw_calibrate(T_mkt, r_jul, a_jul)$Qb
-lab_jul <- "Luglio 2025"
+# Mese passo a passo = mese di riferimento (dicembre 2025, dati input EIOPA).
+d_jul   <- ref_date
+off_jul <- off_ref
+s_jul   <- s_ref
+CRA_jul <- CRA_ref
+r_jul   <- r_ref
+a_jul   <- a_ref
+Qb_jul  <- Qb_ref
+lab_jul <- ref_lab
 
 cat(sprintf("\nMese passo a passo: %s  (zip %s)\n", lab_jul, off_jul$zip))
 cat(sprintf("  CRA = %.0f bps,  alpha ufficiale = %.4f\n", CRA_jul * 1e4, a_jul))
@@ -500,10 +560,17 @@ tab_input <- data.frame(
   EUSA_pct     = round(s_jul * 100, 4),
   afterCRA_pct = round(r_jul * 100, 4)
 )
-cat("\n  Par rate EUSA* e after-CRA (luglio 2025):\n")
+cat("\n  Par input EIOPA e after-CRA (dicembre 2025):\n")
 print(tab_input, row.names = FALSE)
 
-# --- fig_sconto_nodi_jul: P(0,T) con punti esatti ai 15 nodi DLT ---------------
+# --- fig_sconto_nodi_jul: P(0,T) con punti ai 15 nodi DLT ----------------------
+# Verifica di calibrazione onesta: riprezzamento esatto C'P = 1 (i punti sulla
+# curva ci stanno per costruzione, non sono un test)
+C_chk   <- build_C(T_mkt, r_jul)
+P_pay   <- sw_P(u_pay, Qb_jul, a_jul)
+rep_err <- max(abs(t(C_chk) %*% P_pay - 1))
+cat(sprintf("  Verifica riprezzamento: max|C'P - 1| = %.2e\n", rep_err))
+
 grid_P  <- seq(0.5, 22, by = 0.1)
 P_nodi  <- sw_P(T_mkt, Qb_jul, a_jul)
 df_P    <- data.frame(T = grid_P, P = sw_P(grid_P, Qb_jul, a_jul))
@@ -516,8 +583,9 @@ p_sconto_nodi <- ggplot(df_P, aes(x = T, y = P)) +
              color = col_par, size = 2.5) +
   scale_x_continuous(breaks = c(1, 5, 10, 15, 20)) +
   labs(title = sprintf("Fattori di sconto P(0,T) — %s", lab_jul),
-       subtitle = paste0("Punti neri: P(0,T_j) ai 15 nodi DLT dalla soluzione SW.",
-                         " Giacciono esattamente sulla curva: interpolazione esatta."),
+       subtitle = sprintf(paste0("Punti neri: P(0,T_j) ai 15 nodi DLT. ",
+                                 "Verifica di riprezzamento: max|C'P - 1| = %.1e"),
+                          rep_err),
        x = "Scadenza T (anni)", y = "P(0,T)") +
   theme_dispensa
 save_fig("fig_sconto_nodi_jul", p_sconto_nodi)
@@ -531,7 +599,7 @@ write_C_latex <- function(C, maturities, rates, out_file) {
     "\\begin{table}[H]",
     "\\centering",
     paste0("\\caption{Matrice dei flussi di cassa $\\mathbf{C}\\in\\mathbb{R}^{20\\times 15}$,",
-           " luglio~2025. Celle \\colorbox{cyan!20}{azzurre} = cedola $r_j$;",
+           " dicembre~2025. Celle \\colorbox{cyan!20}{azzurre} = cedola $r_j$;",
            " celle \\colorbox{orange!35}{arancio} = cedola$+$rimborso $1{+}r_j$;",
            " punti = flusso nullo.}"),
     "\\label{tab:C-luglio}",
@@ -565,6 +633,12 @@ write_C_latex <- function(C, maturities, rates, out_file) {
 write_C_latex(C_jul, T_mkt, r_jul, file.path(dir_out, "tab_C_luglio.tex"))
 
 # --- fig_sw_alpha_jul: calibrazione di alpha ----------------------------------
+# alpha* dal criterio (sez. 9.14) sui dati EUSA, da confrontare con l'alpha
+# ufficiale pubblicato da EIOPA (a_jul, letto dallo zip)
+a_jul_crit <- alpha_star_for_mat(r_jul, T_mkt)
+cat(sprintf("  alpha* criterio (dati EUSA) = %.4f ; alpha ufficiale EIOPA = %.4f\n",
+            a_jul_crit, a_jul))
+
 a_grid <- seq(a_min, 0.30, length.out = 200)
 g_jul  <- sapply(a_grid, function(a)
   (sw_fwd_int(CP, sw_calibrate(T_mkt, r_jul, a)$Qb, a) - omega) * 1e4)
@@ -574,16 +648,17 @@ p_alpha_jul <- ggplot(df_g, aes(x = alpha, y = g)) +
            fill = "gray85", alpha = 0.5) +
   geom_hline(yintercept = 0, color = "gray50", linewidth = 0.4) +
   geom_line(linewidth = 1, color = col_fwd) +
-  geom_vline(xintercept = a_jul, color = col_spot, linetype = "dashed", linewidth = 0.6) +
+  geom_vline(xintercept = a_jul_crit, color = col_spot, linetype = "dashed", linewidth = 0.6) +
+  geom_vline(xintercept = a_jul, color = "#2E7D32", linetype = "dotdash", linewidth = 0.5) +
   geom_vline(xintercept = a_min, color = "gray55", linetype = "dotted", linewidth = 0.5) +
-  annotate("text", x = a_jul, y = max(df_g$g) * 0.80,
-           label = sprintf("alpha* = %.4f", a_jul),
-           hjust = -0.1, color = col_spot, size = 3.6) +
   annotate("text", x = a_min, y = max(df_g$g) * 0.55,
            label = sprintf("alpha_min = %.2f", a_min),
            hjust = -0.1, color = "gray40", size = 3.3) +
   labs(title = sprintf("Calibrazione di alpha — %s", lab_jul),
-       subtitle = "g(alpha) = f(CP, alpha) - omega in bps; banda grigia = tolleranza +/-1 bp",
+       subtitle = sprintf(paste0("g(alpha) = f(CP, alpha) - omega in bps; banda grigia = +/-1 bp.\n",
+                                 "Linea blu tratteggiata: alpha* criterio = %.4f (dati EUSA); ",
+                                 "linea verde: alpha EIOPA = %.4f"),
+                          a_jul_crit, a_jul),
        x = expression(alpha), y = "f(CP, alpha) - omega  (bps)") +
   theme_dispensa
 save_fig("fig_sw_alpha_jul", p_alpha_jul)
@@ -683,10 +758,60 @@ tab_diag <- data.frame(
   RMSE_bps     = round(RMSE_liq, 2),
   max_diff_bps = round(maxdiff, 2)
 )
-cat("\n  Diagnostica luglio 2025:\n")
+cat("\n  Diagnostica dicembre 2025:\n")
 print(tab_diag, row.names = FALSE)
 write.csv(tab_diag, file.path(dir_out, "tab_ricostruzione_var.csv"), row.names = FALSE)
 cat(sprintf("\n  [OK] %s\n", file.path(dir_out, "tab_ricostruzione_var.csv")))
+
+# --- tab_curva_ricostruita_dic: curva SW (continua e annua composta) ---------
+# Tenor rappresentativi: 15 nodi DLT (zona liquida) + alcuni tenor di estrapolazione
+tenor_tab   <- sort(unique(c(T_mkt, 25, 30, 40, 50, 60, 80)))
+spot_c_tab  <- sw_spot_int(tenor_tab, Qb_jul, a_jul) * 100
+spot_a_tab  <- sw_spot_ann(tenor_tab, Qb_jul, a_jul) * 100
+fwd_c_tab   <- sw_fwd_int (tenor_tab, Qb_jul, a_jul) * 100
+fwd_a_tab   <- sw_fwd_ann (tenor_tab, Qb_jul, a_jul) * 100
+{
+  lines <- c("% GENERATO da R/03_eiopa_rfr_smith_wilson.R",
+    "\\begin{table}[H]\\centering\\small",
+    paste0("\\caption{Curva Smith--Wilson ricostruita, dicembre~2025: tasso spot e forward a ",
+           "capitalizzazione continua e annua composta, ai 15 nodi DLT (zona liquida, $T\\le\\LLP$) ",
+           "e ad alcuni tenor di estrapolazione. Serie completa (1--100 anni) in ",
+           "\\texttt{output/shared/curva\\_ricostruita\\_dic2025.xlsx}, foglio \\texttt{SmithWilson}.}"),
+    "\\label{tab:curva-ricostruita-dic}\\renewcommand{\\arraystretch}{1.15}",
+    "\\resizebox{\\textwidth}{!}{%",
+    "\\begin{tabular}{rcccc}", "\\toprule",
+    "$T$ (anni) & spot continuo (\\%) & spot annuo comp. (\\%) & forward continuo (\\%) & forward annuo comp. (\\%)\\\\",
+    "\\midrule")
+  for (i in seq_along(tenor_tab)) {
+    tint <- if (i %% 2 == 1) "\\rowcolor{rowtint}" else ""
+    lines <- c(lines, sprintf("%s%d & %.4f & %.4f & %.4f & %.4f\\\\", tint, tenor_tab[i],
+                              spot_c_tab[i], spot_a_tab[i], fwd_c_tab[i], fwd_a_tab[i]))
+  }
+  lines <- c(lines, "\\bottomrule", "\\end{tabular}}", "\\end{table}")
+  writeLines(lines, file.path(dir_out, "tab_curva_ricostruita_dic.tex"))
+  message("  [OK] tab_curva_ricostruita_dic.tex")
+}
+
+# --- Excel condiviso: curva SW completa (continua e annua composta), 1-100a --
+if (have_openxlsx) {
+  xlsx_path  <- file.path(dir_shared, "curva_ricostruita_dic2025.xlsx")
+  mats_full  <- 1:100
+  df_sw_full <- data.frame(
+    Tenor_anni             = mats_full,
+    Spot_continuo_pct      = round(sw_spot_int(mats_full, Qb_jul, a_jul) * 100, 6),
+    Spot_annuo_comp_pct    = round(sw_spot_ann(mats_full, Qb_jul, a_jul) * 100, 6),
+    Forward_continuo_pct   = round(sw_fwd_int (mats_full, Qb_jul, a_jul) * 100, 6),
+    Forward_annuo_comp_pct = round(sw_fwd_ann (mats_full, Qb_jul, a_jul) * 100, 6)
+  )
+  wb <- if (file.exists(xlsx_path)) openxlsx::loadWorkbook(xlsx_path) else openxlsx::createWorkbook()
+  if ("SmithWilson" %in% openxlsx::sheets(wb)) openxlsx::removeWorksheet(wb, "SmithWilson")
+  openxlsx::addWorksheet(wb, "SmithWilson")
+  openxlsx::writeData(wb, "SmithWilson", df_sw_full)
+  openxlsx::saveWorkbook(wb, xlsx_path, overwrite = TRUE)
+  message("  [OK] ", xlsx_path, " (foglio SmithWilson)")
+} else {
+  message("  [SKIP] openxlsx non disponibile: curva_ricostruita_dic2025.xlsx non aggiornato")
+}
 
 cat("\n=====================================================================\n")
 cat("  FIGURE GENERATE in:", dir_out, "\n")

@@ -1,0 +1,19 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {section}{\numberline {1}Scopo e panoramica}{2}{section.1}%
+\contentsline {section}{\numberline {2}Le quattro fonti di dati}{2}{section.2}%
+\contentsline {section}{\numberline {3}Ricostruzione e confronto: Fonti A, B, C}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Fonte A --- par \texttt {EUSA*} di mercato}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Fonte B --- par impliciti dalla curva ufficiale}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Fonte C --- dati di input EIOPA originali}{6}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Fonte D e la scoperta}{8}{section.4}%
+\contentsline {section}{\numberline {5}Confronto complessivo delle quattro fonti}{9}{section.5}%
+\contentsline {section}{\numberline {6}La definizione ufficiale dell'LLFR}{10}{section.6}%
+\contentsline {subsection}{\numberline {6.1}La formula generale (§8.3, §8.5.6)}{10}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Il caso EUR: Tabella 2}{10}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Conferma storica: Annex B.5.1}{11}{subsection.6.3}%
+\contentsline {section}{\numberline {7}Il tool Excel/VBA ufficiale e la funzione \texttt {GetLLFR}}{11}{section.7}%
+\contentsline {section}{\numberline {8}Calcolo numerico: come si arriva a 3.2249\%}{12}{section.8}%
+\contentsline {section}{\numberline {9}Confronto con la ricostruzione EUR reale}{12}{section.9}%
+\contentsline {section}{\numberline {10}Conclusione dell'indagine}{13}{section.10}%
+\contentsline {section}{Richiamo: formula di estrapolazione}{13}{section.10}%

@@ -1,0 +1,4 @@
+"Scenario","alpha","RMSE_liquida_bps","max_liquida_bps","RMSE_estrap_bps","max_estrap_bps"
+"Scenario 1: EUSA* + alpha* (criterio)",0.0635,0.341,0.843,1.101,1.426
+"Scenario 2: EUSA* + alpha ufficiale EIOPA",0.0736,0.341,0.843,1.408,1.717
+"Scenario 3: nodi RFR ufficiali + alpha uff.",0.0736,0,0,0.037,0.079

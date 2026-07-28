@@ -1,0 +1,37 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {section}{\numberline {1}Motivazioni economiche}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Contesto regolamentare}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}La metodologia}{2}{subsection.1.2}%
+\contentsline {section}{\numberline {2}La curva dei tassi e i tassi forward}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Dalla capitalizzazione al fattore di sconto}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Tasso spot}{5}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Tasso forward}{5}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Tassi par}{7}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Gli swap di tasso di interesse}{8}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Struttura matematica del metodo: bootstrap ed estrapolazione}{8}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Il Credit Risk Adjustment}{9}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}First Smoothing Point e scadenze liquide}{9}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}La condizione par e il bootstrap}{9}{subsection.3.3}%
+\contentsline {paragraph}{Step 1 --- il primo tenor (Annex~D.4).}{9}{subsection.3.3}%
+\contentsline {paragraph}{Step 2a --- scadenze consecutive (equazione lineare, Annex~D.5).}{9}{equation.12}%
+\contentsline {paragraph}{Una lettura matriciale.}{10}{equation.13}%
+\contentsline {subsection}{\numberline {3.4}Scadenze non consecutive: l'equazione non lineare}{10}{subsection.3.4}%
+\contentsline {paragraph}{Perch\'e il forward costante?}{10}{subsection.3.4}%
+\contentsline {paragraph}{Dalla definizione di forward alla~\eqref {eq:cf}.}{10}{subsection.3.4}%
+\contentsline {paragraph}{Dalla~\eqref {eq:cf} all'equazione non lineare~\eqref {eq:boot-nl}.}{11}{equation.16}%
+\contentsline {subsection}{\numberline {3.5}Ricerca di zeri: il metodo di Newton}{11}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Estrapolazione: dall'LLFR all'UFR}{12}{subsection.3.6}%
+\contentsline {paragraph}{Dove arrivare: l'UFR.}{12}{subsection.3.6}%
+\contentsline {paragraph}{Da dove partire: l'LLFR.}{12}{subsection.3.6}%
+\contentsline {paragraph}{Come passare dall'uno all'altro: convergenza graduale.}{13}{equation.21}%
+\contentsline {subsection}{\numberline {3.7}Il parametro di convergenza $\alpha $}{14}{subsection.3.7}%
+\contentsline {section}{\numberline {4}Ricostruzione: dicembre 2025}{14}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Dati di input}{15}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Il bootstrap in azione}{15}{subsection.4.2}%
+\contentsline {paragraph}{Il gap $15\!\to \!20$ con Newton.}{17}{figure.6}%
+\contentsline {subsection}{\numberline {4.3}Il calcolo del LLFR}{17}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Curva ricostruita e confronto col benchmark}{18}{subsection.4.4}%
+\contentsline {paragraph}{Convergenza e sensitivit\`a.}{21}{table.3}%
+\contentsline {section}{\numberline {5}Confronto con il metodo Smith--Wilson}{22}{section.5}%
+\contentsline {section}{\numberline {6}Conclusioni}{25}{section.6}%

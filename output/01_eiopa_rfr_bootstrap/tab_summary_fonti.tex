@@ -1,0 +1,16 @@
+% GENERATO da R/01_eiopa_rfr_bootstrap.R
+\begin{table}[H]\centering\small
+\caption{Ricostruzione bootstrap di dicembre~2025 dalle quattro fonti, vs curva EIOPA ufficiale ricalcolata col nuovo metodo (bootstrap). Confronto \textbf{like-for-like}: stesso metodo su entrambi i lati. Zona liquida = 15 nodi DLT ($T\le\FSP$); estrapolazione = tenor interi 21--120. Fonte D usa lo stesso bootstrap della Fonte C ma con l'LLFR preso dal tool ufficiale EIOPA (sperimentale, provenienza da chiarire).}
+\label{tab:summary-fonti}\renewcommand{\arraystretch}{1.2}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Fonte di input & $\alpha$ & RMSE liq.\ (bps) & max liq.\ (bps) & RMSE estrap.\ (bps) & max estrap.\ (bps)\\
+\midrule
+A --- par \texttt{EUSA*} di mercato & 20\% & 0.32 & 0.89 & 2.07 & 3.42\\
+B --- par impliciti dall'ufficiale & 20\% & 0.04 & 0.08 & 2.12 & 3.49\\
+C --- input EIOPA originali (YE25) & 20\% & 0.03 & 0.09 & 2.10 & 3.47\\
+D --- Fonte C con LLFR ufficiale xlsm & 20\% & 0.03 & 0.09 & 0.09 & 0.12\\
+\bottomrule
+\end{tabular}}
+\end{table}

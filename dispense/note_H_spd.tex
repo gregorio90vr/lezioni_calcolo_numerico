@@ -1,0 +1,372 @@
+% ============================================================
+%  Nota di supporto a 03_eiopa_rfr_smith_wilson.tex
+%  OBIETTIVO: dimostrare che la matrice di Gram H = [H(u_i,u_j)] del
+%  problema Smith-Wilson e' simmetrica definita positiva (SPD).
+%  Dimostrazione centrata sul Teorema di Mercer.
+%  Documento standalone, compilabile con pdflatex.
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\geometry{margin=2.7cm}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black}
+
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}
+\newtheorem{proposizione}[teorema]{Proposizione}
+\newtheorem{lemma}[teorema]{Lemma}
+\newtheorem{corollario}[teorema]{Corollario}
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+
+\DeclareMathOperator{\tr}{tr}
+\newcommand{\Hmat}{\mathbf{H}}
+\newcommand{\Qmat}{\mathbf{Q}}
+\newcommand{\transp}{^{\!\top}}
+\newcommand{\LLP}{\mathrm{LLP}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Top}{T_{\!H}}
+\newcommand{\inner}[2]{\langle #1, #2\rangle}
+
+\title{\textbf{La matrice di Gram del problema Smith--Wilson\\[2pt]
+\`e definita positiva}\\[6pt]
+\large Nota di supporto a \texttt{03\_eiopa\_rfr\_smith\_wilson.tex} --- dimostrazione via il
+Teorema di Mercer}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+\section{Obiettivo e mappa della dimostrazione}
+\label{sec:obiettivo}
+% ============================================================
+
+La dispensa principale costruisce la funzione di sconto Smith--Wilson
+$P(t)=e^{-\omega t}\bigl(1+\sum_{j=1}^m \zeta_j\,H(t,u_j)\bigr)$ risolvendo un \textbf{problema
+di minimo vincolato} nello spazio finito-dimensionale dei coefficienti $\zeta\in\R^m$:
+\begin{equation}
+  \min_{\zeta\in\R^m}\ \zeta\transp\Hmat\,\zeta
+  \qquad\text{soggetto ai vincoli di pricing}\qquad
+  \Qmat\transp\Hmat\,\zeta = p-q,
+  \label{eq:min}
+\end{equation}
+dove $\Hmat=[H(u_i,u_j)]_{i,j=1}^m\in\R^{m\times m}$ \`e la \textbf{matrice di Gram} del
+\emph{nucleo di Wilson}
+\begin{equation}
+  H(t,u) = \alpha\,\min(t,u) - e^{-\alpha\,\max(t,u)}\,\sinh\!\bigl(\alpha\,\min(t,u)\bigr),
+  \qquad \alpha>0,\ t,u\ge0,
+  \label{eq:H-def}
+\end{equation}
+valutata sugli $m$ nodi di pagamento distinti $u_1<\cdots<u_m$ (nella dispensa $u_j=j$,
+$m=\LLP=20$).
+
+L'intera costruzione dipende da un'unica propriet\`a algebrica, che la dispensa \emph{assume}
+senza dimostrare (per non usare l'analisi funzionale in un corso triennale). Questa nota la
+dimostra.
+
+\begin{proposizione}[Perch\'e serve la definita positivit\`a]
+\label{prop:benposto}
+Se $\Hmat$ \`e simmetrica \textbf{definita positiva} (SPD), allora $\zeta\mapsto\zeta\transp\Hmat\zeta$
+\`e strettamente convessa: il problema~\eqref{eq:min} ha \textbf{un unico} minimo, il sistema di
+calibrazione $(\Qmat\transp\Hmat\Qmat)\,b=p-q$ ha \textbf{soluzione unica} ed \`e risolubile in
+modo stabile con \textbf{Cholesky}. Se invece $\Hmat$ avesse un autovalore $\le0$, il minimo
+potrebbe non esistere o non essere unico e Cholesky fallirebbe.
+\end{proposizione}
+
+L'obiettivo della nota \`e dunque il seguente teorema.
+
+\begin{teorema}[Obiettivo]
+\label{thm:obiettivo}
+Per ogni scelta di nodi \textbf{distinti} $u_1<\cdots<u_m$ con $u_i>0$, la matrice di Gram
+$\Hmat=[H(u_i,u_j)]_{i,j=1}^m$ \`e simmetrica definita positiva.
+\end{teorema}
+
+\paragraph{Mappa della dimostrazione (una sola catena lineare).}
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{\centering
+rappresentazione spettrale di $H$ \textbf{(§\ref{sec:fourier})}
+$\;\Rightarrow\;$ l'operatore integrale $\Top$ \`e positivo \textbf{(§\ref{sec:operatore})}
+$\;\Rightarrow\;$ espansione di Mercer $H=\sum_n\lambda_n\phi_n\phi_n$ \textbf{(§\ref{sec:mercer})}
+$\;\Rightarrow\;$ $\Hmat$ \`e SPD \textbf{(§\ref{sec:spd})}.}}
+\end{center}
+Il \textbf{Teorema di Mercer} (§\ref{sec:mercer}) \`e il cuore della dimostrazione. L'unico
+strumento analitico \`e la rappresentazione spettrale di $H$ (§\ref{sec:fourier}), usata in
+\emph{due} punti chiaramente segnalati: per verificare l'ipotesi di Mercer (§\ref{sec:operatore})
+e per la stretta positivit\`a (§\ref{sec:spd}).
+
+% ============================================================
+\section{Lo strumento: la rappresentazione spettrale di \texorpdfstring{$H$}{H}}
+\label{sec:fourier}
+% ============================================================
+
+\begin{lemma}[Riscrittura algebrica]
+\label{lem:algebrico}
+Per ogni $t,u\ge0$:\quad
+$H(t,u) = \alpha\min(t,u) - \tfrac12 e^{-\alpha|t-u|} + \tfrac12 e^{-\alpha(t+u)}.$
+\end{lemma}
+\begin{proof}
+Con $m=\min(t,u)$, $M=\max(t,u)$: $M-m=|t-u|$, $M+m=t+u$, e da
+$\sinh(\alpha m)=\tfrac12(e^{\alpha m}-e^{-\alpha m})$ segue
+$e^{-\alpha M}\sinh(\alpha m)=\tfrac12(e^{-\alpha|t-u|}-e^{-\alpha(t+u)})$; sostituire
+in~\eqref{eq:H-def}.
+\end{proof}
+
+Servono due identit\`a integrali classiche di Fourier (tavole standard, es.\
+\cite{gradshteyn2007,bracewell2000}):
+\begin{equation}
+  \frac{2}{\pi}\!\int_0^\infty\! \frac{\sin\omega t\,\sin\omega u}{\omega^2}\,d\omega = \min(t,u),
+  \qquad
+  \frac{2}{\pi}\!\int_0^\infty\! \frac{\cos\omega x}{\omega^2+\alpha^2}\,d\omega = \frac{1}{\alpha}e^{-\alpha|x|}.
+  \label{eq:fourier}
+\end{equation}
+
+\begin{lemma}[Rappresentazione spettrale]
+\label{lem:spettrale}
+\[
+  H(t,u) = \int_0^\infty \rho(\omega)\,\sin(\omega t)\sin(\omega u)\,d\omega,
+  \qquad
+  \rho(\omega):=\frac{2\alpha^3}{\pi\,\omega^2(\omega^2+\alpha^2)}\;>\;0\quad\forall\,\omega>0.
+\]
+\end{lemma}
+\begin{proof}
+Per fratti semplici $\tfrac{1}{\omega^2(\omega^2+\alpha^2)}=\tfrac1{\alpha^2}\bigl(\tfrac1{\omega^2}
+-\tfrac1{\omega^2+\alpha^2}\bigr)$. Con $\sin\omega t\,\sin\omega u=\tfrac12[\cos\omega(t-u)-\cos\omega(t+u)]$
+e la seconda identit\`a~\eqref{eq:fourier} (per $x=t-u$ e $x=t+u\ge0$),
+$\int_0^\infty\tfrac{\sin\omega t\,\sin\omega u}{\omega^2+\alpha^2}d\omega=\tfrac{\pi}{4\alpha}
+(e^{-\alpha|t-u|}-e^{-\alpha(t+u)})$; con la prima identit\`a per l'altro addendo e moltiplicando
+per $\tfrac{2\alpha^3}{\pi}$, il confronto con il Lemma~\ref{lem:algebrico} d\`a la tesi.
+\end{proof}
+
+\begin{osservazione}[Il perno di tutta la nota]
+La densit\`a spettrale $\rho$ \`e \textbf{ovunque positiva}: sebbene $H$ contenga un segno meno
+(Lemma~\ref{lem:algebrico}), scritto come integrale con peso $\rho\ge0$ non c'\`e cancellazione.
+\`E questa positivit\`a l'unico ingrediente analitico della dimostrazione, usato in
+§\ref{sec:operatore} e in §\ref{sec:spd}.
+\end{osservazione}
+
+% ============================================================
+\section{L'operatore integrale \texorpdfstring{$\Top$}{T\_H} \`e positivo}
+\label{sec:operatore}
+% ============================================================
+
+Sia $L:=\LLP$ e $X:=[0,L]$, compatto contenente tutti i nodi. Associamo a $H$ l'operatore
+integrale su $L^2(X)$
+\[
+  \Top f(s):=\int_0^L H(s,t)\,f(t)\,dt .
+\]
+Poich\'e $H$ \`e \textbf{continuo} su $X\times X$ (le due espressioni per $t\lessgtr u$ coincidono
+in $t=u$) e \textbf{simmetrico}, l'operatore $\Top$ \`e di Hilbert--Schmidt, dunque
+\textbf{compatto}, ed \textbf{autoaggiunto} \cite{reedsimon1980,brezis2011}. Resta la propriet\`a
+non banale, che \`e proprio l'ipotesi del Teorema di Mercer.
+
+\begin{proposizione}[Positivit\`a dell'operatore]
+\label{prop:positivo}
+$\Top$ \`e un \textbf{operatore positivo}: $\inner{\Top f}{f}_{L^2}\ge0$ per ogni $f\in L^2(X)$.
+\end{proposizione}
+\begin{proof}
+Inserendo la rappresentazione spettrale (Lemma~\ref{lem:spettrale}) e scambiando l'ordine di
+integrazione (Fubini--Tonelli, lecito perch\'e $H$ \`e continuo sul compatto $X\times X$):
+\[
+  \inner{\Top f}{f}_{L^2}
+  = \int_0^L\!\!\int_0^L H(s,t)f(s)f(t)\,ds\,dt
+  = \int_0^\infty \rho(\omega)\Bigl(\int_0^L f(t)\sin(\omega t)\,dt\Bigr)^{\!2} d\omega\ \ge\ 0,
+\]
+essendo $\rho(\omega)\ge0$ e il fattore restante un quadrato.
+\end{proof}
+
+% ============================================================
+\section{Il Teorema di Mercer}
+\label{sec:mercer}
+% ============================================================
+
+Essendo $\Top$ compatto e autoaggiunto, per il \textbf{teorema spettrale per operatori compatti
+autoaggiunti} \cite{reedsimon1980,brezis2011} esiste una base ortonormale $\{\phi_n\}_{n\ge1}$ di
+$L^2(X)$ di autofunzioni, $\Top\phi_n=\lambda_n\phi_n$, con autovalori reali $\lambda_n\to0$. Per
+la Proposizione~\ref{prop:positivo} gli autovalori sono \textbf{non negativi},
+$\lambda_n=\inner{\Top\phi_n}{\phi_n}\ge0$; inoltre ogni autofunzione con $\lambda_n\ne0$ \`e
+\textbf{continua} ($\phi_n=\lambda_n^{-1}\Top\phi_n$ e $\Top$ manda $L^2(X)$ in $C(X)$).
+
+\begin{teorema}[Mercer, 1909 \cite{mercer1909}; cfr.\ \cite{riesznagy1955,steinwart2008}]
+\label{thm:mercer}
+Sia $K$ continuo e simmetrico sul compatto $X\times X$, con operatore integrale $T_K$ positivo su
+$L^2(X)$. Allora
+\[
+  K(s,t)=\sum_{n=1}^\infty \lambda_n\,\phi_n(s)\,\phi_n(t),
+\]
+con $\lambda_n\ge0$, $\{\phi_n\}$ autofunzioni continue ortonormali, e convergenza
+\textbf{assoluta e uniforme} su $X\times X$.
+\end{teorema}
+
+\begin{osservazione}[Ingredienti]
+La dimostrazione (che non riportiamo, cfr.\ \cite{riesznagy1955,steinwart2008}) usa la positivit\`a
+dell'operatore per rendere i resti $\ge0$ e decrescenti sulla diagonale; il \textbf{Teorema di
+Dini} d\`a l'uniformit\`a sulla diagonale, Cauchy--Schwarz fuori diagonale. Ne segue la
+\textbf{traccia} $\sum_n\lambda_n=\int_0^L H(t,t)\,dt=\tr\Top<\infty$ (finita perch\'e $H$ \`e
+continuo sul compatto), quindi gli autovalori sono sommabili.
+\end{osservazione}
+
+Il nucleo $H$ soddisfa tutte le ipotesi (continuo, simmetrico, $\Top$ positivo per la
+Proposizione~\ref{prop:positivo}), dunque ammette l'espansione di Mercer
+$H(s,t)=\sum_n\lambda_n\phi_n(s)\phi_n(t)$.
+
+% ============================================================
+\section{La matrice di Gram \texorpdfstring{$\Hmat$}{H} \`e SPD}
+\label{sec:spd}
+% ============================================================
+
+Concludiamo la dimostrazione del Teorema~\ref{thm:obiettivo}. La strada \`e diretta e usa
+\emph{un fatto per volta}:
+\begin{itemize}
+  \item la \textbf{simmetria} \`e ovvia da $H(t,u)=H(u,t)$;
+  \item la \textbf{semidefinita} positivit\`a ($\zeta\transp\Hmat\zeta\ge0$) segue dall'espansione
+    di Mercer (§\ref{sec:mercer});
+  \item la \textbf{stretta} positivit\`a ($\zeta\transp\Hmat\zeta>0$ per $\zeta\ne0$) segue dalla
+    rappresentazione di Fourier (§\ref{sec:fourier}) e dal Lemma~\ref{lem:indip} qui sotto.
+\end{itemize}
+Isoliamo prima il fatto di algebra lineare che serve alla stretta positivit\`a.
+
+\begin{lemma}[Indipendenza lineare dei seni campionati]
+\label{lem:indip}
+Siano $u_1<\cdots<u_m$ nodi \emph{distinti} con $u_i>0$ e sia $c\in\R^m$. Se
+\[
+  g(\omega):=\sum_{i=1}^m c_i\,\sin(\omega u_i)=0 \qquad\text{per ogni }\omega\ge0,
+\]
+allora $c=0$.
+\end{lemma}
+\begin{proof}
+La funzione $g$ \`e identicamente nulla, quindi tutte le sue derivate in $\omega=0$ sono nulle.
+Poich\'e $\dfrac{d^{2k+1}}{d\omega^{2k+1}}\sin(\omega u_i)\Big|_{\omega=0}=(-1)^k u_i^{2k+1}$
+(le derivate di ordine pari si annullano in $0$), la derivata di ordine $2k+1$ di $g$ in $0$ d\`a
+\[
+  \sum_{i=1}^m c_i\,u_i^{2k+1}=0 \qquad\text{per ogni }k=0,1,2,\dots
+\]
+Poniamo $y_i:=c_i u_i$ e prendiamo le prime $m$ equazioni ($k=0,\dots,m-1$):
+\[
+  \sum_{i=1}^m y_i\,(u_i^2)^{k}=0,\qquad k=0,\dots,m-1,
+\]
+cio\`e il sistema lineare $V y=0$, dove $V=\bigl[(u_i^2)^{k}\bigr]$ \`e la matrice di
+\textbf{Vandermonde} costruita sui valori $u_1^2,\dots,u_m^2$. Essendo gli $u_i>0$ distinti,
+anche gli $u_i^2$ sono distinti, quindi $V$ \`e invertibile \cite{quarteroni2017}: $y=0$. Infine
+$c_i=y_i/u_i=0$ per ogni $i$.
+\end{proof}
+
+\begin{proof}[Dimostrazione del Teorema~\ref{thm:obiettivo}]
+\textbf{Simmetria.} $\Hmat_{ij}=H(u_i,u_j)=H(u_j,u_i)=\Hmat_{ji}$.
+
+\textbf{Semidefinita positivit\`a.} Sia $\zeta\in\R^m$. Sostituiamo nell'espressione di
+$\zeta\transp\Hmat\zeta$ l'espansione di Mercer $H(u_i,u_j)=\sum_n\lambda_n\phi_n(u_i)\phi_n(u_j)$
+(§\ref{sec:mercer}); lo scambio tra la somma \emph{finita} su $i,j$ e la serie \`e lecito per la
+convergenza uniforme:
+\[
+  \zeta\transp\Hmat\zeta
+  = \sum_{i,j=1}^m \zeta_i\zeta_j\,H(u_i,u_j)
+  = \sum_{n=1}^\infty \lambda_n\Bigl(\underbrace{\sum_{j=1}^m \zeta_j\,\phi_n(u_j)}_{=:v_n}\Bigr)^{\!2}
+  = \sum_{n=1}^\infty \lambda_n\,v_n^2\ \ge\ 0,
+\]
+poich\'e ogni $\lambda_n\ge0$ e ogni $v_n^2\ge0$.
+
+\textbf{Stretta positivit\`a.} Supponiamo $\zeta\transp\Hmat\zeta=0$ e mostriamo $\zeta=0$.
+Conviene ripartire dalla rappresentazione di Fourier (Lemma~\ref{lem:spettrale}): sostituendo
+$H(u_i,u_j)=\int_0^\infty\rho(\omega)\sin(\omega u_i)\sin(\omega u_j)\,d\omega$ e portando fuori
+la somma finita,
+\[
+  0=\zeta\transp\Hmat\zeta
+   =\int_0^\infty \rho(\omega)\Bigl(\sum_{i=1}^m \zeta_i\sin(\omega u_i)\Bigr)^{\!2} d\omega .
+\]
+L'integrando \`e continuo e non negativo (perch\'e $\rho>0$); un integrale nullo di una funzione
+continua non negativa impone che l'integrando sia identicamente nullo, dunque
+$\sum_{i=1}^m \zeta_i\sin(\omega u_i)=0$ per ogni $\omega\ge0$. Per il Lemma~\ref{lem:indip},
+$\zeta=0$.
+
+I tre punti danno che $\Hmat$ \`e simmetrica definita positiva.
+\end{proof}
+
+\begin{osservazione}[Lettura spettrale]
+La parte semidefinita mostra $\Hmat=\sum_{n=1}^\infty\lambda_n\,v_nv_n\transp$ con
+$v_n=(\phi_n(u_1),\dots,\phi_n(u_m))\transp\in\R^m$: la matrice di Gram \`e il
+\textbf{campionamento sui nodi} della decomposizione spettrale del nucleo continuo, l'analogo
+infinito-dimensionale della decomposizione $\mathbf A=\sum_k\lambda_k v_kv_k\transp$ di una
+matrice simmetrica.
+\end{osservazione}
+
+\begin{corollario}
+Per la Proposizione~\ref{prop:benposto}, il problema di minimo~\eqref{eq:min} ha soluzione unica,
+il sistema di calibrazione $(\Qmat\transp\Hmat\Qmat)\,b=p-q$ \`e univocamente risolubile e la sua
+soluzione via Cholesky \`e numericamente stabile.
+\end{corollario}
+
+\begin{osservazione}[Il sistema completo]
+Il sistema effettivamente risolto ha matrice $\Qmat\transp\Hmat\Qmat$, SPD non solo perch\'e
+$\Hmat$ lo \`e (questa nota) ma anche perch\'e $\Qmat$ ha rango pieno di colonna: quest'ultimo
+fatto, di sola algebra lineare, \`e dimostrato nella nota gemella \texttt{note\_QHQ\_spd.txt}.
+\end{osservazione}
+
+% ============================================================
+\section*{Nota sul livello di rigore}
+% ============================================================
+\addcontentsline{toc}{section}{Nota sul livello di rigore}
+La riscrittura algebrica (Lemma~\ref{lem:algebrico}) e la rappresentazione spettrale
+(Lemma~\ref{lem:spettrale}) sono state verificate, in fase di stesura, sia analiticamente sia
+numericamente. Sono citati senza ridimostrazione i risultati standard: le identit\`a di
+Fourier~\eqref{eq:fourier}, il teorema spettrale per operatori compatti autoaggiunti, il Teorema
+di Dini e il Teorema di Mercer. La strategia (nucleo definito positivo / decomposizione spettrale)
+\`e quella classica per questa classe di kernel \cite{aronszajn1950,wahba1990,fasshauer2007};
+non ho verificato i numeri di pagina/teorema delle fonti citate.
+
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{aronszajn1950}
+\textbf{Aronszajn, N.} (1950). Theory of Reproducing Kernels.
+\textit{Transactions of the American Mathematical Society}, 68(3), 337--404.
+
+\bibitem{brezis2011}
+\textbf{Brezis, H.} (2011). \textit{Functional Analysis, Sobolev Spaces and Partial Differential
+Equations}. Springer. (Operatori compatti e teorema spettrale: cap.~6.)
+
+\bibitem{bracewell2000}
+\textbf{Bracewell, R.N.} (2000). \textit{The Fourier Transform and Its Applications}, 3rd ed.
+McGraw-Hill.
+
+\bibitem{fasshauer2007}
+\textbf{Fasshauer, G.E.} (2007). \textit{Meshfree Approximation Methods with MATLAB}. World
+Scientific.
+
+\bibitem{gradshteyn2007}
+\textbf{Gradshteyn, I.S., Ryzhik, I.M.} (2007). \textit{Table of Integrals, Series, and Products},
+7th ed. Academic Press.
+
+\bibitem{mercer1909}
+\textbf{Mercer, J.} (1909). Functions of positive and negative type, and their connection with the
+theory of integral equations. \textit{Philosophical Transactions of the Royal Society A}, 209,
+415--446.
+
+\bibitem{quarteroni2017}
+\textbf{Quarteroni, A., Saleri, F., Gervasio, P.} (2017). \textit{Calcolo Scientifico}, 6a ed.
+Springer.
+
+\bibitem{reedsimon1980}
+\textbf{Reed, M., Simon, B.} (1980). \textit{Methods of Modern Mathematical Physics I: Functional
+Analysis}, rev.\ ed. Academic Press.
+
+\bibitem{riesznagy1955}
+\textbf{Riesz, F., Sz.-Nagy, B.} (1955). \textit{Functional Analysis}. Frederick Ungar.
+
+\bibitem{steinwart2008}
+\textbf{Steinwart, I., Christmann, A.} (2008). \textit{Support Vector Machines}. Springer.
+(Teorema di Mercer: \S4.)
+
+\bibitem{wahba1990}
+\textbf{Wahba, G.} (1990). \textit{Spline Models for Observational Data}. CBMS-NSF Regional
+Conference Series in Applied Mathematics, Vol.~59. SIAM.
+
+\end{thebibliography}
+
+\end{document}

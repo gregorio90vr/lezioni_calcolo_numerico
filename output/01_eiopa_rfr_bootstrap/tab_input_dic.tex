@@ -1,0 +1,26 @@
+% GENERATO da R/01_eiopa_rfr_bootstrap.R
+\begin{table}[H]\centering\small
+\caption{Par swap EUR a dicembre~2025 ai 15 tenor DLT. Fonte A: \texttt{EUSA*} (EURIBOR~6M) lordi e after-CRA. Fonte B: par impliciti dalla curva RFR ufficiale (gi\`a netti CRA). Fonte C: par swap lordi da \texttt{eiopa\_input\_swap\_dec2025.csv}, i dati di input EIOPA originali. I tenor 15 e 20 chiudono un ``buco'' (13$\to$15, 15$\to$20).}
+\label{tab:input-dic}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lcccc}
+\toprule
+$T_k$ (anni) & \texttt{EUSA*} $s_k$ (\%) & after-CRA $r_k$ (\%) & par implicito (\%) & input EIOPA (\%)\\
+\midrule
+\rowcolor{rowtint}1 & 2.1725 & 2.0725 & 2.0760 & 2.1760\\
+2 & 2.2620 & 2.1620 & 2.1621 & 2.2621\\
+\rowcolor{rowtint}3 & 2.3815 & 2.2815 & 2.2796 & 2.3795\\
+4 & 2.4810 & 2.3810 & 2.3797 & 2.4800\\
+\rowcolor{rowtint}5 & 2.5690 & 2.4690 & 2.4692 & 2.5690\\
+6 & 2.6510 & 2.5510 & 2.5511 & 2.6510\\
+\rowcolor{rowtint}7 & 2.7300 & 2.6300 & 2.6320 & 2.7320\\
+8 & 2.8020 & 2.7020 & 2.7000 & 2.8000\\
+\rowcolor{rowtint}9 & 2.8710 & 2.7710 & 2.7635 & 2.8631\\
+10 & 2.9270 & 2.8270 & 2.8269 & 2.9270\\
+\rowcolor{rowtint}11 & 2.9810 & 2.8810 & 2.8792 & 2.9790\\
+12 & 3.0310 & 2.9310 & 2.9272 & 3.0270\\
+\rowcolor{rowtint}13 & 3.0730 & 2.9730 & 2.9776 & 3.0779\\
+15~(buco) & 3.1460 & 3.0460 & 3.0428 & 3.1430\\
+\rowcolor{rowtint}20~\textbf{(FSP)} & 3.2340 & 3.1340 & 3.1331 & 3.2330\\
+\bottomrule
+\end{tabular}
+\end{table}

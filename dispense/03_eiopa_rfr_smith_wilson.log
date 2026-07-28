@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  30 JUN 2026 15:52
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  28 JUL 2026 16:20
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -845,7 +845,7 @@ Package: titlesec 2025/01/04 v2.17 Sectioning titles
 )
 Package hyperref Info: Option `colorlinks' set `true' on input line 33.
 \c@teorema=\count354
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 87
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 90
 .
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmr.fd
@@ -858,26 +858,26 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (03_eiopa_rfr_smith_wilson.aux)
 \openout1 = `03_eiopa_rfr_smith_wilson.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 87.
-LaTeX Font Info:    ... okay on input line 87.
-LaTeX Info: Redefining \it@ocap on input line 87.
-LaTeX Info: Redefining \it@ccap on input line 87.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 90.
+LaTeX Font Info:    ... okay on input line 90.
+LaTeX Info: Redefining \it@ocap on input line 90.
+LaTeX Info: Redefining \it@ccap on input line 90.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -939,48 +939,48 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 fg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-Package hyperref Info: Link coloring ON on input line 87.
+Package hyperref Info: Link coloring ON on input line 90.
  (03_eiopa_rfr_smith_wilson.out) (03_eiopa_rfr_smith_wilson.out)
 \@outlinefile=\write5
 \openout5 = `03_eiopa_rfr_smith_wilson.out'.
 
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 8
-9.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 9
+2.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 8
-9.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 9
+2.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-89.
+92.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-89.
+92.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 89.
+(Font)              <12> on input line 92.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 89.
+(Font)              <8> on input line 92.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 89.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 89.
+(Font)              <6> on input line 92.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 92.
 
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 89.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 92.
 
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
@@ -997,285 +997,334 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 
 {C:/Users/grego/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/greg
 o/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users/grego/Ap
-pData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/Users/grego/Ap
-pData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}]
+pData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}]
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
-07.
+09.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [2{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
 }{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc
-}]
-<../output/03_eiopa_rfr_smith_wilson/fig1_motivazione_estrapolazione.pdf, id=14
-6, 650.43pt x 397.485pt>
-File: ../output/03_eiopa_rfr_smith_wilson/fig1_motivazione_estrapolazione.pdf G
-raphic file (type pdf)
-<use ../output/03_eiopa_rfr_smith_wilson/fig1_motivazione_estrapolazione.pdf>
-Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig1_motivazione_e
-strapolazione.pdf  used on input line 167.
+}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}]
+<../output/shared/fig_motivazione.pdf, id=142, 650.43pt x 397.485pt>
+File: ../output/shared/fig_motivazione.pdf Graphic file (type pdf)
+<use ../output/shared/fig_motivazione.pdf>
+Package pdftex.def Info: ../output/shared/fig_motivazione.pdf  used on input li
+ne 181.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
  [3
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.207 S
-       e la capitalizzazione avviene $m$ volte per anno al tasso nominale $r...
- <../output/03_eiopa_rfr_smith_wilson/fig1_motivazione_estrapolazione.pdf>]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 248.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 248.
-
-[4{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.en
-c}]
-<../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pdf, id=185, 650.43pt x
- 397.485pt>
-File: ../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pdf Graphic file (
-type pdf)
-<use ../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pdf>
-Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media
-.pdf  used on input line 348.
-(pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
- [5] [6
+l.211 ...la capitalizzazione al fattore di sconto}
+                                                   <../output/shared/fig_motiva
+zione.pdf>]
+<../output/shared/fig_fattori_sconto.pdf, id=159, 578.16pt x 361.35pt>
+File: ../output/shared/fig_fattori_sconto.pdf Graphic file (type pdf)
+<use ../output/shared/fig_fattori_sconto.pdf>
+Package pdftex.def Info: ../output/shared/fig_fattori_sconto.pdf  used on input
+ line 274.
+(pdftex.def)             Requested size: 350.53915pt x 219.08333pt.
+ [4{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.e
+nc}] [5
 pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.402 \end{equation}
-                     <../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pd
-f>]
+l.344   \item \textbf
+                     {Strategia diretta}: investire da $0$ a $t_2$ realizzan...
+ <../output/shared/fig_fattori_sconto.pdf>]
+<../output/shared/fig_spot_fwd_media.pdf, id=196, 578.16pt x 361.35pt>
+File: ../output/shared/fig_spot_fwd_media.pdf Graphic file (type pdf)
+<use ../output/shared/fig_spot_fwd_media.pdf>
+Package pdftex.def Info: ../output/shared/fig_spot_fwd_media.pdf  used on input
+ line 396.
+(pdftex.def)             Requested size: 385.59373pt x 240.99498pt.
+ [6] [7
+pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.450 \end{equation}
+                     <../output/shared/fig_spot_fwd_media.pdf>]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 420.
+(Font)              <10> on input line 469.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 420.
+(Font)              <7> on input line 469.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 420.
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 4
-82.
- (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
+(Font)              <5> on input line 469.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 5
+35.
+
+(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-[7]
-<../output/03_eiopa_rfr_smith_wilson/fig_spline_vs_sw.pdf, id=234, 650.43pt x 3
+Overfull \hbox (15.70146pt too wide) in paragraph at lines 533--537
+\T1/lmr/bx/n/10.95 EU-RI-BOR 6M \T1/lmr/m/n/10.95 usa-ti da EIO-PA co-me in-put
+ di ri-fe-ri-men-to (\T1/lmtt/m/n/10.95 eiopa_input_swap_dec2025.csv\T1/lmr/m/n
+/10.95 ).
+ []
+
+[8] (../output/shared/tab_input_dic.tex
+Underfull \hbox (badness 1789) in paragraph at lines 3--3
+[]\T1/lmr/m/n/10.95 Tabella 1: []Par swap EUR di in-put EIO-PA a di-cem-bre 202
+5 ai 15 te-nor DLT
+ []
+
+)
+<../output/03_eiopa_rfr_smith_wilson/fig_spline_vs_sw.pdf, id=246, 650.43pt x 3
 97.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig_spline_vs_sw.pdf Graphic file (ty
 pe pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig_spline_vs_sw.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_spline_vs_sw.p
-df  used on input line 543.
+df  used on input line 575.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [8
+ [9
 pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.550 
-      ]
-<../output/03_eiopa_rfr_smith_wilson/fig_spline_delta.pdf, id=243, 650.43pt x 3
+l.581 \end{figure}
+                  ]
+<../output/03_eiopa_rfr_smith_wilson/fig_spline_delta.pdf, id=254, 650.43pt x 3
 97.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig_spline_delta.pdf Graphic file (ty
 pe pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig_spline_delta.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_spline_delta.p
-df  used on input line 553.
+df  used on input line 585.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [9
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.567 
-      
+ [10
 pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.567 
+l.599 
+      
+pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.599 
        <../output/03_eiopa_rfr_smith_wilson/fig_spline_vs_sw.pdf> <../output/03
 _eiopa_rfr_smith_wilson/fig_spline_delta.pdf>]
-<../output/03_eiopa_rfr_smith_wilson/fig3_kernel_wilson.pdf, id=269, 650.43pt x
+<../output/03_eiopa_rfr_smith_wilson/fig3_kernel_wilson.pdf, id=285, 650.43pt x
  397.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig3_kernel_wilson.pdf Graphic file (
 type pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig3_kernel_wilson.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig3_kernel_wilson
-.pdf  used on input line 671.
+.pdf  used on input line 709.
 (pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
- [10
-pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
+ [11] [12
+pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.681 \[
-         <../output/03_eiopa_rfr_smith_wilson/fig3_kernel_wilson.pdf>] [11]
-Overfull \hbox (20.61873pt too wide) in paragraph at lines 785--788
-[]\T1/lmr/m/n/10.95 Il \T1/lmr/bx/n/10.95 prez-zo del-lo swap $\OML/lmm/m/it/10
-.95 j$ \T1/lmr/m/n/10.95 (sca-den-za $\OML/lmm/m/it/10.95 T[]$\T1/lmr/m/n/10.95
- ) --- la som-ma pe-sa-ta dai flus-si di cas-sa, $\OML/lmm/m/it/10.95 s[] [][] 
-P\OT1/lmr/m/n/10.95 (\OML/lmm/m/it/10.95 u[]\OT1/lmr/m/n/10.95 ) +
+l.764 
+       <../output/03_eiopa_rfr_smith_wilson/fig3_kernel_wilson.pdf>] [13]
+Overfull \hbox (33.79135pt too wide) detected at line 854
+\OML/lmm/m/it/10.95 ^^P[]\OT1/lmr/bx/n/10.95 H \OML/lmm/m/it/10.95 ^^P \OT1/lmr
+/m/n/10.95 = [] \OML/lmm/m/it/10.95 ^^P[] ^^P[][]'[]\OT1/lmr/m/n/10.95 (0)\OML/
+lmm/m/it/10.95 '[]\OT1/lmr/m/n/10.95 (0) + \OML/lmm/m/it/10.95   [][]  '[]\OT1
+/lmr/m/n/10.95 (\OML/lmm/m/it/10.95 x\OT1/lmr/m/n/10.95 )\OML/lmm/m/it/10.95 '[
+]\OT1/lmr/m/n/10.95 (\OML/lmm/m/it/10.95 x\OT1/lmr/m/n/10.95 ) \OML/lmm/m/it/10
+.95 dx[] \OT1/lmr/m/n/10.95 = [][] \OML/lmm/m/it/10.95 ^^P[]'[]\OT1/lmr/m/n/10.
+95 (0)[][] + \OML/lmm/m/it/10.95   [][] [][] ^^P[]'[]\OT1/lmr/m/n/10.95 (\OML/
+lmm/m/it/10.95 x\OT1/lmr/m/n/10.95 )[][] \OML/lmm/m/it/10.95 dx;
  []
 
-[12] [13]
-<../output/03_eiopa_rfr_smith_wilson/fig4_matrice_QHQ.pdf, id=341, 505.89pt x 4
+[14] [15] [16] [17]
+<../output/03_eiopa_rfr_smith_wilson/fig4_matrice_QHQ.pdf, id=391, 505.89pt x 4
 33.62pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig4_matrice_QHQ.pdf Graphic file (ty
 pe pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig4_matrice_QHQ.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig4_matrice_QHQ.p
-df  used on input line 928.
+df  used on input line 1151.
 (pdftex.def)             Requested size: 315.48456pt x 270.41635pt.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 946.
+(hyperref)                removing `math shift' on input line 1181.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\alpha' on input line 946.
+(hyperref)                removing `\alpha' on input line 1181.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 946.
+(hyperref)                removing `math shift' on input line 1181.
 
-[14
-pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) ha
+[18
+pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.960 
-       <../output/03_eiopa_rfr_smith_wilson/fig4_matrice_QHQ.pdf>]
-<../output/03_eiopa_rfr_smith_wilson/fig5_calibrazione_alpha.pdf, id=363, 650.4
+l.1187 \begin{equation}
+                        <../output/03_eiopa_rfr_smith_wilson/fig4_matrice_QHQ.p
+df>]
+Overfull \hbox (2.31595pt too wide) in paragraph at lines 1191--1199
+\T1/lmr/m/n/10.95 Definita $\OML/lmm/m/it/10.95 g\OT1/lmr/m/n/10.95 (\OML/lmm/m
+/it/10.95 \OT1/lmr/m/n/10.95 ) = \OML/lmm/m/it/10.95 f\OT1/lmr/m/n/10.95 (0\OM
+L/lmm/m/it/10.95 ; []\OT1/lmr/m/n/10.95 ; \OML/lmm/m/it/10.95 \OT1/lmr/m/n/10.
+95 ) \OMS/lmsy/m/n/10.95 ^^@ \OML/lmm/m/it/10.95 !$ \T1/lmr/m/n/10.95 (lo scar-
+to \T1/lmr/m/it/10.95 con se-gno \T1/lmr/m/n/10.95 del for-ward al $[]$ dal-l'i
+n-ten-si-tà dell'$[]$),
+ []
+
+<../output/03_eiopa_rfr_smith_wilson/fig5_calibrazione_alpha.pdf, id=413, 650.4
 3pt x 397.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig5_calibrazione_alpha.pdf Graphic f
 ile (type pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig5_calibrazione_alpha.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig5_calibrazione_
-alpha.pdf  used on input line 963.
+alpha.pdf  used on input line 1202.
 (pdftex.def)             Requested size: 394.35236pt x 240.99773pt.
- [15
-pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
+[19
+pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1012 
+l.1255 
         <../output/03_eiopa_rfr_smith_wilson/fig5_calibrazione_alpha.pdf>]
-<../output/03_eiopa_rfr_smith_wilson/fig2_spot_forward_par.pdf, id=384, 650.43p
+Overfull \hbox (69.73668pt too wide) in paragraph at lines 1261--1265
+\T1/lmr/m/n/10.95 l'al-go-rit-mo di Smith--Wilson, usan-do i \T1/lmr/bx/n/10.95
+ da-ti di in-put EIO-PA ori-gi-na-li \T1/lmr/m/n/10.95 (\T1/lmtt/m/n/10.95 eiop
+a_input_swap_dec2025.csv\T1/lmr/m/n/10.95 ,
+ []
+
+<../output/03_eiopa_rfr_smith_wilson/fig2_spot_forward_par.pdf, id=441, 650.43p
 t x 397.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig2_spot_forward_par.pdf Graphic fil
 e (type pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig2_spot_forward_par.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig2_spot_forward_
-par.pdf  used on input line 1041.
+par.pdf  used on input line 1289.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
-
-[16
-pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) ha
+[20] (../output/03_eiopa_rfr_smith_wilson/tab_C_luglio.tex) [21
+pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1068 \]
-          <../output/03_eiopa_rfr_smith_wilson/fig2_spot_forward_par.pdf>]
-(../output/03_eiopa_rfr_smith_wilson/tab_C_luglio.tex)
+l.1326   \item $
+                \Hmat = [H(u_i,u_j)]_{i,j=1}^{20}$ matrice SPD ($20\times 20$);
+
+pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1326   \item $
+                \Hmat = [H(u_i,u_j)]_{i,j=1}^{20}$ matrice SPD ($20\times 20$);
+ <../output/03_eiopa_rfr_smith_wilson/fig2_spot_forward_par.pdf>]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1083.
+(hyperref)                removing `math shift' on input line 1331.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\alpha' on input line 1083.
+(hyperref)                removing `\alpha' on input line 1331.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1083.
+(hyperref)                removing `math shift' on input line 1331.
 
-<../output/03_eiopa_rfr_smith_wilson/fig_sw_alpha_jul.pdf, id=403, 650.43pt x 3
+<../output/03_eiopa_rfr_smith_wilson/fig_sw_alpha_jul.pdf, id=466, 650.43pt x 3
 97.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig_sw_alpha_jul.pdf Graphic file (ty
 pe pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig_sw_alpha_jul.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_sw_alpha_jul.p
-df  used on input line 1093.
+df  used on input line 1350.
 (pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
-[17
-pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1099 
-       ]
-<../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_jul.pdf, id=413, 650.43pt 
+<../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_jul.pdf, id=469, 650.43pt 
 x 397.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_jul.pdf Graphic file 
 (type pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_jul.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_ju
-l.pdf  used on input line 1120.
+l.pdf  used on input line 1381.
 (pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
- [18
-pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) ha
-s been already used, duplicate ignored
+[22
+pdfTeX warning (ext4): destination with the same identifier (name{figure.10}) h
+as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1126 
+l.1388 
         <../output/03_eiopa_rfr_smith_wilson/fig_sw_alpha_jul.pdf>]
-<../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.pdf, id=430, 650.43pt x 3
+<../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.pdf, id=488, 650.43pt x 3
 97.485pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.pdf Graphic file (ty
 pe pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.p
-df  used on input line 1133.
+df  used on input line 1396.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
-<../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_jul.pdf, id=432, 650.43pt 
+<../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_jul.pdf, id=490, 650.43pt 
 x 542.025pt>
 File: ../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_jul.pdf Graphic file 
 (type pdf)
 <use ../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_jul.pdf>
 Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_ju
-l.pdf  used on input line 1147.
+l.pdf  used on input line 1410.
 (pdftex.def)             Requested size: 403.11768pt x 335.93623pt.
- [19
-pdfTeX warning (ext4): destination with the same identifier (name{figure.10}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1154 \end{figure}
-                   
+ [23
 pdfTeX warning (ext4): destination with the same identifier (name{figure.11}) h
 as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1154 \end{figure}
-                    <../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_jul.pd
-f> <../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.pdf>] [20
+l.1417 \end{figure}
+                   
 pdfTeX warning (ext4): destination with the same identifier (name{figure.12}) h
 as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1192 
-        <../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_jul.pdf>] [21]
-(03_eiopa_rfr_smith_wilson.aux)
+l.1417 \end{figure}
+                    <../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_jul.pd
+f> <../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.pdf>]
+(../output/03_eiopa_rfr_smith_wilson/tab_curva_ricostruita_dic.tex
+Underfull \hbox (badness 3482) in paragraph at lines 3--3
+[]\T1/lmr/m/n/10.95 Tabella 3: []Curva Smith--Wilson ri-co-strui-ta, di-cem-bre
+ 2025: tas-so spot e for-
+ []
+
+
+Underfull \hbox (badness 1122) in paragraph at lines 3--3
+\OML/lmm/m/it/10.95 T \OMS/lmsy/m/n/10.95 ^^T []$\T1/lmr/m/n/10.95 ) e ad al-cu
+-ni te-nor di estra-po-la-zio-ne. Se-rie com-ple-ta (1--100 an-ni) in
+ []
+
+) [24
+pdfTeX warning (ext4): destination with the same identifier (name{figure.13}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1437 
+        <../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_jul.pdf>] [25
+pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1479 
+       ] [26] (03_eiopa_rfr_smith_wilson.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
 Package rerunfilecheck Info: File `03_eiopa_rfr_smith_wilson.out' has not chang
 ed.
-(rerunfilecheck)             Checksum: 1F3C4BE9352A4E8DE44ED959769B17E5;5966.
+(rerunfilecheck)             Checksum: 078369590EDE5D56B93DB45BC3804242;5587.
  ) 
 Here is how much of TeX's memory you used:
- 27032 strings out of 467871
- 520774 string characters out of 5418376
- 965399 words of memory out of 5000000
- 55338 multiletter control sequences out of 15000+600000
- 711347 words of font info for 98 fonts, out of 8000000 for 9000
+ 27084 strings out of 467871
+ 521921 string characters out of 5418376
+ 964501 words of memory out of 5000000
+ 55365 multiletter control sequences out of 15000+600000
+ 717235 words of font info for 100 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,12n,108p,664b,614s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 98i,12n,108p,633b,588s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
 b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pf
 b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx8.pfb
@@ -1292,14 +1341,15 @@ sers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Use
 rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users
 /grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users
 /grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users
-/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/
-grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/g
-rego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/g
-rego/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.p
-fb>
-Output written on 03_eiopa_rfr_smith_wilson.pdf (21 pages, 585886 bytes).
+/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/
+grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/g
+rego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/gr
+ego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/gr
+ego/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pf
+b>
+Output written on 03_eiopa_rfr_smith_wilson.pdf (26 pages, 628848 bytes).
 PDF statistics:
- 591 PDF objects out of 1000 (max. 8388607)
- 104 named destinations out of 1000 (max. 500000)
- 257 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 664 PDF objects out of 1000 (max. 8388607)
+ 120 named destinations out of 1000 (max. 500000)
+ 262 words of extra memory for PDF output out of 10000 (max. 10000000)
 

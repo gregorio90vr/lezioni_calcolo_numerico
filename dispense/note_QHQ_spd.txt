@@ -1,0 +1,160 @@
+DIMOSTRAZIONE: Q^T H Q E' SIMMETRICA DEFINITA POSITIVA (SPD)
+=============================================================
+Nota supplementare a dispense/03_eiopa_rfr_smith_wilson.tex (Teorema thm:spd).
+Non e' inclusa nella dispensa compilata: li' il teorema e' solo enunciato,
+per scelta didattica (vedi preambolo del file .tex).
+
+NOTAZIONE (coerente con la dispensa)
+-------------------------------------
+- m = LLP = 20 : numero di nodi di pagamento u_1,...,u_m (u_j = j anni).
+- n = 15       : numero di scadenze DLT quotate T_1 < T_2 < ... < T_n <= m.
+- H = [H(u_i,u_j)]_{i,j=1}^m, matrice m x m del nucleo di Wilson: e' SPD
+  per costruzione (Osservazione oss:energia della dispensa; la positivita'
+  del kernel H stesso e' presa come dato, citata da fasshauer2007/lageras2016,
+  e non e' oggetto di questa nota).
+- C, matrice dei flussi di cassa, m x n:
+        C_ij = s_j        se i <  T_j   (cedola)
+        C_ij = 1 + s_j    se i =  T_j   (cedola + rimborso nozionale)
+        C_ij = 0          se i >  T_j   (nessun flusso dopo la scadenza)
+- d_j = e^{-omega u_j} > 0 per ogni j (omega = ln(1+UFR) > 0).
+- Q = diag(d) * C,  matrice m x n.
+
+TEOREMA
+-------
+La matrice del sistema di calibrazione A := Q^T H Q, di dimensione n x n,
+e' simmetrica definita positiva.
+
+La dimostrazione si divide in due lemmi elementari di algebra lineare
+(nessuna analisi funzionale: solo rango di matrici e forme quadratiche),
+piu' l'applicazione al caso specifico.
+
+
+LEMMA 1 (fatto generale)
+------------------------
+Sia H in R^{m x m} simmetrica definita positiva (SPD), e sia Q in R^{m x n}
+una matrice di RANGO PIENO DI COLONNA, cioe' Q x = 0 implica x = 0 per ogni
+x in R^n (equivalentemente: le n colonne di Q sono linearmente indipendenti,
+il che richiede n <= m). Allora A := Q^T H Q e' SPD.
+
+Dimostrazione.
+
+(a) Simmetria.
+    A^T = (Q^T H Q)^T = Q^T H^T Q = Q^T H Q = A,
+    perche' H e' simmetrica (H^T = H).
+
+(b) Definita positivita'.
+    Sia x in R^n, x != 0. Poniamo y := Q x in R^m.
+    Poiche' Q ha rango pieno di colonna (nucleo banale), x != 0 implica y != 0.
+    Allora, usando la definita positivita' di H applicata al vettore y != 0:
+
+        x^T A x = x^T (Q^T H Q) x = (Q x)^T H (Q x) = y^T H y > 0.
+
+    Dunque x^T A x > 0 per ogni x != 0: A e' definita positiva.
+
+Da (a) e (b): A = Q^T H Q e' SPD.  [Fine Lemma 1]
+
+Osservazione: qui si usa SOLO che H sia SPD e che Q abbia rango pieno di
+colonna. Non serve altro sulla struttura di H o di Q: e' un fatto generale
+di algebra lineare (lo stesso principio per cui, se A e' SPD, ogni "proiezione"
+Q^T A Q lungo colonne indipendenti resta SPD).
+
+
+LEMMA 2 (specifico al problema Smith-Wilson)
+---------------------------------------------
+La matrice Q = diag(d) * C, con C e d come definiti sopra, ha rango pieno
+di colonna, cioe' rank(Q) = n.
+
+Dimostrazione.
+
+Passo 1: ridurre a C.
+    diag(d) e' una matrice diagonale m x m con d_j = e^{-omega u_j} > 0 per
+    ogni j: e' quindi invertibile. Moltiplicare per una matrice invertibile
+    non cambia il rango, dunque
+
+        rank(Q) = rank(diag(d) * C) = rank(C).
+
+    Basta quindi mostrare rank(C) = n.
+
+Passo 2: rank(C) = n, esibendo una sottomatrice n x n invertibile.
+    Le scadenze quotate T_1 < T_2 < ... < T_n sono n indici di riga tra gli
+    m = 1,...,20 disponibili. Costruiamo la sottomatrice R, n x n, prendendo
+    da C solo le righe T_1,...,T_n (tutte le n colonne):
+
+        R_kj := C_{T_k, j},   k,j = 1,...,n.
+
+    Per la definizione di C, C_ij = 0 quando i > T_j. Quindi:
+
+        R_kj = C_{T_k,j} = 0   quando   T_k > T_j.
+
+    Poiche' T_1 < T_2 < ... < T_n e' strettamente crescente, T_k > T_j se e
+    solo se k > j. Dunque:
+
+        R_kj = 0   per ogni k > j,
+
+    cioe' R e' TRIANGOLARE SUPERIORE (tutti gli elementi sotto la diagonale
+    sono nulli).
+
+    La diagonale di R vale, per definizione di C (caso i = T_j):
+
+        R_jj = C_{T_j, j} = 1 + s_j > 0   per ogni j = 1,...,n
+
+    (s_j e' un tasso par, quindi 1 + s_j > 0 sempre).
+
+    Il determinante di una matrice triangolare superiore e' il prodotto
+    della diagonale:
+
+        det(R) = prod_{j=1}^n (1 + s_j) != 0,
+
+    quindi R e' invertibile, cioe' rank(R) = n.
+
+Passo 3: concludere rank(C) = n.
+    R e' una sottomatrice di C (n righe scelte tra le m righe di C, tutte
+    le colonne): se una sottomatrice n x n di C ha rango n, allora anche C
+    ha rango almeno n, cioe' rank(C) >= n. D'altra parte C ha esattamente
+    n colonne, quindi rank(C) <= n. Insieme:
+
+        rank(C) = n.
+
+Per il Passo 1, rank(Q) = rank(C) = n: Q ha rango pieno di colonna.
+[Fine Lemma 2]
+
+
+TEOREMA (applicazione al sistema Smith-Wilson)
+-----------------------------------------------
+H e' SPD (dato, Osservazione oss:energia della dispensa) e Q = diag(d) C ha
+rango pieno di colonna n (Lemma 2). Per il Lemma 1, applicato con questa H
+e questa Q:
+
+        A = Q^T H Q  e'  simmetrica definita positiva.
+
+CONSEGUENZE (perche' conta per la dispensa)
+--------------------------------------------
+- A e' SPD implica che il sistema di calibrazione
+
+        (Q^T H Q) b = p - q
+
+  ammette SOLUZIONE UNICA (una forma quadratica strettamente convessa
+  x |-> x^T A x ha un unico punto critico, che e' un minimo globale; qui
+  serve solo per dire che A invertibile, essendo definita positiva quindi
+  senza autovalori nulli).
+
+- Essendo A SPD, si puo' risolvere il sistema con la fattorizzazione di
+  Cholesky A = R^T R (R triangolare superiore), che e' stabile, non
+  richiede pivoting, e costa circa la meta' delle operazioni di una
+  fattorizzazione LU generica: da qui la scelta implementativa della
+  dispensa (Teorema thm:spd, script R/03_eiopa_rfr_smith_wilson.R,
+  funzione chol(QHQ)).
+
+NOTA SUL RUOLO DEI DUE LEMMI
+------------------------------
+- Il Lemma 1 e' il fatto "informativo": vale per QUALSIASI H SPD e QUALSIASI
+  Q a rango pieno di colonna, non solo per Smith-Wilson. E' l'analogo, in
+  algebra lineare pura, del fatto che una matrice di Gram di vettori
+  linearmente indipendenti rispetto a un prodotto scalare e' definita
+  positiva.
+- Il Lemma 2 e' la verifica "concreta": mostra che, con la struttura
+  specifica dei flussi di cassa di un paniere di IRS a scadenze distinte
+  (ognuno con un pagamento di nozionale finale strettamente positivo alla
+  propria scadenza), la matrice C ha automaticamente rango pieno — non e'
+  un'ipotesi aggiuntiva da verificare numericamente, ma una conseguenza
+  della struttura "triangolare" dei flussi rispetto alle scadenze ordinate.

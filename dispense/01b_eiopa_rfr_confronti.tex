@@ -1,0 +1,559 @@
+% ============================================================
+%  Dispensa 01b: Curva EIOPA Risk-Free a bootstrap —
+%                confronto tra fonti di dati e analisi dell'LLFR
+%  Companion di 01_eiopa_rfr_bootstrap.tex
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+%  Registro dell'indagine sul residuo di estrapolazione (delta vs benchmark)
+%  e sul calcolo del Last Liquid Forward Rate (documentazione + tool VBA EIOPA).
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor,colortbl}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{titlesec}
+\usepackage{bm}
+
+\graphicspath{{../output/01_eiopa_rfr_bootstrap/}}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black,
+            citecolor=green!40!black}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
+
+\theoremstyle{definition}
+\newtheorem{definizione}{Definizione}[section]
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+\newtheorem*{attenzione}{Nota numerica}
+
+\tcbset{
+  mybase/.style={
+    colback=gray!5, colframe=gray!40,
+    boxrule=0.4pt, arc=2pt,
+    left=7pt, right=7pt, top=5pt, bottom=5pt,
+    fonttitle=\small\bfseries,
+    breakable
+  }
+}
+\newtcolorbox{keybox}[1][Concetto chiave]{mybase,
+  colframe=blue!40!black, colback=blue!4, title={#1}}
+\newtcolorbox{warningbox}{mybase,
+  colframe=orange!70!black, colback=orange!5}
+
+\definecolor{rowtint}{RGB}{243,247,253}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\UFR}{\mathrm{UFR}}
+\newcommand{\LLFR}{\mathrm{LLFR}}
+\newcommand{\FSP}{\mathrm{FSP}}
+\newcommand{\CRA}{\mathrm{CRA}}
+\newcommand{\DLT}{\mathrm{DLT}}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+
+\title{%
+  \textbf{Curva EIOPA Risk-Free a bootstrap:\\[3pt]
+  confronto tra fonti di dati e analisi dell'LLFR}\\[6pt]
+  \large Companion investigativo di \texttt{01\_eiopa\_rfr\_bootstrap.tex}\\[4pt]
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Scopo e panoramica}
+\label{sec:scopo}
+% ============================================================
+
+La dispensa principale (\texttt{01\_eiopa\_rfr\_bootstrap.tex}) ricostruisce la curva EIOPA
+EUR di dicembre~2025 con il metodo a bootstrap (EIOPA-BoS-26-198), a partire dai dati di input
+EIOPA autentici, e la confronta con la curva ufficiale ricalcolata con lo stesso metodo
+(\emph{benchmark like-for-like}, \texttt{dati/dec25\_eiopa\_rfr\_newapproach.csv}). L\`i la
+ricostruzione usa, senza troppi commenti, i dati di input pi\`u autorevoli e l'LLFR a media
+pesata (che riproduce la curva pubblicata a frazioni di bp).
+
+Questo documento \`e il \textbf{registro dell'indagine} che ha portato a quelle scelte, e
+serve a \textbf{non perdere l'informazione} sugli input alternativi disponibili: oltre ai dati
+di input EIOPA, ripetiamo la ricostruzione di dicembre~2025 anche con i par swap
+\texttt{EUSA*} di mercato (Bloomberg, dal file \texttt{dati/03\_eusa.xlsx}) e con i par
+impliciti dalla curva ufficiale. La domanda di partenza \`e semplice: ricostruendo la curva
+con la definizione ``naturale'' dell'LLFR (il singolo forward all'FSP), il confronto col
+benchmark lascia un residuo sistematico di $\sim 2$ bps in estrapolazione. \emph{Da dove
+viene?}
+
+\begin{keybox}[Come i vari input influenzano il risultato --- in due righe]
+La curva ricostruita dipende da \textbf{due} scelte di input, e ciascuna governa una zona
+diversa:
+\begin{itemize}
+  \item \textbf{la fonte dei dati di mercato} governa la \emph{zona liquida} ($T\le 20$): con
+        il vero input EIOPA l'accordo col benchmark \`e $\sim0.03$ bps (RMSE), con un proxy
+        Bloomberg si ferma a $\sim0.3$ bps --- un ordine di grandezza peggio;
+  \item \textbf{la definizione dell'LLFR} governa l'\emph{estrapolazione} ($T>20$): la
+        definizione a singolo forward lascia $\sim2$ bps, la media pesata li azzera.
+\end{itemize}
+La Tabella~\ref{tab:summary-fonti} quantifica entrambi gli effetti per le quattro
+ricostruzioni.
+\end{keybox}
+
+Per rispondere in dettaglio abbiamo (i) ricostruito la curva da \textbf{quattro fonti} di
+input diverse isolando l'effetto dei dati da quello della definizione di LLFR; (ii) letto la
+documentazione ufficiale EIOPA sul calcolo dell'LLFR; (iii) decompilato il codice VBA del tool
+ufficiale EIOPA. Il documento \`e organizzato cos\`i: le quattro fonti
+(Sez.~\ref{sec:fonti}), la ricostruzione e il confronto per ciascuna (Sez.~\ref{sec:abc}
+e~\ref{sec:fonteD}), il quadro complessivo (Sez.~\ref{sec:confronto}) e infine l'analisi
+dettagliata dell'LLFR dalla documentazione e dal tool ufficiali (Sez.~\ref{sec:doc-ufficiale}
+e seguenti).
+
+% ============================================================
+\section{Le quattro fonti di dati}
+\label{sec:fonti}
+% ============================================================
+
+Ricostruiamo la stessa curva di dicembre~2025 (stessi 15 tenor DLT $\{1$--$13,15,20\}$, stesso
+bootstrap con Newton--Raphson sui buchi $13\!\to\!15$ e $15\!\to\!20$, stesso $\alpha=20\%$)
+cambiando \textbf{una variabile alla volta}:
+
+\begin{itemize}
+  \item \textbf{Fonte A --- par \texttt{EUSA*} di mercato.} I par swap EUR contro EURIBOR~6M
+        osservati (Bloomberg), corretti del $\CRA$: $r_k = s_k - \CRA$ con $\CRA=10$ bps.
+        \`E un \emph{proxy}: il feed Bloomberg non \`e necessariamente la fonte usata
+        internamente da EIOPA.
+  \item \textbf{Fonte B --- par impliciti dalla curva ufficiale.} Dalla curva RFR ufficiale
+        (foglio \texttt{RFR\_spot\_no\_VA} dello zip EIOPA), che d\`a gli zero rate
+        $z_t^{\text{uff}}$ gi\`a al netto del CRA, ricaviamo i fattori di sconto
+        $d_t=(1+z_t^{\text{uff}})^{-t}$ e da questi i \textbf{par impliciti}
+        $s_k^{\text{impl}}=(1-d_{T_k})/\sum_{j\le T_k}d_j$.
+  \item \textbf{Fonte C --- dati di input EIOPA originali.} Par swap lordi pubblicati come
+        input EIOPA di fine anno~2025 (\texttt{eiopa\_input\_swap\_dec2025.csv}), dopo sottrazione del
+        $\CRA$. \`E, con ottima approssimazione, il vero dato di input EIOPA.
+  \item \textbf{Fonte D --- Fonte C con LLFR a media pesata.} Identica alla Fonte~C nel
+        bootstrap, ma l'LLFR usato per l'estrapolazione non \`e il singolo forward all'FSP:
+        \`e il valore a \emph{media pesata} del tool ufficiale EIOPA ($3.2249\%$,
+        Sez.~\ref{sec:calcolo}). \`E la ricostruzione adottata nella dispensa principale.
+\end{itemize}
+
+Le Fonti A, B, C usano tutte la definizione ``naturale'' dell'LLFR (singolo forward
+$f^c_{19,20}$); la Fonte~D isola l'effetto della \emph{scelta dell'LLFR}. La
+Tabella~\ref{tab:input-dic} raccoglie i par di input delle prime tre fonti.
+
+\input{../output/01_eiopa_rfr_bootstrap/tab_input_dic.tex}
+
+I par impliciti (Fonte~B) e i par di input originali (Fonte~C) sono quasi identici, ed
+entrambi molto vicini agli \texttt{EUSA*} after-CRA (Fonte~A): le piccole differenze di
+quest'ultima (frazioni di bp) riflettono che il feed Bloomberg non coincide esattamente con
+la fonte usata internamente da EIOPA.
+
+% ============================================================
+\section{Ricostruzione e confronto: Fonti A, B, C}
+\label{sec:abc}
+% ============================================================
+
+Ciascuna fonte passa per la pipeline completa (bootstrap $+$ estrapolazione FSP/LLFR a singolo
+forward) e viene confrontata col benchmark: overlay dello spot ricostruito e barre dei residui
+in bps, con le metriche RMSE/max separate per zona liquida ($T\le\FSP$) ed estrapolazione.
+
+\subsection{Fonte A --- par \texttt{EUSA*} di mercato}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_eusa.pdf}
+\caption{Fonte~A (bootstrap \texttt{EUSA*}) vs curva EIOPA ufficiale ricalcolata col nuovo
+metodo, dicembre~2025. \emph{Sopra}: spot ricostruito (blu) e ufficiale (rosso, cerchi aperti),
+tenor 1--120. \emph{Sotto}: scarti in bps; blu = zona liquida ($T\le\FSP$), rosso =
+estrapolazione.}
+\label{fig:vs-eusa}
+\end{figure}
+
+In zona liquida l'accordo \`e ottimo (RMSE $0.32$ bps, max $0.89$ bps): il bootstrap dei par
+di mercato riproduce gli zero rate ufficiali quasi esattamente. In estrapolazione lo scarto
+cresce fino a $\sim 3.4$ bps (RMSE $2.07$ bps).
+
+\subsection{Fonte B --- par impliciti dalla curva ufficiale}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_impl.pdf}
+\caption{Fonte~B (bootstrap dei par impliciti) vs benchmark nuovo metodo, dicembre~2025. In
+zona liquida l'accordo \`e a frazioni di bp su tutti i tenor.}
+\label{fig:vs-impl}
+\end{figure}
+
+I par impliciti derivano dalla curva ufficiale: in zona liquida la Fonte~B resta entro $0.08$
+bps su \textbf{ogni} nodo DLT (RMSE $0.04$ bps), un ordine di grandezza meglio della Fonte~A.
+In estrapolazione lo scarto \`e $\sim 3.5$ bps (RMSE $2.12$ bps), praticamente identico alla
+Fonte~A: la fonte dati non cambia il residuo in estrapolazione.
+
+\subsection{Fonte C --- dati di input EIOPA originali}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_input.pdf}
+\caption{Fonte~C (bootstrap dei dati di input EIOPA originali) vs benchmark nuovo metodo,
+dicembre~2025. In zona liquida l'accordo \`e a frazioni di bp, coerente con la Fonte~B.}
+\label{fig:vs-input}
+\end{figure}
+
+Con il vero dato di input EIOPA, in zona liquida l'accordo \`e ottimo (RMSE $0.03$ bps, max
+$0.09$ bps): ai tenor consecutivi $1$--$13$ lo scarto \`e sostanzialmente nullo. \`E la
+conferma pi\`u diretta che il bootstrap qui implementato riproduce correttamente la
+metodologia ufficiale nella zona liquida. Ma in estrapolazione lo scarto resta $\sim 3.5$ bps
+(RMSE $2.10$ bps): \textbf{identico alle altre due fonti}. Il residuo di estrapolazione non
+dipende dai dati di input --- nemmeno usando quelli autentici di EIOPA.
+
+Le Tabelle~\ref{tab:delta-new-eusa}, \ref{tab:delta-new-impl} e~\ref{tab:delta-new-input}
+riportano il delta puntuale ai nodi DLT per le tre fonti.
+
+\input{../output/01_eiopa_rfr_bootstrap/tab_delta_new_eusa.tex}
+\input{../output/01_eiopa_rfr_bootstrap/tab_delta_new_impl.tex}
+\input{../output/01_eiopa_rfr_bootstrap/tab_delta_new_input.tex}
+
+% ============================================================
+\section{Fonte D e la scoperta}
+\label{sec:fonteD}
+% ============================================================
+
+Le Fonti A, B e C condividono lo stesso residuo in estrapolazione ($\sim 2.1$ bps RMSE)
+indipendentemente dai dati di input: un indizio forte che il problema non sia nei dati ma
+nell'\textbf{estrapolazione}, e in particolare nel singolo numero che la ancora: l'LLFR.
+
+Il tool ufficiale EIOPA (\emph{RFR extrapolation and VA calculation}) calcola l'LLFR con la
+formula \textbf{generale a media pesata} (Sez.~\ref{sec:doc-ufficiale}), che sul suo dataset
+di esempio d\`a $\LLFR^c = 3.2249\%$ --- un valore \emph{sotto} l'$\UFR^c$ ($3.2467\%$), mentre
+il nostro singolo forward sta $\sim$20 bps \emph{sopra}. La Fonte~D verifica empiricamente
+l'ipotesi che sia questo a fare la differenza: ripete la ricostruzione di Fonte~C sostituendo
+\emph{solo} l'LLFR con $3.2249\%$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_llfr.pdf}
+\caption{Fonte~D (bootstrap Fonte~C, LLFR a media pesata $=3.2249\%$) vs benchmark nuovo
+metodo, dicembre~2025. L'accordo si estende ora anche in estrapolazione.}
+\label{fig:vs-llfr}
+\end{figure}
+
+Il risultato \`e netto: il residuo in estrapolazione \textbf{crolla da $\sim 3.5$ a $0.12$ bps}
+(max; RMSE da $2.10$ a $0.09$ bps) --- lo stesso ordine di grandezza dell'accordo in zona
+liquida. Il gap era dunque interamente attribuibile alla \textbf{scelta dell'LLFR}, non ai
+dati n\'e a dettagli di arrotondamento.
+
+% ============================================================
+\section{Confronto complessivo delle quattro fonti}
+\label{sec:confronto}
+% ============================================================
+
+La Tabella~\ref{tab:summary-fonti} riassume le quattro ricostruzioni.
+
+\input{../output/01_eiopa_rfr_bootstrap/tab_summary_fonti.tex}
+
+\begin{osservazione}[Due lezioni, una per zona]
+\emph{Zona liquida $\Rightarrow$ conta la fonte dati.} Fonte~B (par impliciti) e Fonte~C
+(input EIOPA) restano a $0.04$ e $0.03$ bps (RMSE) dalla curva ufficiale --- praticamente
+indistinguibili, essendo quasi lo stesso dato --- mentre Fonte~A (\texttt{EUSA*}, proxy
+Bloomberg) si ferma a $0.32$ bps: un ordine di grandezza peggio. La differenza \`e il
+\emph{rumore della fonte dati}. Il bootstrap in s\'e \`e esatto (re-pricing $\sim 10^{-16}$);
+ci\`o che separa le fonti dall'ufficiale sono i dati di input.
+
+\emph{Zona di estrapolazione $\Rightarrow$ conta la \textbf{definizione di LLFR}.} Le Fonti A,
+B, C stanno tutte $\sim 2.1$ bps (RMSE) sotto la curva ufficiale, quasi indipendentemente
+dalla fonte: un gap che il confronto like-for-like da solo non annulla, nemmeno col vero dato
+di input. La Fonte~D lo azzera sostituendo l'LLFR col valore a media pesata del tool. Resta
+per\`o da capire se quel valore sia \emph{corretto per l'EUR}: la risposta \`e nel resto di
+questo documento.
+\end{osservazione}
+
+% ============================================================
+\section{La definizione ufficiale dell'LLFR}
+\label{sec:doc-ufficiale}
+% ============================================================
+
+Tutti i riferimenti in questa sezione sono a~\cite{eiopa2026}, il documento tecnico ufficiale
+EIOPA-BoS-26-198 (\textit{RFR Technical Documentation}, maggio~2026, 115 pagine).
+
+\subsection{La formula generale (§8.3, §8.5.6)}
+\label{sec:formula-generale}
+
+Il §8.3.1 definisce l'LLFR come \emph{"a weighted average of the last forward rate just before
+the FSP and -- if available -- specific forward rates after the FSP"}. Il numero di forward
+aggiuntivi dopo l'FSP (§8.3.2) \emph{"corresponds to the number of DLT maturities beyond the
+FSP"}.
+
+La formula chiusa \`e al §8.5.6. Siano $t_1<\cdots<t_L$ le scadenze DLT di una valuta e $t_F$
+l'FSP. Se $L=F$ (nessuna scadenza DLT oltre l'FSP):
+\begin{equation}
+  \LLFR^C = f^C_{t_{F-1},t_F}.
+  \label{eq:llfr-single}
+\end{equation}
+Altrimenti ($L>F$):
+\begin{equation}
+  \LLFR^C = w_{t_F}\,f^C_{t_{F-1},t_F} + w_{t_{F+1}}\,f^C_{t_F,t_{F+1}} + \cdots +
+            w_{t_L}\,f^C_{t_F,t_L},
+  \label{eq:llfr-weighted}
+\end{equation}
+con
+\begin{equation}
+  f^C_{t_{k-1},t_k} = \frac{t_k\,z^C_{t_k} - t_{k-1}\,z^C_{t_{k-1}}}{t_k-t_{k-1}},
+  \qquad
+  w_{t_k} = \frac{V_{t_k}}{V_{t_F}+V_{t_{F+1}}+\cdots+V_{t_L}},
+  \label{eq:llfr-weights}
+\end{equation}
+dove $V_{t_k}$ \`e il \textbf{notional medio annuo di swap scambiati} al tenor $t_k$, secondo
+la DLT assessment di EIOPA. La notazione $t_{F-1}$ indica la scadenza DLT \emph{immediatamente
+precedente} l'FSP nella sequenza $t_1,\dots,t_L$ (si veda l'Osservazione~\ref{oss:tf-1}).
+
+\begin{osservazione}[Il caso particolare §8.3.4]
+\label{oss:caso-speciale}
+Il documento lo scrive esplicitamente: \emph{"In case the FSP has the longest DLT maturity,
+the LLFR equals the last forward rate just before the FSP and the associated weight equals
+100\%."} È esattamente l'eq.~\eqref{eq:llfr-single}: un unico forward, nessuna media.
+\end{osservazione}
+
+\subsection{Il caso EUR: Tabella 2}
+\label{sec:tabella2}
+
+La sez.~5.2.7--5.2.8 introduce una tabella (Table~2, p.~24) che elenca, valuta per valuta,
+quali tenor sono DLT e i pesi LLFR associati. Il titolo riporta un avviso esplicito:
+\begin{quote}
+\textit{"Table 2 - Tenors used for the derivation of the basic risk-free interest rate term
+structures and the associated LLFR weights (\textbf{Not final, update from the 2026 DLT
+assessment pending})."}
+\end{quote}
+Per l'\textbf{EUR}, la colonna mostra celle DLT da 1 a 20 anni, con \textbf{"100\%" alla sola
+riga 20Y} e \textbf{nessuna} cella DLT da 21 a 150 anni. Per confronto, GBP arriva a 50 anni
+("100\%" alla riga 50Y, cio\`e per GBP l'FSP \`e 50), USD e AUD a 30 anni: sono queste valute
+a ricadere nel caso generale~\eqref{eq:llfr-weighted}.
+
+\subsection{Conferma storica: Annex B.5.1}
+\label{sec:annexB}
+
+L'Annex~B.5.1 (Tabella~7) riporta la cronologia degli strumenti DLT dell'EUR dal 2016:
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{ll}
+\toprule
+\textbf{Periodo} & \textbf{Tenor DLT EUR (swap)} \\
+\midrule
+1 gen 2016 -- 31 dic 2019 & 1--10, 12, 15, 20 \\
+1 gen 2020 -- 31 mar 2021 & 1--15, 20 \\
+1 apr 2021 -- 31 dic 2024 & 1--12, 15, 20 \\
+1 gen -- 29 giu 2025 & 1--13, 15, 19, 20 \\
+\rowcolor{rowtint} \textbf{30 giu -- 31 dic 2025} & \textbf{1--13, 15, 20} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Mai, dal 2016 a oggi, l'EUR ha avuto tenor DLT oltre i 20 anni.} A dicembre~2025 i
+tenor sono $1$--$13,15,20$: l'FSP (20 anni) \`e la scadenza DLT pi\`u lunga, quindi vale il
+caso dell'Osservazione~\ref{oss:caso-speciale}, cio\`e il peso 100\% sul singolo forward
+(eq.~\eqref{eq:llfr-single}). \`E \textbf{ufficialmente} il caso corretto per l'EUR.
+
+% ============================================================
+\section{Il tool Excel/VBA ufficiale e la funzione \texttt{GetLLFR}}
+\label{sec:tool}
+% ============================================================
+
+EIOPA pubblica un tool Excel a supporto della documentazione:
+\texttt{RFR extrapolation and VA calculation (19 May 2026).xlsm} (macro-abilitato). Il foglio
+rilevante, \texttt{Input Data \& Extrapolation}, ha una tabella (righe 25--174, maturit\`a
+1--150) con colonne: Maturity (G), flag DLT (H), peso LLFR (I), Input Rate swap (J),
+Bootstrapped Zero Rate CC (K). Nel dataset \emph{di esempio} del tool i pesi LLFR sono nonzero
+a $20/25/30/40/50$ anni --- una situazione da valuta con DLT oltre l'FSP (stile GBP), non
+l'EUR.
+
+Il modulo VBA \texttt{mExtrapolation}, estratto da \texttt{xl/vbaProject.bin} (con
+\texttt{oletools}), contiene la funzione, quotata qui \textbf{verbatim}:
+
+\begin{Verbatim}[fontsize=\small,frame=single]
+Function GetLLFR(InputRates As Range, DLTin As Range, LLFRweightsIn As Range)
+
+Dim rates(): rates = RangeToArray(InputRates)
+Dim weight(): weight = RangeToArray(LLFRweightsIn)
+Dim w(), t()
+Dim i As Integer, k As Integer: k = 0
+
+'tenor per cui il peso > 0
+For i = 1 To UBound(weight)
+    If weight(i) > 0 Then
+        k = k + 1
+        ReDim Preserve t(k): t(k) = i
+        ReDim Preserve w(k): w(k) = weight(i)
+    End If
+Next
+
+'ultimo punto liquido prima dell'FSP (t(1) = primo tenor con peso > 0)
+Dim dlt(): dlt = RangeToArray(DLTin)
+Dim LLPbeforeFSP As Integer
+For i = 1 To t(1) - 1
+    If dlt(i) = 1 Then LLPbeforeFSP = i
+Next
+
+Dim tempLLFR As Double
+tempLLFR = w(1) * (t(1)*rates(t(1)) - LLPbeforeFSP*rates(LLPbeforeFSP)) _
+           / (t(1) - LLPbeforeFSP)
+For i = 2 To UBound(t)
+    tempLLFR = tempLLFR + w(i) * (t(i)*rates(t(i)) - t(1)*rates(t(1))) _
+               / (t(i) - t(1))
+Next
+GetLLFR = tempLLFR
+End Function
+\end{Verbatim}
+
+Da notare: nella funzione \texttt{Extrapolation} (stesso modulo) l'\texttt{UFR} viene passato
+come \texttt{Log(1+UFR)} ma l'\texttt{LLFR} \textbf{no} --- conferma che \texttt{GetLLFR}
+restituisce gi\`a un tasso in capitalizzazione \textbf{continua} (opera sulla colonna K).
+
+\begin{attenzione}[Perché \texttt{LLPbeforeFSP} \`e $15$ e non $19$]
+\label{oss:tf-1}
+Sui dati del tool (DLT$=1$ a $1$--$13,15$; \texttt{t(1)}$=20$): il ciclo
+\texttt{For i = 1 To 19} tiene l'\textbf{ultimo} tenor con DLT$=1$, cio\`e $15$. La notazione
+$t_{F-1}$ dell'eq.~\eqref{eq:llfr-weighted} indica dunque il tenor DLT precedente
+\emph{nella lista}, non ``un anno prima''. Per l'EUR il dettaglio \`e ininfluente: sotto
+l'ipotesi di forward costante nel buco $15\!\to\!20$, $f^C_{15,20}=f^C_{19,20}$ esattamente
+per costruzione.
+\end{attenzione}
+
+% ============================================================
+\section{Calcolo numerico: come si arriva a 3.2249\%}
+\label{sec:calcolo}
+% ============================================================
+
+Applicando la formula~\eqref{eq:llfr-weighted} ai cinque tenor pesati del tool (zero rate a
+capitalizzazione continua della colonna K; $\text{LLPbeforeFSP}=15$, $z^c_{15}=3.06008\%$), si
+ottengono i cinque forward e i loro contributi pesati (Tabella~\ref{tab:llfr-weighted}).
+
+\input{../output/01_eiopa_rfr_bootstrap/tab_llfr_weighted.tex}
+
+\begin{osservazione}[Perché il risultato è basso]
+Ognuno dei cinque forward ($3.455\%, 3.203\%, 3.121\%, 2.985\%, 2.770\%$) \`e gi\`a vicino o
+sotto l'$\UFR$ ($3.2467\%$), perch\'e nel dataset di esempio i tassi swap a 25--50 anni sono
+\textbf{decrescenti}. \`E questa media di forward ``gi\`a maturi'' a portare l'LLFR sotto
+l'UFR. Il singolo forward EUR ($3.4544\%$ continuo), al contrario, riflette solo la parte
+crescente della curva fino a 20 anni: non ha termini smorzanti, perch\'e per l'EUR quei tenor
+lunghi liquidi non esistono.
+\end{osservazione}
+
+% ============================================================
+\section{Confronto con la ricostruzione EUR reale}
+\label{sec:confronto-reale}
+% ============================================================
+
+Usando i dati EIOPA reali (Fonte~C) e la formula corretta per l'EUR
+(eq.~\eqref{eq:llfr-single}, singolo forward): $\LLFR^C_{\text{Fonte C}} = 3.4544\%$ continuo
+($3.5147\%$ annuo). Calcolando lo stesso LLFR \emph{dagli $z_{19},z_{20}$ del benchmark stesso}:
+$\LLFR^C_{\text{benchmark}} = 3.4575\%$ continuo. I due valori sono \textbf{quasi identici}
+(differenza $0.3$ bps) --- coerente, dato che i dati di mercato EUR coincidono. Se il benchmark
+fosse costruito con la sua stessa zona liquida, la sua coda dovrebbe partire da $\sim3.46\%$
+($\sim$20 bps sopra l'UFR). Non lo fa:
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{rrrr}
+\toprule
+$T$ & forward benchmark (\%) & dist.\ da UFR, benchmark (bps) & dist.\ da UFR, nostra ric.\ (bps) \\
+\midrule
+21  & 3.2796 & $-1.97$   & $+18.82$ \\
+25  & 3.2869 & $-1.27$   & $+8.46$ \\
+30  & 3.2924 & $-0.73$   & $+3.11$ \\
+40  & 3.2975 & $-0.24$   & $+0.42$ \\
+50  & 3.2992 & $-0.08$   & $+0.057$ \\
+80  & 3.2999 & $-0.003$  & $+0.00014$ \\
+120 & 3.30000 & $+0.0003$ & $\approx 0$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Il forward implicito nel benchmark converge \textbf{da sotto} l'UFR (parte gi\`a a $-1.97$ bps
+a $T=21$), come se fosse ancorato a un LLFR sotto l'UFR --- non ai $\sim3.46\%$ (sopra) che i
+suoi stessi dati liquidi implicano. \`E \textbf{incompatibile} con l'eq.~\eqref{eq:extrap-fwd-app}:
+il peso $B(\alpha,h)\in[0,1]$ tiene il forward sempre tra $\UFR^C$ e $\LLFR^C$, senza mai
+attraversare l'UFR se il LLFR \`e sopra.
+
+\begin{attenzione}[La verifica causale, ripresa]
+Sostituendo nella Fonte~C \emph{solo} l'LLFR col valore del tool ($3.2249\%$) il residuo crolla
+a $0.09$ bps (RMSE, Sez.~\ref{sec:fonteD}); sostituendolo invece con l'LLFR EUR-coerente
+implicito dal benchmark stesso ($3.4575\%$) il residuo \textbf{non} migliora ($2.13$ vs $2.10$
+bps). Il valore che ``risolve'' il gap \`e specificamente quello generico del tool, non un
+qualunque LLFR EUR-coerente.
+\end{attenzione}
+
+% ============================================================
+\section{Conclusione dell'indagine}
+\label{sec:conclusione}
+% ============================================================
+
+\begin{itemize}
+  \item Il residuo di $\sim 2$ bps in estrapolazione \textbf{non dipende dai dati di input}
+        (identico per Fonti A/B/C), ma dalla \textbf{scelta dell'LLFR}: la Fonte~D lo azzera
+        sostituendo il singolo forward con la media pesata del tool ($3.2249\%$).
+  \item La documentazione ufficiale (\cite{eiopa2026}, §8.3.4, Tabella~2, Annex~B.5.1) \`e
+        univoca: per l'EUR di dicembre~2025 l'FSP coincide con la scadenza DLT pi\`u lunga,
+        quindi l'LLFR \`e il \textbf{singolo forward} (peso 100\%). Il valore a media pesata
+        del tool nasce dal suo \emph{dataset di esempio} (DLT a 25--50 anni), che non
+        corrisponde all'EUR reale.
+  \item Ne segue che il file di benchmark \texttt{dec25\_eiopa\_rfr\_newapproach.csv} \`e
+        \textbf{internamente inconsistente}: la sua zona liquida implica un LLFR EUR-coerente
+        ($\sim3.46\%$), ma la sua coda estrapolata si comporta come se usasse il valore
+        generico del tool ($\sim3.225\%$). L'ipotesi pi\`u probabile \`e che sia stato generato
+        applicando la formula/i dati d'esempio del tool invece del caso singolo-forward EUR.
+  \item \textbf{Perch\'e allora la dispensa principale usa $3.2249\%$?} Perch\'e l'obiettivo
+        didattico l\`i \`e \emph{riprodurre la curva pubblicata}: usando quel valore la
+        ricostruzione combacia col benchmark a frazioni di bp ovunque. Questo documento
+        registra il prezzo di quella scelta --- \`e il valore che riproduce il file, non
+        necessariamente quello ufficialmente corretto per l'EUR.
+  \item Resta una possibilit\`a aperta, segnalata dal documento stesso: la Tabella~2 \`e
+        \emph{"Not final, update from the 2026 DLT assessment pending"}. Un futuro
+        aggiornamento della DLT assessment potrebbe estendere i tenor DLT dell'EUR --- ma non
+        retroattivamente a dicembre~2025.
+\end{itemize}
+
+\appendix
+\section*{Richiamo: formula di estrapolazione (§8.5.5 di~\cite{eiopa2026})}
+\addcontentsline{toc}{section}{Richiamo: formula di estrapolazione}
+La formula che usa l'LLFR una volta calcolato (identica a quella della dispensa principale):
+\begin{equation}
+  f^C_{t_F,t_F+h} = \UFR^C + (\LLFR^C-\UFR^C)\,B(\alpha,h),
+  \qquad B(\alpha,h)=\frac{1-e^{-\alpha h}}{\alpha h}.
+  \label{eq:extrap-fwd-app}
+\end{equation}
+
+% ============================================================
+\begin{thebibliography}{9}
+
+\bibitem{eiopa2026}
+EIOPA (2026).
+\textit{RFR Technical Documentation --- The methodology to derive EIOPA's risk-free
+interest rate term structures}. EIOPA-BoS-26-198, Maggio 2026.
+\url{https://www.eiopa.europa.eu/document/download/7da8a1f3-e395-4789-bdc1-76984f8510b2_en?filename=EIOPA-BoS-26-198+-+RFR+Technical+Documentation+SII+Review.pdf}
+
+\bibitem{eiopatool}
+EIOPA (2026).
+\textit{RFR extrapolation and VA calculation} (tool Excel/VBA, versione 19~maggio~2026).
+
+\end{thebibliography}
+
+\end{document}
