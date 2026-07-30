@@ -178,7 +178,7 @@ gradualmente verso l'$\UFR$.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/shared/fig_motivazione.pdf}
+\includegraphics[width=0.92\textwidth]{../output/03_eiopa_rfr_smith_wilson/fig_motivazione.pdf}
 \caption{\textbf{Curva spot} EUR ufficiale EIOPA, dicembre~2025, scadenze 1--150 anni.
 Nella zona ombreggiata ($T > 20$ anni) non esistono dati di mercato affidabili:
 la curva \`e costruita in modo che il tasso converga al valore di lungo periodo
@@ -271,7 +271,7 @@ coerentemente con le propriet\`a appena elencate.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.80\textwidth]{../output/shared/fig_fattori_sconto.pdf}
+\includegraphics[width=0.80\textwidth]{../output/03_eiopa_rfr_smith_wilson/fig_fattori_sconto.pdf}
 \caption{Esempio di fattori di sconto $P(0,T)$. La curva decresce monotonamente:
 $P(0,T)<1$ riflette la preferenza temporale (un euro oggi vale pi\`u di un euro domani).}
 \label{fig:sconto-intro}
@@ -393,7 +393,7 @@ fondamentale tra spot e forward:
 \end{equation}
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.88\textwidth]{../output/shared/fig_spot_fwd_media.pdf}
+\includegraphics[width=0.88\textwidth]{../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pdf}
 \caption{Andamento tipico del tasso spot $r(t)$ e del forward istantaneo $f(t)$. Le due
 curve partono dallo stesso valore, ma il forward si muove pi\`u rapidamente: lo spot \`e la
 \emph{media} del forward sull'intervallo $[0,t]$ \eqref{eq:spot-media-fwd} e quindi ne segue
@@ -544,7 +544,7 @@ Si tratta di $n=15$ strumenti che si fermano all'ultimo punto liquido (20 anni):
 a meno della correzione CRA, su cui la curva viene fatta passare esattamente. La
 Tabella~\ref{tab:input-dic} riporta i par lordi e la loro riduzione del CRA.
 
-\input{../output/shared/tab_input_dic.tex}
+\input{../output/03_eiopa_rfr_smith_wilson/tab_input_dic.tex}
 
 Restano due questioni operative: \emph{ricostruire} una curva continua che interpoli questi
 15 punti e \emph{prolungarla} oltre i 20 anni, dove non esistono dati. Verifichiamo
@@ -1428,10 +1428,12 @@ riproduce la metodologia ufficiale.
 
 La Tabella~\ref{tab:curva-ricostruita-dic} riporta la curva Smith--Wilson ricostruita --- tasso
 spot e forward, a capitalizzazione sia continua sia annua composta --- ai 15 nodi DLT e ad
-alcuni tenor di estrapolazione. La serie completa (tenor interi 1--100 anni), per questo
-metodo e per il bootstrap della Lezione~1, \`e disponibile in formato Excel in
-\texttt{output/shared/curva\_ricostruita\_dic2025.xlsx} (fogli \texttt{SmithWilson} e
-\texttt{Bootstrap}).
+alcuni tenor di estrapolazione. La serie completa (tenor interi 1--100 anni) \`e disponibile in
+formato Excel in
+\texttt{output/03\_eiopa\_rfr\_smith\_wilson/curva\_ricostruita\_dic2025.xlsx}
+(foglio \texttt{SmithWilson}); la serie corrispondente per il bootstrap della Lezione~1 \`e in
+\texttt{output/01\_eiopa\_rfr\_bootstrap/curva\_ricostruita\_dic2025.xlsx}
+(foglio \texttt{Bootstrap}).
 
 \input{../output/03_eiopa_rfr_smith_wilson/tab_curva_ricostruita_dic.tex}
 

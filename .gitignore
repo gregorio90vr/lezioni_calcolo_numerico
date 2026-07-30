@@ -1,5 +1,7 @@
 .Rproj.user
+# R history files
 .Rhistory
+R/.Rhistory
 .RData
 .Ruserdata
 .positai

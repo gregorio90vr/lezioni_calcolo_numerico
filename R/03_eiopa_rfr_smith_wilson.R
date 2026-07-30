@@ -254,14 +254,14 @@ Qb_ref   <- cal_ref$Qb
 cat(sprintf("Mese di riferimento: %s  (zip %s)\n", ref_lab, off_ref$zip))
 cat(sprintf("  CRA = %.0f bps,  alpha ufficiale = %.4f\n\n", CRA_ref * 1e4, a_ref))
 
-# --- Asset condivisi con la dispensa 01 (Sez. 1-2 identiche) -------------------
-dir_shared <- file.path(dirname(getwd()), "output", "shared")
-if (!dir.exists(dir_shared)) dir.create(dir_shared, recursive = TRUE)
+# --- Asset di Sez. 1-2 -----------------------------------------------------
+# Le dispense 01 e 03 NON condividono file: ciascuna genera i propri asset nella
+# propria cartella di output. I duplicati (stessa figura in due cartelle) sono
+# voluti, cosi' le due dispense sono indipendenti.
 
-# Tabella dati di input condivisa (Sez.2 identica in 01 e 03). Codice identico
-# nei due script; i valori vengono dallo stesso file eiopa_input_swap_dec2025.csv.
+# Tabella dati di input (Sez.2, analoga a quella della dispensa 01).
 {
-  lines <- c("% GENERATO da R (asset condiviso 01/03)",
+  lines <- c("% GENERATO da R/03_eiopa_rfr_smith_wilson.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Par swap EUR di input EIOPA a dicembre~2025 ai 15 tenor DLT ",
            "(\\texttt{eiopa\\_input\\_swap\\_dec2025.csv}), lordi e dopo la sottrazione del CRA. ",
@@ -277,13 +277,12 @@ if (!dir.exists(dir_shared)) dir.create(dir_shared, recursive = TRUE)
                               s_ref[i]*100, r_ref[i]*100))
   }
   lines <- c(lines, "\\bottomrule", "\\end{tabular}", "\\end{table}")
-  writeLines(lines, file.path(dir_shared, "tab_input_dic.tex"))
-  message("  [OK] output/shared/tab_input_dic.tex")
+  writeLines(lines, file.path(dir_out, "tab_input_dic.tex"))
+  message("  [OK] tab_input_dic.tex")
 }
 
-# Figure illustrative condivise (Sez.2): fattori di sconto e spot-vs-forward,
-# dalla curva ufficiale EIOPA di dicembre 2025 (method-agnostiche). Codice identico
-# in 01/03.
+# Figure illustrative (Sez.2): fattori di sconto e spot-vs-forward, dalla curva
+# ufficiale EIOPA di dicembre 2025 (method-agnostiche).
 {
   mm <- off_ref$mat; zz <- off_ref$spot
   sel <- mm >= 1 & mm <= 25
@@ -293,7 +292,7 @@ if (!dir.exists(dir_shared)) dir.create(dir_shared, recursive = TRUE)
          subtitle = "P(0,T) = prezzo oggi di 1 unita' pagata in T; decresce con la scadenza",
          x = "Scadenza T (anni)", y = "P(0,T)") + theme_dispensa +
     scale_x_continuous(breaks = c(1,5,10,15,20,25))
-  ggsave(file.path(dir_shared, "fig_fattori_sconto.pdf"), plot = pP, width = 8, height = 5, device = "pdf")
+  ggsave(file.path(dir_out, "fig_fattori_sconto.pdf"), plot = pP, width = 8, height = 5, device = "pdf")
 
   s60 <- mm >= 1 & mm <= 60; m60 <- mm[s60]; z60 <- zz[s60]; zc <- log(1 + z60)
   fc <- c(zc[1], m60[-1]*zc[-1] - m60[-length(m60)]*zc[-length(zc)])
@@ -305,8 +304,8 @@ if (!dir.exists(dir_shared)) dir.create(dir_shared, recursive = TRUE)
          subtitle = "Il forward si muove piu' rapidamente: lo spot ne e' la media su [0,t]",
          x = "Scadenza T (anni)", y = "Tasso annuo (%)", color = NULL) + theme_dispensa +
     scale_x_continuous(breaks = c(1,5,10,15,20,30,40,50,60))
-  ggsave(file.path(dir_shared, "fig_spot_fwd_media.pdf"), plot = pSF, width = 8, height = 5, device = "pdf")
-  message("  [OK] output/shared/fig_fattori_sconto.pdf, fig_spot_fwd_media.pdf")
+  ggsave(file.path(dir_out, "fig_spot_fwd_media.pdf"), plot = pSF, width = 8, height = 5, device = "pdf")
+  message("  [OK] fig_fattori_sconto.pdf, fig_spot_fwd_media.pdf")
 }
 
 # ==============================================================================
@@ -316,7 +315,7 @@ if (!dir.exists(dir_shared)) dir.create(dir_shared, recursive = TRUE)
 # non quota, la curva e' ESTRAPOLATA e il forward converge all'UFR.
 
 # Fig motivazione: curva spot ufficiale EIOPA di DICEMBRE 2025 (method-agnostica).
-# Salvata anche in output/shared/ per la Sez.1 condivisa con la dispensa 01.
+# Salvata due volte nella stessa cartella con i due nomi usati dal tex (Sez.1 e Sez.2).
 df1 <- data.frame(T = off_ref$mat, val = off_ref$spot * 100)
 p_mot <- ggplot(df1, aes(x = T, y = val)) +
   annotate("rect", xmin = 20, xmax = max(df1$T), ymin = -Inf, ymax = Inf,
@@ -334,7 +333,7 @@ p_mot <- ggplot(df1, aes(x = T, y = val)) +
        x = "Scadenza T (anni)", y = "Tasso spot annuo (%)") +
   theme_dispensa
 save_fig("fig1_motivazione_estrapolazione", p_mot)
-ggsave(file.path(dir_shared, "fig_motivazione.pdf"), plot = p_mot, width = 9, height = 5.5, device = "pdf")
+ggsave(file.path(dir_out, "fig_motivazione.pdf"), plot = p_mot, width = 9, height = 5.5, device = "pdf")
 
 # ==============================================================================
 # PARTE 2 — CURVA DEI TASSI E TASSI FORWARD  (fig2, fig2b)
@@ -776,7 +775,8 @@ fwd_a_tab   <- sw_fwd_ann (tenor_tab, Qb_jul, a_jul) * 100
     paste0("\\caption{Curva Smith--Wilson ricostruita, dicembre~2025: tasso spot e forward a ",
            "capitalizzazione continua e annua composta, ai 15 nodi DLT (zona liquida, $T\\le\\LLP$) ",
            "e ad alcuni tenor di estrapolazione. Serie completa (1--100 anni) in ",
-           "\\texttt{output/shared/curva\\_ricostruita\\_dic2025.xlsx}, foglio \\texttt{SmithWilson}.}"),
+           "\\texttt{output/03\\_eiopa\\_rfr\\_smith\\_wilson/curva\\_ricostruita\\_dic2025.xlsx}, ",
+           "foglio \\texttt{SmithWilson}.}"),
     "\\label{tab:curva-ricostruita-dic}\\renewcommand{\\arraystretch}{1.15}",
     "\\resizebox{\\textwidth}{!}{%",
     "\\begin{tabular}{rcccc}", "\\toprule",
@@ -792,9 +792,10 @@ fwd_a_tab   <- sw_fwd_ann (tenor_tab, Qb_jul, a_jul) * 100
   message("  [OK] tab_curva_ricostruita_dic.tex")
 }
 
-# --- Excel condiviso: curva SW completa (continua e annua composta), 1-100a --
+# --- Excel: curva SW completa (continua e annua composta), 1-100a ------------
+#     Nella cartella della dispensa 03; la dispensa 01 ha il proprio file.
 if (have_openxlsx) {
-  xlsx_path  <- file.path(dir_shared, "curva_ricostruita_dic2025.xlsx")
+  xlsx_path  <- file.path(dir_out, "curva_ricostruita_dic2025.xlsx")
   mats_full  <- 1:100
   df_sw_full <- data.frame(
     Tenor_anni             = mats_full,

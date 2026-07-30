@@ -1,0 +1,16 @@
+% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R
+\begin{table}[H]\centering\small
+\caption{Metodo di Newton sull'equazione non lineare~\eqref{eq:boot-nl} per il gap $13\to15$ ($g=2$). Inizializzazione $f_0$ = forward annuale del tenor 13; criterio d'arresto $|f_k-f_{k-1}|\le 10^{-16}$. Il residuo $\varphi(f_k)$ crolla di diversi ordini di grandezza per iterazione: \`e la firma della convergenza quadratica.}
+\label{tab:newton-esempio}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{rccc}
+\toprule
+$k$ & $f_k$ (\%) & $\varphi(f_k)$ & $|f_k-f_{k-1}|$\\
+\midrule
+\rowcolor{rowtint}0 & 3.73842478 & -2.788e-03 & ---\\
+1 & 3.58968675 & +5.977e-06 & 1.487e-03\\
+\rowcolor{rowtint}2 & 3.59000428 & +2.734e-11 & 3.175e-06\\
+3 & 3.59000428 & +0.000e+00 & 1.453e-11\\
+\rowcolor{rowtint}4 & 3.59000428 & +0.000e+00 & 0.000e+00\\
+\bottomrule
+\end{tabular}
+\end{table}

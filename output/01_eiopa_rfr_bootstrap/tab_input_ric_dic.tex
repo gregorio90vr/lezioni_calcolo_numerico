@@ -1,0 +1,30 @@
+% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R
+\begin{table}[H]\centering\small
+\caption{Tassi swap EUR di input a dicembre~2025 (valuation date 31/12/2025), con il rispettivo \emph{Reuters Instrument Code}. I ticker sono quelli prescritti dalla documentazione ufficiale EIOPA per la curva risk-free EUR; il dato \`e acquisito da LSEG Data \& Analytics (ex Refinitiv). Il CRA di 10~bps \`e sottratto prima del bootstrap.}
+\label{tab:input-ric-dic}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{rlccl}
+\toprule
+$T_k$ (anni) & RIC & swap lordo (\%) & after-CRA $s_k$ (\%) & utilizzo\\
+\midrule
+\rowcolor{rowtint}1 & \texttt{EURAB6E1Y=} & 2.1760 & 2.0760 & bootstrap\\
+2 & \texttt{EURAB6E2Y=} & 2.2621 & 2.1621 & bootstrap\\
+\rowcolor{rowtint}3 & \texttt{EURAB6E3Y=} & 2.3795 & 2.2795 & bootstrap\\
+4 & \texttt{EURAB6E4Y=} & 2.4800 & 2.3800 & bootstrap\\
+\rowcolor{rowtint}5 & \texttt{EURAB6E5Y=} & 2.5690 & 2.4690 & bootstrap\\
+6 & \texttt{EURAB6E6Y=} & 2.6510 & 2.5510 & bootstrap\\
+\rowcolor{rowtint}7 & \texttt{EURAB6E7Y=} & 2.7320 & 2.6320 & bootstrap\\
+8 & \texttt{EURAB6E8Y=} & 2.8000 & 2.7000 & bootstrap\\
+\rowcolor{rowtint}9 & \texttt{EURAB6E9Y=} & 2.8631 & 2.7631 & bootstrap\\
+10 & \texttt{EURAB6E10Y=} & 2.9270 & 2.8270 & bootstrap\\
+\rowcolor{rowtint}11 & \texttt{EURAB6E11Y=} & 2.9790 & 2.8790 & bootstrap\\
+12 & \texttt{EURAB6E12Y=} & 3.0270 & 2.9270 & bootstrap\\
+\rowcolor{rowtint}13 & \texttt{EURAB6E13Y=} & 3.0779 & 2.9779 & bootstrap\\
+15 & \texttt{EURAB6E15Y=} & 3.1430 & 3.0430 & bootstrap\\
+\rowcolor{rowtint}20 & \texttt{EURAB6E20Y=} & 3.2330 & 3.1330 & bootstrap\\
+25 & \texttt{EURAB6E25Y=} & 3.2500 & 3.1500 & solo $\LLFR$\\
+\rowcolor{rowtint}30 & \texttt{EURAB6E30Y=} & 3.2431 & 3.1431 & solo $\LLFR$\\
+40 & \texttt{EURAB6E40Y=} & 3.2060 & 3.1060 & solo $\LLFR$\\
+\rowcolor{rowtint}50 & \texttt{EURAB6E50Y=} & 3.1310 & 3.0310 & solo $\LLFR$\\
+\bottomrule
+\end{tabular}
+\end{table}

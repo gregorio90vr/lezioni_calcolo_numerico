@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  28 JUL 2026 16:20
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  30 JUL 2026 18:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1006,11 +1006,13 @@ File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [2{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
 }{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc
 }{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}]
-<../output/shared/fig_motivazione.pdf, id=142, 650.43pt x 397.485pt>
-File: ../output/shared/fig_motivazione.pdf Graphic file (type pdf)
-<use ../output/shared/fig_motivazione.pdf>
-Package pdftex.def Info: ../output/shared/fig_motivazione.pdf  used on input li
-ne 181.
+<../output/03_eiopa_rfr_smith_wilson/fig_motivazione.pdf, id=142, 650.43pt x 39
+7.485pt>
+File: ../output/03_eiopa_rfr_smith_wilson/fig_motivazione.pdf Graphic file (typ
+e pdf)
+<use ../output/03_eiopa_rfr_smith_wilson/fig_motivazione.pdf>
+Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_motivazione.pd
+f  used on input line 181.
 (pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
  [3
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
@@ -1018,13 +1020,15 @@ s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
 l.211 ...la capitalizzazione al fattore di sconto}
-                                                   <../output/shared/fig_motiva
-zione.pdf>]
-<../output/shared/fig_fattori_sconto.pdf, id=159, 578.16pt x 361.35pt>
-File: ../output/shared/fig_fattori_sconto.pdf Graphic file (type pdf)
-<use ../output/shared/fig_fattori_sconto.pdf>
-Package pdftex.def Info: ../output/shared/fig_fattori_sconto.pdf  used on input
- line 274.
+                                                   <../output/03_eiopa_rfr_smit
+h_wilson/fig_motivazione.pdf>]
+<../output/03_eiopa_rfr_smith_wilson/fig_fattori_sconto.pdf, id=159, 578.16pt x
+ 361.35pt>
+File: ../output/03_eiopa_rfr_smith_wilson/fig_fattori_sconto.pdf Graphic file (
+type pdf)
+<use ../output/03_eiopa_rfr_smith_wilson/fig_fattori_sconto.pdf>
+Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_fattori_sconto
+.pdf  used on input line 274.
 (pdftex.def)             Requested size: 350.53915pt x 219.08333pt.
  [4{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.e
 nc}] [5
@@ -1034,20 +1038,23 @@ s been already used, duplicate ignored
                                                   \__shipout_drop_firstpage_...
 l.344   \item \textbf
                      {Strategia diretta}: investire da $0$ a $t_2$ realizzan...
- <../output/shared/fig_fattori_sconto.pdf>]
-<../output/shared/fig_spot_fwd_media.pdf, id=196, 578.16pt x 361.35pt>
-File: ../output/shared/fig_spot_fwd_media.pdf Graphic file (type pdf)
-<use ../output/shared/fig_spot_fwd_media.pdf>
-Package pdftex.def Info: ../output/shared/fig_spot_fwd_media.pdf  used on input
- line 396.
-(pdftex.def)             Requested size: 385.59373pt x 240.99498pt.
+ <../output/03_eiopa_rfr_smith_wilson/fig_fattori_sconto.pdf>]
+<../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pdf, id=196, 650.43pt x
+ 397.485pt>
+File: ../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pdf Graphic file (
+type pdf)
+<use ../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pdf>
+Package pdftex.def Info: ../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media
+.pdf  used on input line 396.
+(pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
  [6] [7
 pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
 l.450 \end{equation}
-                     <../output/shared/fig_spot_fwd_media.pdf>]
+                     <../output/03_eiopa_rfr_smith_wilson/fig_spot_fwd_media.pd
+f>]
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <10> on input line 469.
 LaTeX Font Info:    External font `lmex10' loaded for size
@@ -1056,8 +1063,7 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <5> on input line 469.
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 5
 35.
-
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
+ (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 Overfull \hbox (15.70146pt too wide) in paragraph at lines 533--537
@@ -1066,7 +1072,7 @@ Overfull \hbox (15.70146pt too wide) in paragraph at lines 533--537
 /10.95 ).
  []
 
-[8] (../output/shared/tab_input_dic.tex
+[8] (../output/03_eiopa_rfr_smith_wilson/tab_input_dic.tex
 Underfull \hbox (badness 1789) in paragraph at lines 3--3
 []\T1/lmr/m/n/10.95 Tabella 1: []Par swap EUR di in-put EIO-PA a di-cem-bre 202
 5 ai 15 te-nor DLT
@@ -1284,6 +1290,19 @@ as been already used, duplicate ignored
 l.1417 \end{figure}
                     <../output/03_eiopa_rfr_smith_wilson/fig_sconto_nodi_jul.pd
 f> <../output/03_eiopa_rfr_smith_wilson/fig_sw_curve_jul.pdf>]
+Overfull \hbox (29.51324pt too wide) in paragraph at lines 1429--1437
+\T1/lmtt/m/n/10.95 output/03_eiopa_rfr_smith_wilson/curva_ricostruita_dic2025.x
+lsx \T1/lmr/m/n/10.95 (fo-glio \T1/lmtt/m/n/10.95 SmithWilson\T1/lmr/m/n/10.95 
+);
+ []
+
+
+Overfull \hbox (179.54666pt too wide) in paragraph at lines 1429--1437
+\T1/lmr/m/n/10.95 la se-rie cor-ri-spon-den-te per il boo-tstrap del-la Le-zio-
+ne 1 è in \T1/lmtt/m/n/10.95 output/01_eiopa_rfr_bootstrap/curva_ricostruita_di
+c2025.xlsx
+ []
+
 (../output/03_eiopa_rfr_smith_wilson/tab_curva_ricostruita_dic.tex
 Underfull \hbox (badness 3482) in paragraph at lines 3--3
 []\T1/lmr/m/n/10.95 Tabella 3: []Curva Smith--Wilson ri-co-strui-ta, di-cem-bre
@@ -1291,9 +1310,22 @@ Underfull \hbox (badness 3482) in paragraph at lines 3--3
  []
 
 
-Underfull \hbox (badness 1122) in paragraph at lines 3--3
-\OML/lmm/m/it/10.95 T \OMS/lmsy/m/n/10.95 ^^T []$\T1/lmr/m/n/10.95 ) e ad al-cu
--ni te-nor di estra-po-la-zio-ne. Se-rie com-ple-ta (1--100 an-ni) in
+Underfull \hbox (badness 1424) in paragraph at lines 3--3
+\T1/lmr/m/n/10.95 ward a ca-pi-ta-liz-za-zio-ne con-ti-nua e an-nua com-po-sta,
+ ai 15 no-di DLT (zo-na li-qui-
+ []
+
+
+Underfull \hbox (badness 1292) in paragraph at lines 3--3
+\T1/lmr/m/n/10.95 da, $\OML/lmm/m/it/10.95 T \OMS/lmsy/m/n/10.95 ^^T []$\T1/lmr
+/m/n/10.95 ) e ad al-cu-ni te-nor di estra-po-la-zio-ne. Se-rie com-ple-ta (1--
+100 an-
+ []
+
+
+Underfull \hbox (badness 1194) in paragraph at lines 3--3
+\T1/lmr/m/n/10.95 ni) in \T1/lmtt/m/n/10.95 output/03_eiopa_rfr_smith_wilson/cu
+rva_ricostruita_dic2025.xlsx\T1/lmr/m/n/10.95 , fo-glio
  []
 
 ) [24
@@ -1301,13 +1333,13 @@ pdfTeX warning (ext4): destination with the same identifier (name{figure.13}) h
 as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1437 
+l.1439 
         <../output/03_eiopa_rfr_smith_wilson/fig_sw_vs_eiopa_jul.pdf>] [25
 pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1479 
+l.1481 
        ] [26] (03_eiopa_rfr_smith_wilson.aux)
  ***********
 LaTeX2e <2025-11-01>
@@ -1318,9 +1350,9 @@ ed.
 (rerunfilecheck)             Checksum: 078369590EDE5D56B93DB45BC3804242;5587.
  ) 
 Here is how much of TeX's memory you used:
- 27084 strings out of 467871
- 521921 string characters out of 5418376
- 964501 words of memory out of 5000000
+ 27082 strings out of 467871
+ 522325 string characters out of 5418376
+ 964521 words of memory out of 5000000
  55365 multiletter control sequences out of 15000+600000
  717235 words of font info for 100 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1347,7 +1379,7 @@ rego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/gr
 ego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/gr
 ego/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pf
 b>
-Output written on 03_eiopa_rfr_smith_wilson.pdf (26 pages, 628848 bytes).
+Output written on 03_eiopa_rfr_smith_wilson.pdf (26 pages, 631210 bytes).
 PDF statistics:
  664 PDF objects out of 1000 (max. 8388607)
  120 named destinations out of 1000 (max. 500000)
