@@ -1,0 +1,12 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\beamer@sectionintoc {1}{Motivazioni e obiettivi (\textasciitilde 20 min)}{4}{0}{1}
+\beamer@sectionintoc {2}{La Decomposizione ai Valori Singolari, SVD (\textasciitilde 25 min)}{9}{0}{2}
+\beamer@sectionintoc {3}{Norma di Frobenius e Teorema di Eckart--Young--Mirsky (\textasciitilde 20 min)}{13}{0}{3}
+\beamer@sectionintoc {4}{La PCA come SVD della matrice centrata (\textasciitilde 25 min)}{16}{0}{4}
+\beamer@sectionintoc {5}{Dati ECB e aggregazione mensile (\textasciitilde 15 min)}{24}{0}{5}
+\beamer@sectionintoc {6}{PCA sulle variazioni mensili (\textasciitilde 15 min)}{29}{0}{6}
+\beamer@sectionintoc {7}{Interpretazione: loadings e scores (\textasciitilde 28 min)}{34}{0}{7}
+\beamer@sectionintoc {8}{Ricostruzione della variazione mensile (\textasciitilde 15 min)}{44}{0}{8}
+\beamer@sectionintoc {9}{Calibrazione su curve fuori campione (\textasciitilde 20 min)}{50}{0}{9}
+\beamer@sectionintoc {10}{Conclusioni (\textasciitilde 7 min)}{60}{0}{10}
