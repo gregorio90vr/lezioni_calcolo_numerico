@@ -1,0 +1,761 @@
+% ============================================================
+%  Slide: PCA sulle Curve dei Tassi ECB
+%  Lezione da 4 ore basata su dispense/04_pca_ecb.tex
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+%
+%  Il codice R NON è mostrato su queste slide: viene scritto a
+%  mano a lezione dal docente. I punti in cui interrompere la
+%  teoria per passare all'implementazione sono segnalati da una
+%  frame dedicata, prodotta dal comando \programmazioneslide.
+%  Le figure sono le stesse PDF già generate da R/04_pca_ecb.R
+%  in output/04_pca_ecb/ — nessun asset duplicato.
+% ============================================================
+\documentclass[11pt,aspectratio=169]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+\graphicspath{{../output/04_pca_ecb/}}
+
+% ------------------------------------------------------------
+% Tema: metropolis — tipografia pulita, moderna, leggibile da
+% fondo aula. Colore d'accento riportato al blu già usato nelle
+% figure delle dispense (col_spot = #185FA5) per continuità visiva
+% col resto del corso.
+% ------------------------------------------------------------
+\usetheme{metropolis}
+\metroset{numbering=fraction, progressbar=frametitle, block=fill, sectionpage=none}
+\definecolor{uniblue}{HTML}{185FA5}
+\setbeamercolor{frametitle}{bg=uniblue,fg=white}
+\setbeamercolor{progress bar}{fg=uniblue,bg=uniblue!20}
+\setbeamercolor{title separator}{fg=uniblue}
+\setbeamercolor{alerted text}{fg=uniblue}
+
+\newcommand{\R}{\mathbb{R}}
+% Ambienti teorema in italiano (i nomi built-in di beamer restano in
+% inglese anche con babel[italian] caricato): stessa convenzione delle
+% dispense, che usano teorema/definizione/proposizione.
+\newtheorem{teorema}{Teorema}
+\newtheorem{definizione}{Definizione}
+\newtheorem{proposizione}{Proposizione}
+
+% ------------------------------------------------------------
+% Slide "PROGRAMMAZIONE": promemoria visivo a piena pagina per
+% interrompere la teoria e passare all'implementazione dal vivo.
+% ------------------------------------------------------------
+\definecolor{progteal}{HTML}{0F5C50}
+\newcommand{\programmazioneslide}[1]{%
+\begin{frame}[plain]
+  \vfill
+  \begin{center}
+    \colorbox{progteal}{%
+      \begin{minipage}{0.86\linewidth}
+        \centering\color{white}\vspace{18pt}
+        {\Huge\textbf{PROGRAMMAZIONE}}\\[16pt]
+        {\Large #1}
+        \vspace{18pt}
+      \end{minipage}%
+    }
+  \end{center}
+  \vfill
+\end{frame}
+}
+
+% ------------------------------------------------------------
+% Evidenziare un periodo sui grafici "scores mensili" e "serie
+% storica per tenor": entrambe le figure hanno già, disegnate da
+% R/04_pca_ecb.R, le fasce grigie con etichetta per i 4 eventi
+% macro (stesso asse temporale in entrambe). Qui si sovrappone un
+% riquadro colorato, in coordinate frazionarie dell'immagine
+% (0=bordo sinistro, 1=bordo destro), per far risaltare a colpo
+% d'occhio la fascia dell'evento in discussione — non serve
+% precisione al pixel: il riquadro è volutamente un po' più largo
+% della fascia vera, che resta comunque visibile ed etichettata.
+% Frazioni calibrate su: asse dati ~ott/set 2004 -- dic 2025,
+% espansione scale_x_date del 5%, margine sinistro (etichette
+% asse y) stimato al 7,5% della larghezza immagine.
+% ------------------------------------------------------------
+\definecolor{highlightred}{HTML}{D1495B}
+% #1 = file, #2 = xstart (frazione), #3 = xend (frazione), #4 = altezza immagine
+\newcommand{\highlightband}[4]{%
+\begin{tikzpicture}
+  \node[anchor=south west,inner sep=0] (img) at (0,0)
+    {\includegraphics[height=#4]{#1}};
+  \begin{scope}[x={(img.south east)},y={(img.north west)}]
+    \draw[highlightred,line width=1.4pt,rounded corners=2pt] (#2,0.035) rectangle (#3,0.965);
+  \end{scope}
+\end{tikzpicture}%
+}
+
+% ============================================================
+\title{PCA sulle Curve dei Tassi di Interesse (ECB)}
+\subtitle{Decomposizione delle variazioni della curva dei tassi AAA — lezione (4 ore)}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata}
+\institute{Università degli Studi di Verona}
+\date{Anno Accademico 2026--2027}
+
+\begin{document}
+
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Piano della lezione (4 ore)}
+\begin{block}{Blocco 1 --- Teoria (\textasciitilde110 min)}
+Motivazioni $\to$ SVD $\to$ Frobenius ed Eckart--Young $\to$ PCA come SVD della matrice centrata
+\end{block}
+\begin{alertblock}{Pausa (\textasciitilde15--20 min)}
+\end{alertblock}
+\begin{block}{Blocco 2 --- Applicazione ai tassi ECB (\textasciitilde110 min)}
+Dati e aggregazione mensile $\to$ PCA sulle variazioni $\to$ interpretazione (loadings, scores,
+eventi macro) $\to$ ricostruzione $\to$ calibrazione su curve fuori campione $\to$ conclusioni
+\end{block}
+\vspace{4pt}
+\begin{center}
+\small Cinque momenti di \textcolor{progteal}{\textbf{PROGRAMMAZIONE}} segnalano dove
+fermarsi e passare all'implementazione dal vivo.
+\end{center}
+\end{frame}
+
+\begin{frame}{Indice}
+\tableofcontents
+\end{frame}
+
+\AtBeginSection[]{
+  \begin{frame}{Percorso}
+  \tableofcontents[currentsection]
+  \end{frame}
+}
+
+% ============================================================
+\section{Motivazioni e obiettivi (\textasciitilde20 min)}
+% ============================================================
+
+\begin{frame}{La curva dei tassi di interesse}
+\begin{itemize}
+  \item La \textbf{curva dei tassi} associa a ogni scadenza $T$ un tasso $r(T)$: cambia ogni
+        giorno per decisioni di politica monetaria, aspettative di inflazione, fattori
+        macroeconomici.
+  \item Dati: curva \textbf{governativa AAA} dell'area euro, ECB Data Portal, scadenze da
+        \textbf{1 a 20 anni}.
+  \item \textbf{Spot rate} $r(T)$: tasso implicito nel prezzo di uno zero-coupon bond,
+        $P(0,T) = e^{-r(T)\,T}$.
+\end{itemize}
+\begin{center}
+\includegraphics[width=0.62\linewidth,height=0.55\textheight,keepaspectratio]{step0_esempio_curva_tassi.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Il problema della dimensionalità}
+\begin{itemize}
+  \item Ogni data di valutazione produce un vettore
+        $\mathbf{r} = (r(T_1),\ldots,r(T_n)) \in \R^n$, $n=20$.
+  \item In ambito attuariale $n$ può salire a 40--50 scadenze.
+  \item Seguire e modellare congiuntamente tutte le componenti è complesso e poco pratico.
+  \item[$\Rightarrow$] Serve una rappresentazione \textbf{compatta}: pochi
+        \emph{movimenti fondamentali} che spiegano la maggior parte delle variazioni.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{L'obiettivo: PCA via SVD}
+\begin{itemize}
+  \item Strumento: \textbf{Principal Component Analysis (PCA)}, implementata tramite la
+        \textbf{Singular Value Decomposition (SVD)}.
+  \item Permette di \textbf{identificare e quantificare} i movimenti principali della curva.
+  \item Risultato anticipato: con soli \textbf{3} fattori si descrive quasi per intero
+        l'evoluzione storica della curva --- lo vedremo nel Blocco 2.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Struttura della dispensa: calibrazione e proiezione}
+\`E prassi consolidata articolare il modello in due fasi:
+\begin{itemize}
+  \item \textbf{Calibrazione}: i parametri (i loadings PCA) sono stimati sulle variazioni
+        storiche fino a una data di riferimento --- tipicamente fine anno solare.
+  \item \textbf{Proiezione}: i parametri vengono \emph{congelati} e usati su date successive,
+        fuori dal campione di stima.
+\end{itemize}
+\begin{block}{In questa lezione}
+Calibrazione: \textbf{ottobre 2004 -- 31 dicembre 2025}. Proiezione su due curve fuori
+campione: \textbf{31 marzo 2026} (+3 mesi) e \textbf{30 giugno 2026} (+6 mesi).
+\end{block}
+\end{frame}
+
+% ============================================================
+\section{La Decomposizione ai Valori Singolari, SVD (\textasciitilde25 min)}
+% ============================================================
+
+\begin{frame}{Teorema: esistenza e unicità della SVD}
+\begin{teorema}[SVD]
+Per ogni matrice $A \in \R^{m\times n}$ esistono:
+\begin{itemize}
+  \item una matrice ortogonale $U \in \R^{m\times m}$ (\textbf{vettori singolari sinistri});
+  \item una matrice ortogonale $V \in \R^{n\times n}$ (\textbf{vettori singolari destri});
+  \item una matrice diagonale $\Sigma \in \R^{m\times n}$ con
+        $\sigma_1 \ge \sigma_2 \ge \cdots \ge \sigma_{\min(m,n)} \ge 0$
+        (\textbf{valori singolari});
+\end{itemize}
+tali che $A = U\Sigma V^T$. I valori singolari sono unici; i vettori singolari sono unici a
+meno di segno quando i $\sigma_i$ sono distinti.
+\end{teorema}
+\end{frame}
+
+\begin{frame}{Interpretazione geometrica}
+Esempio: $A = \begin{pmatrix}1&1\\0&1\end{pmatrix}$ (shear). La SVD scompone l'azione di $A$
+in tre trasformazioni:
+\begin{itemize}
+  \item $V^T$ \textbf{ruota} il cerchio: $\mathbf{v}_1,\mathbf{v}_2$ diventano gli assi
+        canonici;
+  \item $\Sigma$ \textbf{deforma} lungo gli assi per i fattori $\sigma_1\approx 1{,}618$,
+        $\sigma_2\approx 0{,}618$;
+  \item $U$ \textbf{ruota} l'ellisse risultante nella posizione finale.
+\end{itemize}
+\begin{center}
+\includegraphics[width=0.75\linewidth,height=0.5\textheight,keepaspectratio]{svd_geometria_esempio.pdf}
+\end{center}
+\end{frame}
+
+\programmazioneslide{Calcolare in R la SVD della matrice di esempio ($2\times 2$):
+\texttt{svd(A)}, ispezionare \texttt{\$u}, \texttt{\$d}, \texttt{\$v}.}
+
+% ============================================================
+\section{Norma di Frobenius e Teorema di Eckart--Young--Mirsky (\textasciitilde20 min)}
+% ============================================================
+
+\begin{frame}{La norma di Frobenius}
+\[
+  \|A\|_F = \sqrt{\sum_{i,j} a_{ij}^2} = \sqrt{\operatorname{tr}(A^T A)}.
+\]
+\begin{proposizione}[Frobenius e valori singolari]
+Per ogni matrice $A$ con valori singolari $\sigma_1,\ldots,\sigma_r$ ($r=\operatorname{rk}(A)$):
+\[
+  \|A\|_F^2 = \sigma_1^2 + \sigma_2^2 + \cdots + \sigma_r^2.
+\]
+\end{proposizione}
+\end{frame}
+
+\begin{frame}{Teorema di Eckart--Young--Mirsky (1936)}
+Sia $A = U\Sigma V^T$ e $A_k = \sum_{i=1}^k \sigma_i\,\mathbf{u}_i\mathbf{v}_i^T$ la
+\textbf{SVD troncata} alle prime $k$ componenti.
+\begin{teorema}[Eckart--Young--Mirsky]
+$A_k$ è la \textbf{miglior approssimazione di rango $k$} in norma di Frobenius:
+\[
+  A_k = \operatorname*{argmin}_{\operatorname{rk}(B)\le k} \|A-B\|_F,
+  \qquad
+  \|A-A_k\|_F^2 = \sigma_{k+1}^2+\cdots+\sigma_r^2.
+\]
+\end{teorema}
+\begin{alertblock}{Il filo conduttore}
+``Miglior approssimazione'' (Eckart--Young) $\;\equiv\;$ ``massima varianza spiegata''
+(Frobenius $=$ varianza) $\Rightarrow$ è la base della PCA.
+\end{alertblock}
+\end{frame}
+
+% ============================================================
+\section{La PCA come SVD della matrice centrata (\textasciitilde25 min)}
+% ============================================================
+
+\begin{frame}{Impostazione}
+Matrice $X \in \R^{m\times n}$:
+\begin{itemize}
+  \item $m$ righe = osservazioni (mesi);
+  \item $n$ colonne = variabili osservate (scadenze/maturity).
+\end{itemize}
+\begin{definizione}[Matrice centrata]
+\[
+  \tilde X = X - \mathbf{1}_m\,\bar{\mathbf{x}}^T,
+  \qquad \bar{\mathbf{x}} \in \R^n \text{ vettore delle medie di colonna}.
+\]
+\end{definizione}
+Centrare isola le \textbf{direzioni di variabilità} dalla posizione media del campione.
+\end{frame}
+
+\begin{frame}{Varianza campionaria e norma di Frobenius}
+\[
+  \mathrm{Var}_{\mathrm{tot}} = \frac{1}{m-1}\sum_{i,j}\tilde x_{ij}^2
+  = \frac{\|\tilde X\|_F^2}{m-1}.
+\]
+Quindi $\|\tilde X\|_F^2 = (m-1)\cdot \mathrm{Var}_{\mathrm{tot}}$: la norma di Frobenius
+rappresenta la \textbf{varianza totale}, a meno di una costante.
+\end{frame}
+
+\begin{frame}{Teorema: Principal Component Analysis}
+Sia $\tilde X = U\Sigma V^T$ la SVD della matrice centrata.
+\begin{teorema}[PCA]
+\begin{enumerate}
+  \item I \textbf{loadings} (direzioni principali) sono le colonne di $V$:
+        $\mathbf{v}_1,\mathbf{v}_2,\ldots$
+  \item Gli \textbf{scores} (coordinate nelle nuove direzioni) sono le righe di $U\Sigma$,
+        cioè $\tilde X V$.
+  \item La varianza spiegata dalla componente $i$ è $\sigma_i^2/\sum_j\sigma_j^2$.
+\end{enumerate}
+\end{teorema}
+\end{frame}
+
+\begin{frame}{Quota di varianza spiegata}
+Per il Teorema di Eckart--Young, $\tilde X_k$ (SVD troncata) è la miglior approssimazione di
+rango $k$, con errore residuo $\|\tilde X - \tilde X_k\|_F^2 = \sigma_{k+1}^2+\cdots+\sigma_n^2$.
+\[
+  \eta_k = \frac{\|\tilde X_k\|_F^2}{\|\tilde X\|_F^2}
+  = \frac{\sigma_1^2+\cdots+\sigma_k^2}{\sigma_1^2+\cdots+\sigma_n^2}
+  = 1 - \frac{\sigma_{k+1}^2+\cdots+\sigma_n^2}{\sigma_1^2+\cdots+\sigma_n^2} \;\in [0,1].
+\]
+\end{frame}
+
+\begin{frame}{Ricostruzione a $k$ componenti}
+La $s$-esima riga di $\tilde X_k = U_k\Sigma_k V_k^T$:
+\[
+  (\tilde X_k)_{s,:} = \hat{\tilde{\mathbf{x}}}_s^{(k)}
+  = \sum_{i=1}^{k} \alpha_{s,i}\,\mathbf{v}_i \;\in\; \R^n,
+  \qquad \alpha_{s,i} = \sigma_i\,u_{s,i} = (U\Sigma)_{s,i}.
+\]
+\begin{itemize}
+  \item I loadings $\mathbf{v}_i$ indicano le \textbf{direzioni};
+  \item gli scores $\alpha_{s,i}$ indicano l'\textbf{ampiezza} dello spostamento.
+\end{itemize}
+Duplice uso: approssimare una variazione storica con $k$ dimensioni, oppure proiettare una
+curva \emph{qualsiasi} su uno spazio di dimensione $k$ (Blocco 2, calibrazione).
+\end{frame}
+
+\begin{frame}{Riepilogo Blocco 1}
+\begin{enumerate}
+  \item \textbf{SVD}: fattorizza qualsiasi matrice in componenti ordinate per importanza.
+  \item \textbf{Eckart--Young}: la SVD troncata è la miglior approssimazione di rango $k$
+        in norma di Frobenius.
+  \item \textbf{Frobenius $=$ varianza}: la stessa proprietà si legge in termini statistici.
+  \item \textbf{PCA} $=$ SVD della matrice \emph{centrata}: loadings $=$ colonne di $V$,
+        scores $=$ righe di $U\Sigma$.
+\end{enumerate}
+\vspace{6pt}
+\centering\Large Domande prima della pausa?
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}[plain]
+\vfill
+\begin{center}
+{\Huge\textbf{PAUSA}}\\[10pt]
+{\Large \textasciitilde 15--20 minuti}
+\end{center}
+\vfill
+\end{frame}
+% ------------------------------------------------------------
+
+% ============================================================
+\section{Dati ECB e aggregazione mensile (\textasciitilde15 min)}
+% ============================================================
+
+\begin{frame}{Perché variazioni mensili?}
+\begin{itemize}
+  \item Dati ECB disponibili: \textbf{giornalieri}. Ma l'obiettivo non è catturare movimenti
+        di brevissimo periodo, bensì l'evoluzione strutturale della curva.
+  \item Le variazioni \textbf{giornaliere} sono più adatte a trading/gestione ad alta
+        frequenza; le \textbf{mensili} colgono meglio gli eventi macro-finanziari.
+  \item Prassi consolidata (Litterman--Scheinkman 1991, Meucci 2009): la PCA si applica alle
+        \textbf{variazioni}, non ai livelli.
+\end{itemize}
+\[
+  R^{\mathrm{mens}}_{s,j} = R_{t^\ast(s),j}, \qquad t^\ast(s) = \max\{t : t \in \text{mese } s\}.
+\]
+Campione di calibrazione: $R^{\mathrm{mens}} \in \R^{256\times 20}$ (set 2004 -- dic 2025).
+\end{frame}
+
+\begin{frame}{Curve dei tassi ECB: livelli mensili}
+\begin{center}
+\includegraphics[width=0.85\linewidth,height=0.72\textheight,keepaspectratio]{step1_curve_livelli_m.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{La matrice delle variazioni mensili $\Delta R^{\mathrm{mens}}$}
+\[
+  (\Delta R^{\mathrm{mens}})_{s,j} = R^{\mathrm{mens}}_{s,j} - R^{\mathrm{mens}}_{s-1,j},
+  \qquad s=2,\ldots,M,\; j=1,\ldots,20.
+\]
+255 variazioni mensili $\times$ 20 scadenze: è la matrice $X$ su cui applicheremo la PCA.
+\begin{center}
+\includegraphics[width=0.82\linewidth,height=0.62\textheight,keepaspectratio]{step1_delta_mensili.pdf}
+\end{center}
+\end{frame}
+
+\programmazioneslide{Caricamento dei dati ECB, aggregazione mensile
+(ultima osservazione di ogni mese) e calcolo delle variazioni $\Delta R^{\mathrm{mens}}$.}
+
+% ============================================================
+\section{PCA sulle variazioni mensili (\textasciitilde15 min)}
+% ============================================================
+
+\begin{frame}{Applichiamo il Teorema PCA}
+\begin{itemize}
+  \item Si centra $\Delta R^{\mathrm{mens}}$: matrice centrata $\tilde X \in \R^{255\times 20}$.
+  \item Si calcola la SVD, $\tilde X = U\Sigma V^T$.
+  \item Le prime $k$ colonne di $V$ $\to$ \textbf{loadings}; le prime $k$ colonne di
+        $U\Sigma$ $\to$ \textbf{scores}.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Varianza spiegata: scree plot}
+\begin{center}
+\includegraphics[width=0.85\linewidth,height=0.68\textheight,keepaspectratio]{step2_varianza_spiegata_m.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Perché $k=3$}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Componente & PC1 & PC2 & PC3 \\
+\midrule
+Varianza spiegata & $89{,}67\%$ & $8{,}41\%$ & $1{,}43\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{8pt}
+\begin{itemize}
+  \item Cumulata: $\eta_3 = 99{,}51\%$ --- le componenti dalla quarta in poi sono
+        trascurabili.
+  \item Come vedremo, le tre componenti sono anche \textbf{direttamente interpretabili} in
+        termini economici.
+\end{itemize}
+\end{frame}
+
+\programmazioneslide{SVD della matrice centrata (\texttt{svd()}); calcolare $\sigma_i^2/\sum_j\sigma_j^2$
+e costruire lo scree plot (varianza per componente e cumulata).}
+
+% ============================================================
+\section{Interpretazione: loadings e scores (\textasciitilde28 min)}
+% ============================================================
+
+\begin{frame}{I loadings: forma dei fattori sulla curva}
+\begin{center}
+\includegraphics[width=0.85\linewidth,height=0.72\textheight,keepaspectratio]{step3_loadings_pc1_pc3_m.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Interpretazione economica dei tre fattori}
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lp{2.6cm}p{4.6cm}c}
+\toprule
+\textbf{Fattore} & \textbf{Forma} & \textbf{Interpretazione} & \textbf{Var.} \\
+\midrule
+PC1 --- Livello & stesso segno, valore simile su tutte le scadenze &
+  shift parallelo: tutti i tassi salgono/scendono insieme & $89{,}67\%$ \\
+PC2 --- Pendenza & un cambio di segno (breve/lungo) &
+  rotazione: brevi e lunghi in direzioni opposte & $8{,}41\%$ \\
+PC3 --- Curvatura & due cambi di segno (estremi vs.\ centro) &
+  butterfly: il ventre si muove opposto agli estremi & $1{,}43\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}{Gli scores: quanto si muove ciascun fattore}
+\[
+  \alpha_{s,i} = \sigma_i\,u_{s,i}, \qquad i=1,2,3.
+\]
+\begin{itemize}
+  \item $\alpha_{s,i}$ misura \emph{di quanto} la curva si è mossa nel mese $s$ nella
+        direzione del loading $\mathbf{v}_i$.
+  \item Valore grande in modulo $\to$ quel fattore ha dominato il movimento; vicino a zero
+        $\to$ fattore inattivo.
+  \item Gli scores, letti nel tempo, raccontano la storia della politica monetaria BCE.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Scores mensili PC1--PC3 nel tempo}
+\begin{center}
+\includegraphics[width=0.92\linewidth,height=0.75\textheight,keepaspectratio]{step3_scores_mensili_ma_m.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Serie storica dei tassi per scadenza}
+\begin{center}
+\includegraphics[width=0.92\linewidth,height=0.75\textheight,keepaspectratio]{step3_serie_storica_tenor.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Evento 1 --- Crisi Lehman Brothers (set. 2008 -- feb. 2009)}
+\begin{itemize}
+  \item \textbf{Evento ed effetto sui tassi}: 15/09/2008 Lehman fallisce; la BCE taglia i
+        tassi con la sequenza più rapida della sua storia --- calo violento ma non uniforme,
+        prima sul breve poi si ribalta sul lungo.
+  \item \textbf{Effetto sugli scores}: PC1 negativo (minimo a nov.\ 2008); PC2 fortemente
+        negativo (irripidimento); \textbf{PC3 al massimo assoluto} a ott.\ 2008 --- fuga
+        verso la liquidità di brevissimo termine.
+\end{itemize}
+\vspace{4pt}
+\begin{columns}[T,onlytextwidth]
+\column{0.5\linewidth}
+\centering\highlightband{step3_scores_mensili_ma_m.pdf}{0.220}{0.294}{3.0cm}\\[2pt]
+{\scriptsize Scores PC1--PC3}
+\column{0.5\linewidth}
+\centering\highlightband{step3_serie_storica_tenor.pdf}{0.220}{0.294}{3.0cm}\\[2pt]
+{\scriptsize Tassi per scadenza}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Evento 2 --- Attese e rialzi BCE (set. 2010 -- lug. 2011)}
+\begin{itemize}
+  \item \textbf{Evento ed effetto sui tassi}: inflazione sopra target; la BCE rialza i tassi
+        in apr.\ e lug.\ 2011 --- il mercato anticipa vendendo obbligazioni, la curva sale su
+        tutte le scadenze già mesi prima della decisione.
+  \item \textbf{Effetto sugli scores}: PC1 positivo; movimento pressoché parallelo su tutte
+        le scadenze $\Rightarrow$ PC2 e PC3 restano marginali. Periodo dominato dal solo
+        fattore di livello.
+\end{itemize}
+\vspace{4pt}
+\begin{columns}[T,onlytextwidth]
+\column{0.5\linewidth}
+\centering\highlightband{step3_scores_mensili_ma_m.pdf}{0.304}{0.389}{3.0cm}\\[2pt]
+{\scriptsize Scores PC1--PC3}
+\column{0.5\linewidth}
+\centering\highlightband{step3_serie_storica_tenor.pdf}{0.304}{0.389}{3.0cm}\\[2pt]
+{\scriptsize Tassi per scadenza}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Evento 3 --- Attesa del Quantitative Easing BCE (2014)}
+\begin{itemize}
+  \item \textbf{Evento ed effetto sui tassi}: inflazione in calo per tutto il 2014 (negativa
+        a dicembre); il PSPP, annunciato il 22/01/2015, è ampiamente atteso --- il calo dei
+        rendimenti si concentra già nel 2014, prima dell'annuncio ufficiale.
+  \item \textbf{Effetto sugli scores}: PC1 negativo, più marcato sulle scadenze lunghe
+        $\Rightarrow$ PC2 in media positivo. PC3 marginale: il 2014 è livello $+$ pendenza.
+\end{itemize}
+\vspace{4pt}
+\begin{columns}[T,onlytextwidth]
+\column{0.5\linewidth}
+\centering\highlightband{step3_scores_mensili_ma_m.pdf}{0.444}{0.546}{3.0cm}\\[2pt]
+{\scriptsize Scores PC1--PC3}
+\column{0.5\linewidth}
+\centering\highlightband{step3_serie_storica_tenor.pdf}{0.444}{0.546}{3.0cm}\\[2pt]
+{\scriptsize Tassi per scadenza}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Evento 4 --- Rialzi BCE contro l'inflazione (dic. 2021 -- set. 2023)}
+\begin{itemize}
+  \item \textbf{Evento ed effetto sui tassi}: inflazione in forte accelerazione; dal
+        27/07/2022 la BCE avvia dieci rialzi consecutivi fino al 14/09/2023 --- il tasso a
+        1 anno sale molto più del 10 anni, la curva si appiattisce fino a invertirsi.
+  \item \textbf{Effetto sugli scores}: PC1 positivo lungo tutta la fase; PC2 marcatamente
+        positivo (firma dell'appiattimento); PC3 negativo, concorre all'inversione.
+\end{itemize}
+\vspace{4pt}
+\begin{columns}[T,onlytextwidth]
+\column{0.5\linewidth}
+\centering\highlightband{step3_scores_mensili_ma_m.pdf}{0.778}{0.914}{3.0cm}\\[2pt]
+{\scriptsize Scores PC1--PC3}
+\column{0.5\linewidth}
+\centering\highlightband{step3_serie_storica_tenor.pdf}{0.778}{0.914}{3.0cm}\\[2pt]
+{\scriptsize Tassi per scadenza}
+\end{columns}
+\end{frame}
+
+% ============================================================
+\section{Ricostruzione della variazione mensile (\textasciitilde15 min)}
+% ============================================================
+
+\begin{frame}{Formula di ricostruzione a $k=3$}
+\[
+  \hat{\Delta r}^{(k=3)}_s
+  = \underbrace{\bar{\mathbf{x}}}_{\text{media}}
+  + \underbrace{\alpha_{s,1}\mathbf{v}_1}_{\text{livello}}
+  + \underbrace{\alpha_{s,2}\mathbf{v}_2}_{\text{pendenza}}
+  + \underbrace{\alpha_{s,3}\mathbf{v}_3}_{\text{curvatura}}
+\]
+Verifichiamo la qualità su tre mesi: \textbf{ottobre 2004} (primo), \textbf{maggio 2015}
+(centrale), \textbf{dicembre 2025} (ultimo).
+\end{frame}
+
+\begin{frame}{Confronto osservata vs.\ ricostruita ($k=3$)}
+\begin{center}
+\includegraphics[width=0.72\linewidth,height=0.72\textheight,keepaspectratio]{step3_confronto_ricostruzione_m.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Errore di ricostruzione per scadenza}
+\begin{center}
+\includegraphics[width=0.72\linewidth,height=0.72\textheight,keepaspectratio]{step3_errore_ricostruzione_tenor_m.pdf}
+\end{center}
+Errore generalmente entro $\pm 1$ pb --- trascurabile in ambito finanziario. Massimo a
+\textbf{maggio 2015} (mese con movimento non banale di pendenza).
+\end{frame}
+
+\begin{frame}{Ricostruzione progressiva --- maggio 2015}
+Scores del mese: $\alpha_1\approx +77{,}8$ pb, $\alpha_2\approx -42{,}7$ pb,
+$\alpha_3\approx -13{,}2$ pb.
+\begin{center}
+\includegraphics[width=0.92\linewidth,height=0.68\textheight,keepaspectratio]{step3_ricostruzione_progressiva_m.pdf}
+\end{center}
+\end{frame}
+
+\programmazioneslide{Implementare la formula di ricostruzione a $k$ componenti e il grafico
+di ricostruzione progressiva (aggiungendo un fattore alla volta).}
+
+% ============================================================
+\section{Calibrazione su curve fuori campione (\textasciitilde20 min)}
+% ============================================================
+
+\begin{frame}{L'idea: proiezione ortogonale}
+I loadings $\mathbf{v}_1,\ldots,\mathbf{v}_n$ formano una base ortonormale di $\R^n$
+($V^TV=I_n$). Data una curva \emph{qualsiasi} $\mathbf{y}\in\R^n$:
+\begin{block}{Passo 1 --- Scores}
+\[
+  \boldsymbol{\alpha}_k = V_k^T\mathbf{y} = (\mathbf{v}_1^T\mathbf{y},\ldots,\mathbf{v}_k^T\mathbf{y})^T.
+\]
+\end{block}
+\begin{block}{Passo 2 --- Ricostruzione}
+\[
+  \hat{\mathbf{y}}^{(k)} = V_k\boldsymbol{\alpha}_k = \alpha_1\mathbf{v}_1+\cdots+\alpha_k\mathbf{v}_k.
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Forma compatta: il proiettore ortogonale}
+\[
+  \hat{\mathbf{y}}^{(k)} = V_k(V_k^T\mathbf{y}) = (V_kV_k^T)\,\mathbf{y}, \qquad
+  P_k = V_kV_k^T \in \R^{n\times n}.
+\]
+\begin{itemize}
+  \item $P_k$ è il proiettore ortogonale sullo spazio generato dalle prime $k$ colonne di $V$.
+  \item Per $k=n$: $V_nV_n^T=I_n$, ricostruzione \textbf{esatta} (errore nullo).
+\end{itemize}
+\begin{alertblock}{Perché serve}
+Ricalibrare l'intero modello a ogni chiusura trimestrale non è sostenibile: si
+\textbf{congelano} i loadings stimati e si riutilizzano su curve successive.
+\end{alertblock}
+\end{frame}
+
+\programmazioneslide{Proiettare una curva nuova sui loadings già stimati:
+Passo 1 (scores $= V_k^T\mathbf{y}$) e Passo 2 (ricostruzione $=V_k\boldsymbol\alpha_k$) in R.}
+
+\begin{frame}{Applicazione: curva ECB del 31 marzo 2026}
+Loadings stimati sui dati fino al \textbf{31/12/2025}. Proiettiamo la curva di tre mesi dopo.
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+Score & Valore \\
+\midrule
+$\alpha_1$ (livello) & $13{,}63\%$ \\
+$\alpha_2$ (pendenza) & $-0{,}11\%$ \\
+$\alpha_3$ (curvatura) & $-1{,}15\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}{Marzo 2026: curva originale vs.\ ricostruita}
+\begin{center}
+\includegraphics[width=0.78\linewidth,height=0.72\textheight,keepaspectratio]{sez4_mar26_curva.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Marzo 2026: errore per scadenza e convergenza}
+\begin{columns}
+\column{0.5\linewidth}
+\includegraphics[width=\linewidth]{sez4_mar26_errore_tenor.pdf}
+\column{0.5\linewidth}
+\includegraphics[width=\linewidth]{sez4_mar26_convergenza.pdf}
+\end{columns}
+\centering\small Con $k=3$ l'errore è già contenuto; converge rapidamente a zero al
+crescere di $k$.
+\end{frame}
+
+\begin{frame}{Applicazione: curva ECB del 30 giugno 2026}
+Stessi loadings di marzo (\textbf{non} riadattati), sei mesi dopo la calibrazione.
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+Score & Valore \\
+\midrule
+$\alpha_1$ (livello) & $13{,}07\%$ \\
+$\alpha_2$ (pendenza) & $-0{,}12\%$ \\
+$\alpha_3$ (curvatura) & $-1{,}17\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}{Giugno 2026: curva e convergenza}
+\begin{columns}
+\column{0.5\linewidth}
+\includegraphics[width=\linewidth]{sez4_giu26_curva.pdf}
+\column{0.5\linewidth}
+\includegraphics[width=\linewidth]{sez4_giu26_convergenza.pdf}
+\end{columns}
+\centering\small Con $k=3$ i due errori (mar./giu.) sono simili; da $k=4$ in poi giugno
+converge più lentamente --- coerente con la maggiore distanza dalla calibrazione.
+\end{frame}
+
+\begin{frame}{Sintesi numerica}
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lc}
+\toprule
+RMSE in campione ($k=3$) & $1{,}40$ pb \\
+Errore fuori campione, 31/03/2026 ($k=3$) & $10{,}25$ pb \\
+Errore fuori campione, 30/06/2026 ($k=3$) & $10{,}35$ pb \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{10pt}
+\begin{alertblock}{Il punto pedagogico}
+L'errore a $k=3$ è \textbf{quasi identico} ai due orizzonti: raddoppiare la distanza dalla
+calibrazione non degrada la proiezione $\Rightarrow$ giustifica una ricalibrazione
+\textbf{annuale}, non trimestrale.
+\end{alertblock}
+\end{frame}
+
+% ============================================================
+\section{Conclusioni (\textasciitilde7 min)}
+% ============================================================
+
+\begin{frame}{Conclusioni}
+\begin{itemize}
+  \item La PCA sulle \textbf{variazioni mensili centrate} decompone la struttura a termine
+        in componenti indipendenti; la frequenza mensile filtra il rumore di brevissimo
+        periodo.
+  \item Strumento matematico: la \textbf{SVD}; per Eckart--Young il troncamento a $k$
+        componenti è l'approssimazione ottimale in norma di Frobenius.
+  \item Le \textbf{prime tre componenti} spiegano il $99{,}51\%$ della varianza: da 20
+        scadenze a 3 fattori, con meno dell'$1\%$ di informazione persa.
+  \item I \textbf{loadings} (livello, pendenza, curvatura) e gli \textbf{scores} (quando si
+        attivano) ricostruiscono la storia della curva alla luce degli eventi di politica
+        monetaria.
+  \item La \textbf{proiezione fuori campione} mostra che loadings calibrati a fine 2025
+        restano validi, con soli 3 fattori, anche su curve di mesi successivi.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Riferimenti bibliografici}
+\small
+\begin{itemize}
+  \item Quarteroni, Saleri, Gervasio (2017). \textit{Calcolo Scientifico}, 6a ed. Springer.
+  \item Burden, Faires (2016). \textit{Numerical Analysis}, 10th ed. Cengage.
+  \item Litterman, Scheinkman (1991). \textit{Common Factors Affecting Bond Returns}.
+        Journal of Fixed Income 1(1), 54--61.
+  \item Meucci (2009). \textit{Risk and Asset Allocation}. Springer Finance.
+  \item Fabozzi (2012). \textit{Fixed Income Mathematics}, 4th ed. McGraw-Hill.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[plain]
+\vfill
+\begin{center}
+{\Huge Grazie}\\[10pt]
+{\Large Domande?}
+\end{center}
+\vfill
+\end{frame}
+
+\end{document}
