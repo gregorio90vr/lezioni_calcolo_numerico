@@ -849,7 +849,7 @@ B_weight <- function(a, h) ifelse(h == 0, 1, (1 - exp(-a*h)) / (a*h))
 # Benchmark like-for-like: curva ufficiale di dicembre 2025 RICALCOLATA da EIOPA
 # col nuovo metodo (bootstrap), cosi' il confronto isola i soli dati di input.
 read_eiopa_newmethod <- function() {
-  f <- file.path("..", "dati", "dec25_eiopa_rfr_newapproach.csv")
+  f <- file.path("..", "dati", "01_dec25_eiopa_rfr_newapproach.csv")
   if (!file.exists(f)) return(NULL)
   tryCatch({
     df <- read.csv(f, stringsAsFactors = FALSE)

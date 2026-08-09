@@ -24,9 +24,22 @@
 #   C   = capitalizzazione Continua
 #   YM  = minimizzazione dell'errore sul rendimento (Yield error Minimisation)
 #   SR  = Spot Rate (non forward, non par)
-#   1Y  = scadenza 1 anno (da 1Y a 20Y nel dataset)
+#   1Y  = scadenza 1 anno (da 1Y a 20Y usate qui; il dataset ECB ne pubblica
+#         fino a 30Y, e include anche BETA0-3/TAU1-2 e le serie forward/par:
+#         tutte scartate dal filtro su valid_keys)
 #
 # Dati disponibili dal 06/09/2004. Fonte: BCE, liberamente scaricabili.
+#
+# INPUT: l'export ECB per il 2026 arriva in un file separato da quello
+# storico (2004-2025), perche' scaricato in un secondo momento dal portale.
+# Questo script legge ENTRAMBI i CSV grezzi e li unisce in un'unica serie
+# continua. I due file grezzi sono export SDMX completi del dataflow YC
+# (39 colonne, ~100 serie diverse per data: BETA0-3, TAU1-2, forward, par,
+# spot da 1Y a 30Y) e pesano diversi GB: si selezionano solo le 3 colonne
+# necessarie (KEY, TIME_PERIOD, OBS_VALUE) direttamente in lettura con
+# fread(..., select = ...), che scarta le altre colonne durante il parsing
+# senza mai allocarle in memoria (verificato: 3.5GB letti in ~4s, <150MB di
+# RAM, anche su una macchina con poca memoria libera).
 # ==============================================================================
 
 suppressPackageStartupMessages({
@@ -37,8 +50,18 @@ suppressPackageStartupMessages({
   }
 })
 
-input_file_name <- "../dati/data.csv"       # copia data.csv in LaboratorioPCA/dati/
-output_file_name <- "../dati/04_ecb_spot.xlsx"
+input_file_name_a <- "../dati/04_dati_originali_ecb_2004_2025.csv"       # storico 2004-2025
+input_file_name_b <- "../dati/04_dati_originali_ecb_2026_finoLuglio.csv" # 2026, scaricato a parte
+
+# File 1: campione principale per la PCA, tutte le date fino a fine_periodo
+output_file_name_merged <- "../dati/04_ecb_spot.xlsx"
+fine_periodo <- as.Date("2026-06-30")
+
+# File 2: singola curva "fuori campione" per la ricostruzione (Sezione 4 di
+# 04b_pca_ecb.R). Nota: il 31/07/2026 non e' pubblicato nel file di input
+# (ultimo giorno disponibile lavorativo: 30/07/2026), quindi si usa quello.
+output_file_name_oos <- "../dati/04b_ecb_spot_20260730.xlsx"
+data_oos <- as.Date("2026-07-30")
 
 args_all <- commandArgs(trailingOnly = FALSE)
 file_arg <- "--file="
@@ -50,76 +73,100 @@ if (length(script_path) > 0) {
   base_dir <- getwd()
 }
 
-input_file <- file.path(base_dir, input_file_name)
-output_file <- file.path(base_dir, output_file_name)
-
-if (!file.exists(input_file)) {
-  candidate <- file.path(getwd(), input_file_name)
-  if (file.exists(candidate)) {
-    input_file <- candidate
-  }
-}
-
-if (!file.exists(input_file)) {
+resolve_path <- function(rel_path) {
+  candidate <- file.path(base_dir, rel_path)
+  if (file.exists(candidate)) return(candidate)
+  candidate <- file.path(getwd(), rel_path)
+  if (file.exists(candidate)) return(candidate)
   stop(
     paste0(
-      "Input file non trovato: ", input_file_name,
+      "Input file non trovato: ", rel_path,
       "\nControlla che il file sia nella cartella dello script o nella working directory.",
-      "\nbase_dir=", base_dir,
-      " | getwd()=", getwd()
+      "\nbase_dir=", base_dir, " | getwd()=", getwd()
     )
   )
 }
 
-raw_dt <- fread(input_file)
+input_file_a <- resolve_path(input_file_name_a)
+input_file_b <- resolve_path(input_file_name_b)
+output_file_merged <- file.path(base_dir, output_file_name_merged)
+output_file_oos     <- file.path(base_dir, output_file_name_oos)
 
-# Handle both lowercase/uppercase ECB column names.
-key_col <- names(raw_dt)[tolower(names(raw_dt)) == "key"][1]
-date_col <- names(raw_dt)[tolower(names(raw_dt)) == "time_period"][1]
-value_col <- names(raw_dt)[tolower(names(raw_dt)) == "obs_value"][1]
+# Le 20 scadenze spot AAA usate per la PCA (esclude BETA0-3, TAU1-2, forward,
+# par, e le scadenze oltre 20Y).
+valid_keys <- paste0("YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_", 1:20, "Y")
+ordered_maturities <- paste0(1:20, "Y")
 
-if (any(is.na(c(key_col, date_col, value_col)))) {
-  stop("Missing required columns: key/KEY, TIME_PERIOD, OBS_VALUE")
+# ------------------------------------------------------------------
+# Lettura di un export SDMX grezzo, filtrato alle 20 scadenze spot AAA
+# ------------------------------------------------------------------
+read_ecb_long <- function(file) {
+  dt <- fread(file, select = c("KEY", "TIME_PERIOD", "OBS_VALUE"))
+  dt <- dt[KEY %chin% valid_keys]
+  dt[, `:=`(
+    TIME_PERIOD = as.Date(TIME_PERIOD),
+    MATURITY    = gsub("^.*SR_", "", KEY),
+    OBS_VALUE   = as.numeric(OBS_VALUE)
+  )]
+  dt[, KEY := NULL]
+  dt[]
 }
 
-raw_dt[, MATURITY := fifelse(
-  grepl("([1-9]|1[0-9]|20)Y$", get(key_col)),
-  sub(".*\\.(([1-9]|1[0-9]|20)Y)$", "\\1", get(key_col)),
-  NA_character_
-)]
+cat("Lettura", input_file_a, "...\n")
+long_a <- read_ecb_long(input_file_a)
+cat("  ", nrow(long_a), "osservazioni,",
+    format(min(long_a$TIME_PERIOD)), "-", format(max(long_a$TIME_PERIOD)), "\n")
 
-# Define the valid KEY patterns for filtering
-valid_keys <- paste0("YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_", c(1:20), "Y")
+cat("Lettura", input_file_b, "...\n")
+long_b <- read_ecb_long(input_file_b)
+cat("  ", nrow(long_b), "osservazioni,",
+    format(min(long_b$TIME_PERIOD)), "-", format(max(long_b$TIME_PERIOD)), "\n")
 
-# Filter rows based on the valid KEY values
-raw_dt0 <- copy(raw_dt)
-raw_dt <- raw_dt[get(key_col) %in% valid_keys]
-
-long_dt <- raw_dt[,
-  .(
-    TIME_PERIOD = as.Date(get(date_col)),
-    MATURITY,
-    OBS_VALUE = as.numeric(get(value_col))
-  )
-]
-long_dt[,MATURITY:=gsub("YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_","",MATURITY)]
+# Unione: se le date si sovrappongono fra i due file si tiene l'ultima
+# osservazione per (data, scadenza), stesso criterio gia' usato altrove
+# nella pipeline per gestire eventuali doppioni.
+long_dt <- rbindlist(list(long_a, long_b))
 setorder(long_dt, TIME_PERIOD, MATURITY)
 long_dt <- long_dt[, .(OBS_VALUE = tail(OBS_VALUE, 1L)), by = .(TIME_PERIOD, MATURITY)]
 
-wide_dt <- dcast(long_dt, TIME_PERIOD ~ MATURITY, value.var = "OBS_VALUE")
+cat("Totale dopo unione:", nrow(long_dt), "osservazioni,",
+    format(min(long_dt$TIME_PERIOD)), "-", format(max(long_dt$TIME_PERIOD)), "\n")
 
-ordered_maturities <- paste0(1:20, "Y")
-available_maturities <- intersect(ordered_maturities, names(wide_dt))
-
-wide_dt <- wide_dt[, c("TIME_PERIOD", available_maturities), with = FALSE]
-setorder(wide_dt, TIME_PERIOD)
+# ------------------------------------------------------------------
+# File 1 — campione principale, tutte le date fino a fine_periodo
+# ------------------------------------------------------------------
+long_main <- long_dt[TIME_PERIOD <= fine_periodo]
+wide_main <- dcast(long_main, TIME_PERIOD ~ MATURITY, value.var = "OBS_VALUE")
+wide_main <- wide_main[, c("TIME_PERIOD", intersect(ordered_maturities, names(wide_main))), with = FALSE]
+setorder(wide_main, TIME_PERIOD)
 
 wb <- createWorkbook()
 addWorksheet(wb, "PCA_Input")
-writeData(wb, sheet = "PCA_Input", x = as.data.frame(wide_dt))
+writeData(wb, sheet = "PCA_Input", x = as.data.frame(wide_main))
 addWorksheet(wb, "Long_Format")
-writeData(wb, sheet = "Long_Format", x = as.data.frame(long_dt))
-saveWorkbook(wb, file = output_file, overwrite = TRUE)
+writeData(wb, sheet = "Long_Format", x = as.data.frame(long_main))
+saveWorkbook(wb, file = output_file_merged, overwrite = TRUE)
 
-message("File creato: ", output_file)
-message("Righe PCA_Input: ", nrow(wide_dt), " | Colonne: ", ncol(wide_dt))
+message("File creato: ", output_file_merged)
+message("Righe PCA_Input: ", nrow(wide_main), " | Colonne: ", ncol(wide_main),
+        " | fino al ", format(max(wide_main$TIME_PERIOD)))
+
+# ------------------------------------------------------------------
+# File 2 — singola curva fuori campione, per la ricostruzione out-of-sample
+# ------------------------------------------------------------------
+if (!(data_oos %in% long_dt$TIME_PERIOD)) {
+  stop("Curva del ", format(data_oos), " non trovata nei dati di input. ",
+       "Date piu' recenti disponibili: ",
+       paste(format(tail(sort(unique(long_dt$TIME_PERIOD)), 3)), collapse = ", "))
+}
+
+long_oos <- long_dt[TIME_PERIOD == data_oos]
+wide_oos <- dcast(long_oos, TIME_PERIOD ~ MATURITY, value.var = "OBS_VALUE")
+wide_oos <- wide_oos[, c("TIME_PERIOD", intersect(ordered_maturities, names(wide_oos))), with = FALSE]
+
+wb2 <- createWorkbook()
+addWorksheet(wb2, "PCA_Input")
+writeData(wb2, sheet = "PCA_Input", x = as.data.frame(wide_oos))
+saveWorkbook(wb2, file = output_file_oos, overwrite = TRUE)
+
+message("File creato: ", output_file_oos, " (curva del ", format(data_oos), ")")

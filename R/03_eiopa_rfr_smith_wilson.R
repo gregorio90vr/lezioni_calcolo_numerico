@@ -229,7 +229,7 @@ ref_lab  <- "Dicembre 2025"
 
 # Dati di input EIOPA originali (par swap lordi, dicembre 2025)
 read_input_ye25 <- function() {
-  f <- file.path(dirname(getwd()), "dati", "eiopa_input_swap_dec2025.csv")
+  f <- file.path(dirname(getwd()), "dati", "03_eiopa_input_swap_dec2025.csv")
   if (!file.exists(f)) return(NULL)
   tryCatch({
     df <- read.csv(f, stringsAsFactors = FALSE)
@@ -239,7 +239,7 @@ read_input_ye25 <- function() {
   }, error = function(e) NULL)
 }
 inp_ye25 <- read_input_ye25()
-if (is.null(inp_ye25)) stop("Dati input EIOPA non trovati (dati/eiopa_input_swap_dec2025.csv)")
+if (is.null(inp_ye25)) stop("Dati input EIOPA non trovati (dati/03_eiopa_input_swap_dec2025.csv)")
 
 # --- Calibrazione del mese di riferimento (input EIOPA, dicembre 2025) ---------
 off_ref  <- read_eiopa_official(ref_date)

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  27 JUN 2026 00:48
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  9 AUG 2026 22:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -838,9 +838,9 @@ Package: titlesec 2025/01/04 v2.17 Sectioning titles
 \titlewidthlast=\dimen309
 \titlewidthfirst=\dimen310
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 33.
+Package hyperref Info: Option `colorlinks' set `true' on input line 37.
 \c@teorema=\count353
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 78
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 80
 .
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmr.fd
@@ -853,26 +853,26 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (04_pca_ecb.aux)
 \openout1 = `04_pca_ecb.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 78.
-LaTeX Font Info:    ... okay on input line 78.
-LaTeX Info: Redefining \it@ocap on input line 78.
-LaTeX Info: Redefining \it@ccap on input line 78.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 80.
+LaTeX Font Info:    ... okay on input line 80.
+LaTeX Info: Redefining \it@ocap on input line 80.
+LaTeX Info: Redefining \it@ccap on input line 80.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -934,48 +934,48 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 fg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-Package hyperref Info: Link coloring ON on input line 78.
+Package hyperref Info: Link coloring ON on input line 80.
  (04_pca_ecb.out) (04_pca_ecb.out)
 \@outlinefile=\write5
 \openout5 = `04_pca_ecb.out'.
 
 LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 8
-0.
+2.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OML+lmm on input line 8
-0.
+2.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-80.
+82.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-80.
+82.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 80.
+(Font)              <12> on input line 82.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 80.
+(Font)              <8> on input line 82.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 80.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 80.
+(Font)              <6> on input line 82.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 82.
 
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 80.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 82.
 
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
@@ -994,297 +994,421 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 o/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users/grego/Ap
 pData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/grego/AppDat
 a/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}]
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 123.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 123.
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-23.
 
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step0_esempio_curva_tas
+si.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
+wed
+<../output/04_pca_ecb/step0_esempio_curva_tassi.pdf, id=143, 578.16pt x 325.215
+pt>
+File: ../output/04_pca_ecb/step0_esempio_curva_tassi.pdf Graphic file (type pdf
+)
+<use ../output/04_pca_ecb/step0_esempio_curva_tassi.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/step0_esempio_curva_tassi.pdf  us
+ed on input line 98.
+(pdftex.def)             Requested size: 306.71924pt x 172.52689pt.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <9> on input line 107.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 107.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
+07.
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [2{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.
-enc}]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
-88.
-
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
-File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [3{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
-}] [4{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex
-.enc}]
-LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-423.
-
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmtt.fd
-File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [5]
-
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_curve_livell
-i_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> all
-owed
-<../output/04_pca_ecb/step1_curve_livelli_m.pdf, id=238, 650.43pt x 361.35pt>
-File: ../output/04_pca_ecb/step1_curve_livelli_m.pdf Graphic file (type pdf)
-<use ../output/04_pca_ecb/step1_curve_livelli_m.pdf>
-Package pdftex.def Info: ../output/04_pca_ecb/step1_curve_livelli_m.pdf  used o
-n input line 461.
-(pdftex.def)             Requested size: 403.11768pt x 223.95749pt.
-[6]
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 466.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 466.
- [7
+) [2
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.517 
-       <../output/04_pca_ecb/step1_curve_livelli_m.pdf>]
+l.149 P
+       er questo motivo, è utile cercare una rappresentazione più compatta...
+{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}
+ <../output/04_pca_ecb/step0_esempio_curva_tassi.pdf>]
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
+74.
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_delta_mensil
-i.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allow
-ed
-<../output/04_pca_ecb/step1_delta_mensili.pdf, id=272, 722.7pt x 361.35pt>
-File: ../output/04_pca_ecb/step1_delta_mensili.pdf Graphic file (type pdf)
-<use ../output/04_pca_ecb/step1_delta_mensili.pdf>
-Package pdftex.def Info: ../output/04_pca_ecb/step1_delta_mensili.pdf  used on 
-input line 525.
-(pdftex.def)             Requested size: 416.26231pt x 208.13303pt.
+(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
+File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+Underfull \hbox (badness 10000) in paragraph at lines 208--210
 
+ []
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_heatmap_corr
-elazioni_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1
-.5> allowed
-<../output/04_pca_ecb/step1_heatmap_correlazioni_m.pdf, id=273, 505.89pt x 433.
-62pt>
-File: ../output/04_pca_ecb/step1_heatmap_correlazioni_m.pdf Graphic file (type 
-pdf)
-<use ../output/04_pca_ecb/step1_heatmap_correlazioni_m.pdf>
-Package pdftex.def Info: ../output/04_pca_ecb/step1_heatmap_correlazioni_m.pdf 
- used on input line 542.
-(pdftex.def)             Requested size: 214.70682pt x 184.03793pt.
+[3{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.en
+c}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}]
 
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_correlazioni
-_3d_barre_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <
-1.5> allowed
-<../output/04_pca_ecb/step1_correlazioni_3d_barre_m.pdf, id=274, 722.7pt x 614.
-295pt>
-File: ../output/04_pca_ecb/step1_correlazioni_3d_barre_m.pdf Graphic file (type
- pdf)
-<use ../output/04_pca_ecb/step1_correlazioni_3d_barre_m.pdf>
-Package pdftex.def Info: ../output/04_pca_ecb/step1_correlazioni_3d_barre_m.pdf
-  used on input line 546.
-(pdftex.def)             Requested size: 214.70682pt x 182.4996pt.
-[8
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/svd_geometria_esempio.p
+df): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+<../output/04_pca_ecb/svd_geometria_esempio.pdf, id=187, 614.295pt x 614.295pt>
+
+File: ../output/04_pca_ecb/svd_geometria_esempio.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/svd_geometria_esempio.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/svd_geometria_esempio.pdf  used o
+n input line 283.
+(pdftex.def)             Requested size: 403.11768pt x 403.12073pt.
+[4] [5
 pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.553 
-       <../output/04_pca_ecb/step1_delta_mensili.pdf>]
+l.346 \]
+         <../output/04_pca_ecb/svd_geometria_esempio.pdf>] [6]
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step2_varianza_spi
-egata_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5>
- allowed
-<../output/04_pca_ecb/step2_varianza_spiegata_m.pdf, id=295, 650.43pt x 361.35p
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step1_curve_livelli_m.p
+df): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+<../output/04_pca_ecb/step1_curve_livelli_m.pdf, id=247, 650.43pt x 361.35pt>
+File: ../output/04_pca_ecb/step1_curve_livelli_m.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/step1_curve_livelli_m.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/step1_curve_livelli_m.pdf  used o
+n input line 596.
+(pdftex.def)             Requested size: 403.11768pt x 223.95749pt.
+[7]
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 602.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 602.
+
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step1_delta_mensili.pdf
+): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+<../output/04_pca_ecb/step1_delta_mensili.pdf, id=257, 722.7pt x 361.35pt>
+File: ../output/04_pca_ecb/step1_delta_mensili.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/step1_delta_mensili.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/step1_delta_mensili.pdf  used on 
+input line 694.
+(pdftex.def)             Requested size: 416.26231pt x 208.13303pt.
+[8
+pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.747 
+      
+pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.747 
+       <../output/04_pca_ecb/step1_curve_livelli_m.pdf> <../output/04_pca_ecb/s
+tep1_delta_mensili.pdf
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step1_delta_mensili.pdf
+): PDF inclusion: multiple pdfs with page group included in a single page
+>]
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step2_varianza_spiegata
+_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
+wed
+<../output/04_pca_ecb/step2_varianza_spiegata_m.pdf, id=294, 650.43pt x 361.35p
 t>
 File: ../output/04_pca_ecb/step2_varianza_spiegata_m.pdf Graphic file (type pdf
 )
 <use ../output/04_pca_ecb/step2_varianza_spiegata_m.pdf>
 Package pdftex.def Info: ../output/04_pca_ecb/step2_varianza_spiegata_m.pdf  us
-ed on input line 584.
+ed on input line 752.
 (pdftex.def)             Requested size: 403.11768pt x 223.95749pt.
-[9
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.589 
-       <../output/04_pca_ecb/step1_heatmap_correlazioni_m.pdf> <../output/04_pc
-a_ecb/step1_correlazioni_3d_barre_m.pdf
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_correlazioni
-_3d_barre_m.pdf): PDF inclusion: multiple pdfs with page group included in a si
-ngle page
->]
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_loadings_pc1
-_pc3_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> 
-allowed
-<../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf, id=331, 650.43pt x 361.35pt
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_loadings_pc1_pc3_
+m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allow
+ed
+<../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf, id=295, 650.43pt x 361.35pt
 >
 File: ../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf Graphic file (type pdf)
 
 <use ../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf>
 Package pdftex.def Info: ../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf  use
-d on input line 619.
+d on input line 787.
 (pdftex.def)             Requested size: 403.11768pt x 223.95749pt.
-
-Overfull \hbox (42.2356pt too wide) in paragraph at lines 628--645
- [] 
- []
-
-[10
-pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.645 \end{center}
-                  
+[9
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.645 \end{center}
-                   <../output/04_pca_ecb/step2_varianza_spiegata_m.pdf> <../out
-put/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf
+l.791 
+       <../output/04_pca_ecb/step2_varianza_spiegata_m.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 798--799
+[]|\T1/lmr/m/n/10.95 Var.
+ []
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_loadings_pc1
-_pc3_m.pdf): PDF inclusion: multiple pdfs with page group included in a single 
-page
->]
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_scores_mensi
-li_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> al
-lowed
-<../output/04_pca_ecb/step3_scores_mensili_m.pdf, id=365, 794.97pt x 650.43pt>
-File: ../output/04_pca_ecb/step3_scores_mensili_m.pdf Graphic file (type pdf)
-<use ../output/04_pca_ecb/step3_scores_mensili_m.pdf>
-Package pdftex.def Info: ../output/04_pca_ecb/step3_scores_mensili_m.pdf  used 
-on input line 659.
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_scores_mensili_ma
+_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
+wed
+<../output/04_pca_ecb/step3_scores_mensili_ma_m.pdf, id=317, 794.97pt x 650.43p
+t>
+File: ../output/04_pca_ecb/step3_scores_mensili_ma_m.pdf Graphic file (type pdf
+)
+<use ../output/04_pca_ecb/step3_scores_mensili_ma_m.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/step3_scores_mensili_ma_m.pdf  us
+ed on input line 833.
 (pdftex.def)             Requested size: 425.02763pt x 347.76323pt.
-[11
+[10
 pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.676 
-       <../output/04_pca_ecb/step3_scores_mensili_m.pdf>]
+l.839 
+       <../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf>]
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_confronto_ri
-costruzione_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version
- <1.5> allowed
-<../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf, id=386, 650.43pt x 6
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_serie_storica_ten
+or.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
+wed
+<../output/04_pca_ecb/step3_serie_storica_tenor.pdf, id=340, 794.97pt x 433.62p
+t>
+File: ../output/04_pca_ecb/step3_serie_storica_tenor.pdf Graphic file (type pdf
+)
+<use ../output/04_pca_ecb/step3_serie_storica_tenor.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/step3_serie_storica_tenor.pdf  us
+ed on input line 847.
+(pdftex.def)             Requested size: 425.02763pt x 231.84215pt.
+[11
+pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.854 
+       <../output/04_pca_ecb/step3_scores_mensili_ma_m.pdf>] [12
+pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.898 \end{itemize}
+                    <../output/04_pca_ecb/step3_serie_storica_tenor.pdf>]
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_confronto_ricostr
+uzione_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5
+> allowed
+<../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf, id=380, 650.43pt x 6
 50.43pt>
 File: ../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf Graphic file (ty
 pe pdf)
 <use ../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf>
 Package pdftex.def Info: ../output/04_pca_ecb/step3_confronto_ricostruzione_m.p
-df  used on input line 724.
+df  used on input line 988.
 (pdftex.def)             Requested size: 350.53915pt x 350.54216pt.
-[12
-pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
+[13]
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_errore_ricostruzi
+one_tenor_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <
+1.5> allowed
+<../output/04_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf, id=389, 650.43pt 
+x 650.43pt>
+File: ../output/04_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf Graphic file 
+(type pdf)
+<use ../output/04_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/step3_errore_ricostruzione_tenor_
+m.pdf  used on input line 1007.
+(pdftex.def)             Requested size: 350.53915pt x 350.54216pt.
+[14
+pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.735 
-       <../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf>]
+l.1013 
+        <../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf>]
 
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_ricostruzion
-e_progressiva_m.pdf): PDF inclusion: found PDF version <1.7>, but at most versi
-on <1.5> allowed
-<../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf, id=408, 722.7pt x 
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_ricostruzione_pro
+gressiva_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1
+.5> allowed
+<../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf, id=410, 722.7pt x 
 397.485pt>
 File: ../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf Graphic file (
 type pdf)
 <use ../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf>
 Package pdftex.def Info: ../output/04_pca_ecb/step3_ricostruzione_progressiva_m
-.pdf  used on input line 743.
+.pdf  used on input line 1028.
 (pdftex.def)             Requested size: 425.02763pt x 233.7681pt.
-[13
-pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.786 
-       <../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf>] [14]
-[15]
-
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez5_curva_ricostr
-uzione.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> 
-allowed
-<../output/04_pca_ecb/sez5_curva_ricostruzione.pdf, id=440, 650.43pt x 361.35pt
->
-File: ../output/04_pca_ecb/sez5_curva_ricostruzione.pdf Graphic file (type pdf)
-
-<use ../output/04_pca_ecb/sez5_curva_ricostruzione.pdf>
-Package pdftex.def Info: ../output/04_pca_ecb/sez5_curva_ricostruzione.pdf  use
-d on input line 933.
-(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
-
-
-pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez5_convergenza_e
-rrore.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> a
-llowed
-<../output/04_pca_ecb/sez5_convergenza_errore.pdf, id=441, 650.43pt x 361.35pt>
-
-File: ../output/04_pca_ecb/sez5_convergenza_errore.pdf Graphic file (type pdf)
-<use ../output/04_pca_ecb/sez5_convergenza_errore.pdf>
-Package pdftex.def Info: ../output/04_pca_ecb/sez5_convergenza_errore.pdf  used
- on input line 943.
-(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
-[16
-pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.951 \newpage
-               <../output/04_pca_ecb/sez5_curva_ricostruzione.pdf>] [17
+[15
 pdfTeX warning (ext4): destination with the same identifier (name{figure.10}) h
 as been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1001 \bibitem{fabozzi2012}
-                             <../output/04_pca_ecb/sez5_convergenza_errore.pdf>
-]
-Underfull \hbox (badness 10000) in paragraph at lines 1022--1025
-[]\T1/lmr/bx/n/10.95 ECB Da-ta Por-tal \T1/lmr/m/n/10.95 --- [][]$\T1/lmtt/m/n/
-10.95 https : / / data . ecb . europa . eu$[][]\T1/lmr/m/n/10.95 : da-ta-set
- []
+l.1034 
+        <../output/04_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf>] [16
+pdfTeX warning (ext4): destination with the same identifier (name{figure.11}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1086 \]
+          <../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf>]
+[17]
 
-[18] (04_pca_ecb.aux)
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_curva.pdf): 
+PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+<../output/04_pca_ecb/sez4_mar26_curva.pdf, id=459, 650.43pt x 361.35pt>
+File: ../output/04_pca_ecb/sez4_mar26_curva.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/sez4_mar26_curva.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/sez4_mar26_curva.pdf  used on inp
+ut line 1206.
+(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
+
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_errore_tenor
+.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowe
+d
+<../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf, id=460, 650.43pt x 361.35pt>
+
+File: ../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf  used
+ on input line 1217.
+(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
+
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_convergenza.
+pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+
+<../output/04_pca_ecb/sez4_mar26_convergenza.pdf, id=461, 650.43pt x 361.35pt>
+File: ../output/04_pca_ecb/sez4_mar26_convergenza.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/sez4_mar26_convergenza.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/sez4_mar26_convergenza.pdf  used 
+on input line 1225.
+(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
+(../output/04_pca_ecb/sez4_tabella_mar26.tex) [18
+pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1252 
+       
+pdfTeX warning (ext4): destination with the same identifier (name{figure.12}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1252 
+        <../output/04_pca_ecb/sez4_mar26_curva.pdf>] [19
+pdfTeX warning (ext4): destination with the same identifier (name{figure.13}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1252 
+       
+pdfTeX warning (ext4): destination with the same identifier (name{figure.14}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1252 
+        <../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf> <../output/04_pca_ec
+b/sez4_mar26_convergenza.pdf
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_convergenza.
+pdf): PDF inclusion: multiple pdfs with page group included in a single page
+>] [20
+pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1253 \newpage
+               ]
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_curva.pdf): 
+PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+<../output/04_pca_ecb/sez4_giu26_curva.pdf, id=527, 650.43pt x 361.35pt>
+File: ../output/04_pca_ecb/sez4_giu26_curva.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/sez4_giu26_curva.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/sez4_giu26_curva.pdf  used on inp
+ut line 1320.
+(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
+
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_errore_tenor
+.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowe
+d
+<../output/04_pca_ecb/sez4_giu26_errore_tenor.pdf, id=528, 650.43pt x 361.35pt>
+
+File: ../output/04_pca_ecb/sez4_giu26_errore_tenor.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/sez4_giu26_errore_tenor.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/sez4_giu26_errore_tenor.pdf  used
+ on input line 1331.
+(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
+
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_convergenza.
+pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+
+<../output/04_pca_ecb/sez4_giu26_convergenza.pdf, id=529, 650.43pt x 361.35pt>
+File: ../output/04_pca_ecb/sez4_giu26_convergenza.pdf Graphic file (type pdf)
+<use ../output/04_pca_ecb/sez4_giu26_convergenza.pdf>
+Package pdftex.def Info: ../output/04_pca_ecb/sez4_giu26_convergenza.pdf  used 
+on input line 1339.
+(pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
+(../output/04_pca_ecb/sez4_tabella_giu26.tex) [21
+pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1362 
+       ] [22
+pdfTeX warning (ext4): destination with the same identifier (name{figure.15}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1362 
+       
+pdfTeX warning (ext4): destination with the same identifier (name{figure.16}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1362 
+        <../output/04_pca_ecb/sez4_giu26_curva.pdf> <../output/04_pca_ecb/sez4_
+giu26_errore_tenor.pdf
+
+pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_errore_tenor
+.pdf): PDF inclusion: multiple pdfs with page group included in a single page
+>] [23
+pdfTeX warning (ext4): destination with the same identifier (name{figure.17}) h
+as been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1363 \newpage
+               
+pdfTeX warning (ext4): destination with the same identifier (name{table.4}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.1363 \newpage
+                <../output/04_pca_ecb/sez4_giu26_convergenza.pdf>] [24]
+(04_pca_ecb.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
 Package rerunfilecheck Info: File `04_pca_ecb.out' has not changed.
-(rerunfilecheck)             Checksum: 5852C074DD0FAB0EFCC6E13DC90A0DD0;7911.
+(rerunfilecheck)             Checksum: 4646339D08500653E34729FD2A23420A;6685.
  ) 
 Here is how much of TeX's memory you used:
- 26965 strings out of 467871
- 518364 string characters out of 5418376
- 923145 words of memory out of 5000000
- 55276 multiletter control sequences out of 15000+600000
- 740925 words of font info for 117 fonts, out of 8000000 for 9000
+ 26918 strings out of 467871
+ 519057 string characters out of 5418376
+ 920305 words of memory out of 5000000
+ 55224 multiletter control sequences out of 15000+600000
+ 739982 words of font info for 114 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,11n,108p,749b,656s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 98i,10n,108p,549b,682s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
 b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pf
 b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbxi10.p
 fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.p
 fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.p
-fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi6.pf
-b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb
-><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmib10.pf
-b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb
-><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb>
-<C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C
-:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/
-Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Us
-ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Us
-ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Use
-rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Use
-rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/User
-s/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users
-/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users
-/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users/
-grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.
-pfb>
-Output written on 04_pca_ecb.pdf (18 pages, 892392 bytes).
+fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pf
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmib10.p
+fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pf
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb
+><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><
+C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:
+/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/U
+sers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/U
+sers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri9.pfb><C:/Us
+ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Us
+ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Use
+rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/User
+s/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users
+/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10
+.pfb>
+Output written on 04_pca_ecb.pdf (24 pages, 1053590 bytes).
 PDF statistics:
- 617 PDF objects out of 1000 (max. 8388607)
- 94 named destinations out of 1000 (max. 500000)
- 324 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 710 PDF objects out of 1000 (max. 8388607)
+ 96 named destinations out of 1000 (max. 500000)
+ 298 words of extra memory for PDF output out of 10000 (max. 10000000)
 

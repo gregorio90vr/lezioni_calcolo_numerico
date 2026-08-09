@@ -5,3 +5,10 @@ R/.Rhistory
 .RData
 .Ruserdata
 .positai
+
+# Python cache
+__pycache__/
+
+# CSV grezzi ECB troppo grandi per GitHub (>50-100MB)
+dati/04_dati_originali_ecb_2004_2025.csv
+dati/04_dati_originali_ecb_2026_finoLuglio.csv

@@ -1,0 +1,161 @@
+PROPOSTA DI RIORGANIZZAZIONE CARTELLE
+Repo: lezioni_calcolo_numerico
+======================================================================
+
+NOTA PRELIMINARE
+----------------
+Le dispense (dispense/*.tex) sono già state controllate e vanno
+mantenute così come sono: questo documento propone SOLO uno
+spostamento/riordino di file e cartelle, nessuna modifica di
+contenuto. Nessuna azione è stata eseguita: è un elenco di
+suggerimenti da valutare ed eventualmente applicare.
+
+======================================================================
+1. SINTESI DEI PROBLEMI TROVATI
+======================================================================
+
+La struttura di dispense/, output/ e dati/ segue già bene la
+convenzione NN_topic descritta in CLAUDE.md e non ha bisogno di
+interventi. I problemi sono concentrati altrove:
+
+a) oldpca/ (cartella in root)
+   È una cartella "di backup" parallela e ridondante rispetto alla
+   convenzione già in uso nel resto del repo, dove le versioni
+   superate vengono archiviate dentro sottocartelle old/ già esistenti
+   (R/old/, dispense/old/, dati/old/). Contiene:
+     - oldpca/04_pca_ecb.R        -> versione precedente dello script
+     - oldpca/04_pca_ecb.tex      -> versione precedente della dispensa
+     - oldpca/04_pca_ecb.pdf      -> PDF generato da quella versione
+     - oldpca/04_pca_ecb/*.pdf    -> output generato da quella versione
+     - oldpca/v31072026/05_pca_eiopa.tex -> altra versione precedente
+   Questo materiale duplica/precede quanto già archiviato in
+   R/old/04_pca_ecb_pre_rivisto.R, creando due posti diversi in cui
+   cercare le versioni vecchie.
+
+b) Script R "prep" superati, non citati in CLAUDE.md
+     - R/04_pca_ecb_prep_fusione.R
+     - R/04_pca_ecb_prep--recenti.R
+   Non compaiono nella tabella degli script attivi di CLAUDE.md e
+   sembrano versioni precedenti della pipeline poi consolidata in
+   R/04_pca_ecb_prep.R (quello effettivamente documentato e usato).
+
+c) File dati fuori posto
+     - R/monthly_data_base.xlsx
+   Tutti gli altri file dati vivono in dati/ (o dati/old/), non dentro
+   R/. Questo file andrebbe spostato per coerenza, oppure eliminato se
+   è un residuo di lavorazione non più necessario (da verificare col
+   contenuto prima di deciderlo).
+
+d) materiale/ organizzata solo in parte
+   Le sottocartelle numeriche materiale/02/ e materiale/06/ raccolgono
+   i riferimenti bibliografici di quelle lezioni, ma il resto dei PDF
+   di riferimento (es. i due documenti EIOPA-BoS, il libro di Hull,
+   svd_geometrica.png, review_rfr_eiopa.txt) sta sciolto nella root di
+   materiale/ senza una sottocartella dedicata. Non è un errore grave,
+   ma è incoerente: o si uniforma tutto a sottocartelle per lezione, o
+   si documenta esplicitamente che 02/ e 06/ sono eccezioni
+   intenzionali.
+
+e) altre_analisi/eiopa_rfr_sw/ isolata
+   Contiene 3 note testuali (perche_m_diverso_n.txt,
+   perche_norma_H.txt, perche_P_non_r.txt) legate alla lezione
+   Smith-Wilson, ma vive in una cartella a sé stante scollegata dal
+   resto. Da valutare se accorparla sotto dispense/ (come appunti di
+   lavoro) o lasciarla come raccolta separata, ma con un nome più
+   esplicito.
+
+f) .gitignore incompleto
+   Ignora già i file di history/stato R (.Rhistory, .Rproj.user,
+   .RData, .Ruserdata), ma non python/__pycache__/, che infatti è
+   presente come cartella nel repo.
+
+g) Solo un problema di documentazione (nessun file da spostare)
+   Questi script sono corretti e al loro posto, ma non compaiono nella
+   tabella "Naming convention" / "R package dependencies" di
+   CLAUDE.md:
+     - R/svd_geometria.R (genera la figura condivisa
+       output/04_pca_ecb/svd_geometria_esempio.pdf, citata anche nelle
+       note della lezione 06)
+     - R/03b_eiopa_rfr_smith_wilson_dic2025.R (abbinato a
+       dispense/03b_... e output/03b_.../)
+     - R/06b_analisi_periodi.R (abbinato a output/06b_analisi_periodi/)
+   Suggerimento per un secondo momento: aggiungerli alla tabella di
+   CLAUDE.md così la convenzione documentata rispecchia tutti gli
+   script realmente in uso.
+
+======================================================================
+2. PRINCIPIO GUIDA PROPOSTO
+======================================================================
+
+Non introdurre nuove convenzioni: usare quelle già esistenti nel
+repo. In pratica, tutto ciò che è "versione superata / backup" va
+dentro le cartelle old/ che già esistono per ciascun tipo di
+contenuto (R/old/, dispense/old/, dati/old/), invece di avere cartelle
+di backup parallele in root come oldpca/.
+
+======================================================================
+3. SPOSTAMENTI CONCRETI SUGGERITI
+======================================================================
+
+  oldpca/04_pca_ecb.R
+      -> R/old/04_pca_ecb_ancora_precedente.R
+         (rinominato per non confliggere con l'omonimo già presente
+         R/old/04_pca_ecb_pre_rivisto.R; verificare quale delle due
+         versioni è effettivamente la più vecchia prima di rinominare)
+
+  oldpca/04_pca_ecb.tex
+  oldpca/04_pca_ecb.pdf
+      -> dispense/old/
+
+  oldpca/04_pca_ecb/*.pdf   (output della versione vecchia)
+      -> valutare l'eliminazione (è output rigenerabile dallo script
+         vecchio, se lo si tiene in R/old/) oppure, se si vuole
+         preservarlo com'è, spostarlo in output/old/04_pca_ecb/
+
+  oldpca/v31072026/05_pca_eiopa.tex
+      -> dispense/old/05_pca_eiopa_v31072026.tex
+
+  (dopo questi spostamenti, la cartella oldpca/ in root risulta vuota
+  e può essere rimossa)
+
+  R/04_pca_ecb_prep_fusione.R
+  R/04_pca_ecb_prep--recenti.R
+      -> R/old/
+         (verificare prima che nessuno dei due sia in realtà ancora
+         necessario/diverso dalla pipeline attuale)
+
+  R/monthly_data_base.xlsx
+      -> dati/ oppure dati/old/, a seconda che sia ancora utilizzato
+         da qualche script attivo (nessuno script della tabella
+         CLAUDE.md sembra referenziarlo per nome: verificare con una
+         ricerca testuale "monthly_data_base" prima di spostarlo)
+
+  materiale/ (opzionale, minore)
+      -> creare sottocartelle numeriche coerenti con le lezioni anche
+         per i PDF oggi sciolti in root (o lasciare com'è e
+         documentare che 02/ e 06/ sono le uniche eccezioni)
+
+  altre_analisi/eiopa_rfr_sw/
+      -> valutare spostamento sotto dispense/ (es.
+         dispense/note_eiopa_rfr_sw/) per accorpare tutti gli appunti
+         di lezione nello stesso ramo, oppure lasciare separata ma con
+         un nome cartella più descrittivo (es. note_teoriche/)
+
+======================================================================
+4. MODIFICA SUGGERITA A .gitignore
+======================================================================
+
+Aggiungere una riga per ignorare la cache Python:
+
+  __pycache__/
+
+======================================================================
+5. NOTA FINALE (non riguarda lo spostamento di file)
+======================================================================
+
+Da valutare in un secondo momento, separatamente da questo riordino:
+aggiornare la tabella "Naming convention" / "R package dependencies"
+di CLAUDE.md includendo R/svd_geometria.R,
+R/03b_eiopa_rfr_smith_wilson_dic2025.R e R/06b_analisi_periodi.R, così
+la documentazione rispecchia tutti gli script realmente presenti e
+usati nel repo.
