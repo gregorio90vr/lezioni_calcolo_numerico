@@ -1,0 +1,634 @@
+% ============================================================
+%  Dispensa 01: Titoli obbligazionari — prezzo, rendimento,
+%               duration e convexity
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+%  Prima lezione del corso: introduce, su un singolo titolo e un
+%  singolo rendimento, gli stessi ingredienti numerici che le
+%  dispense successive applicheranno a una curva intera —
+%  ricerca di zeri (dispensa 02, 03) e algebra lineare elementare
+%  (dispensa 04). Nessun dato esterno: i due titoli di esempio
+%  sono definiti direttamente in R/01_bond_duration_convexity.R.
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor,colortbl}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{titlesec}
+\usepackage{bm}
+
+% le figure sono prodotte da R/01_bond_duration_convexity.R in output/01_bond_duration_convexity/
+\graphicspath{{../output/01_bond_duration_convexity/}}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black,
+            citecolor=green!40!black}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
+\titleformat{\subsubsection}{\small\bfseries\itshape}{\thesubsubsection.}{0.5em}{}
+
+% --- ambienti teorema ---
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[section]
+\newtheorem{proposizione}[teorema]{Proposizione}
+\theoremstyle{definition}
+\newtheorem{definizione}[teorema]{Definizione}
+\newtheorem{esempio}[teorema]{Esempio}
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+\newtheorem*{attenzione}{Nota numerica}
+
+% --- box colorati ---
+\tcbset{
+  mybase/.style={
+    colback=gray!5, colframe=gray!40,
+    boxrule=0.4pt, arc=2pt,
+    left=7pt, right=7pt, top=5pt, bottom=5pt,
+    fonttitle=\small\bfseries,
+    breakable
+  }
+}
+\newtcolorbox{keybox}[1][Concetto chiave]{mybase,
+  colframe=blue!40!black, colback=blue!4, title={#1}}
+\newtcolorbox{algobox}[1][Algoritmo]{mybase,
+  colframe=teal!50!black, colback=teal!4, title={#1}}
+\newtcolorbox{warningbox}{mybase,
+  colframe=orange!70!black, colback=orange!5}
+\newtcolorbox{codebox}[1][Codice R]{mybase,
+  colframe=green!40!black, colback=green!3, title={#1}}
+
+% --- colore righe tabella ---
+\definecolor{rowtint}{RGB}{243,247,253}
+
+% --- macro math ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\YTM}{\mathrm{YTM}}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\defeq}{\coloneqq}
+
+% ============================================================
+\title{%
+  \textbf{Titoli obbligazionari: prezzo, rendimento,\\ duration e convexity}\\[6pt]
+  \large Dal singolo rendimento alla necessità di una curva dei tassi\\[4pt]
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Motivazioni economiche}
+% ============================================================
+
+\subsection{Il problema: valutare oggi un flusso di pagamenti futuri}
+
+Un'\textbf{obbligazione} (o \textbf{bond}) è un contratto con cui un emittente (uno Stato, una
+banca, un'impresa) si impegna a pagare al possessore del titolo un flusso di importi prefissati
+a date prefissate: le \textbf{cedole} periodiche più il rimborso del \textbf{nozionale} a
+scadenza. È lo strumento finanziario più semplice e diffuso, ed è anche il punto di partenza
+naturale per chiedersi: \emph{quanto vale oggi un pagamento che riceveremo in futuro?}
+
+La risposta richiede due ingredienti: sapere \emph{quando} e \emph{quanto} si riceverà (i
+flussi di cassa contrattuali, noti) e sapere \emph{a quale tasso} scontare quei flussi per
+riportarli al presente (il \textbf{rendimento}, che invece va determinato). Il grosso di questa
+dispensa consiste nel rendere precisi questi due concetti e nel risolvere, con strumenti di
+calcolo numerico elementari, il problema \emph{inverso}: dato il prezzo a cui un titolo è
+scambiato sul mercato, qual è il rendimento implicito?
+
+\subsection{Obbligazioni, portafogli e gestione del rischio di tasso}
+
+Chi possiede obbligazioni --- una banca, un fondo pensione, una compagnia di assicurazione ---
+non è interessato soltanto al prezzo di oggi: vuole sapere \emph{quanto} quel prezzo si muove
+se il rendimento di mercato cambia. Questa sensibilità ha un nome, \textbf{duration}, ed è la
+prima e più importante misura di rischio di tasso di interesse: dice, in prima approssimazione,
+di quanti punti percentuali varia il prezzo per un movimento di un punto percentuale del
+rendimento. Una raffinatezza del second'ordine, la \textbf{convexity}, migliora questa stima
+quando il movimento di tasso non è piccolo.
+
+Queste due grandezze non sono un esercizio accademico: sono al centro della gestione
+\textbf{attivo-passivo} (asset-liability management) delle compagnie assicurative e dei fondi
+pensione, ed è esattamente per questa ragione --- rendere confrontabile il rischio di tasso di
+attivi e passivi con scadenze diverse --- che il quadro regolamentare europeo Solvency~II
+impone la costruzione di una curva dei tassi risk-free ufficiale, oggetto delle prossime
+dispense.
+
+\subsection{Il percorso di queste dispense}
+\label{sec:percorso}
+
+Questa lezione lavora con un \textbf{singolo titolo} e un \textbf{singolo rendimento} $y$: è la
+situazione più semplice possibile, e permette di introdurre senza distrazioni gli strumenti
+numerici --- ricerca di zeri, sviluppo di Taylor, algebra lineare elementare --- che il resto
+del corso userà in contesti via via più ricchi:
+\begin{itemize}
+  \item \textbf{01} (questa dispensa): un titolo, un rendimento $y$ costante per tutte le
+        scadenze;
+  \item \textbf{02}: il mercato quota rendimenti \emph{diversi} per scadenze diverse --- non
+        basta più un numero, serve una funzione $t\mapsto P(0,t)$. La \textbf{02} la costruisce
+        con un bootstrap (metodologia EIOPA corrente);
+  \item \textbf{03}: lo stesso problema, risolto con un metodo diverso --- Smith--Wilson,
+        minima energia, algebra lineare su matrici definite positive (metodologia EIOPA
+        storica);
+  \item \textbf{04}: infine, come si \emph{muove} nel tempo l'intera curva --- analisi delle
+        componenti principali (PCA) sulle sue variazioni storiche.
+\end{itemize}
+La Sezione~\ref{sec:verso-curva} chiude il cerchio, mostrando \emph{perché} un singolo
+rendimento non basta e apre esplicitamente alla dispensa~02.
+
+% ============================================================
+\section{Prezzo e rendimento di un titolo obbligazionario}
+% ============================================================
+
+\subsection{Flussi di cassa di un titolo a cedola fissa}
+
+Consideriamo un titolo con nozionale $N$, cedola annua $c$ (in percentuale del nozionale) e
+scadenza $T$ anni, con pagamenti annuali. Il titolo genera i flussi di cassa
+\[
+  CF_t = \begin{cases} c\,N & t = 1,\ldots,T-1 \ \text{(sola cedola)},\\
+                       c\,N + N & t = T \ \text{(cedola + rimborso del nozionale)}. \end{cases}
+\]
+Per semplicità consideriamo cedole \emph{annue}; il caso semestrale (o con altra frequenza) è
+identico nella sostanza --- cambiano solo le date dei flussi --- ed è quello effettivamente
+usato dal mercato IRS delle prossime dispense.
+
+\subsection{Il prezzo come valore attuale}
+
+\begin{definizione}[Prezzo di un'obbligazione]
+\label{def:prezzo-bond}
+Dato un rendimento $y > -1$ (lo stesso tasso per tutte le scadenze), il \textbf{prezzo} del
+titolo è la somma dei valori attuali dei suoi flussi di cassa, scontati a capitalizzazione
+annua composta:
+\begin{equation}
+  P(y) = \sum_{t=1}^{T} \frac{CF_t}{(1+y)^t}.
+  \label{eq:prezzo}
+\end{equation}
+\end{definizione}
+
+\`E la stessa capitalizzazione composta annua già incontrata (o che si incontrerà) parlando di
+tasso spot annuo nella dispensa~03: qui $y$ è un unico numero, non ancora una funzione della
+scadenza.
+
+\subsection{Due titoli di esempio}
+\label{sec:due-titoli}
+
+Useremo, in tutta la dispensa, due titoli didattici (non quotazioni di mercato reali, nello
+spirito degli esempi numerici di \cite{hull2018}, cap.~4):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lccc}
+\toprule
+Titolo & cedola $c$ & scadenza $T$ & prezzo di mercato $P_{\mathrm{mkt}}$ \\
+\midrule
+Bond A & 4\% & 5 anni & 97{,}50 \\
+Bond B & 3\% & 10 anni & 96{,}00 \\
+\bottomrule
+\end{tabular}
+\end{center}
+Nozionale $N=100$ per entrambi. Entrambi quotano \emph{sotto la pari} ($P_{\mathrm{mkt}}<N$):
+ci aspettiamo quindi, come vedremo tra poco, un rendimento superiore alla rispettiva cedola.
+
+\subsection{Il rendimento a scadenza (YTM)}
+
+Nella pratica la situazione è ribaltata rispetto alla Definizione~\ref{def:prezzo-bond}: il
+mercato quota il \textbf{prezzo} $P_{\mathrm{mkt}}$, mentre il rendimento è \emph{incognito}.
+
+\begin{definizione}[Rendimento a scadenza]
+\label{def:ytm}
+Il \textbf{rendimento a scadenza} (\emph{yield to maturity}, $\YTM$) di un titolo quotato al
+prezzo $P_{\mathrm{mkt}}$ è il valore $y^\ast$ che risolve
+\begin{equation}
+  \varphi(y) \defeq P(y) - P_{\mathrm{mkt}} = 0.
+  \label{eq:ytm-eq}
+\end{equation}
+\end{definizione}
+
+La~\eqref{eq:ytm-eq} è un'equazione \emph{non lineare} in $y$: $P(y)$ è una somma di potenze
+$(1+y)^{-t}$, non invertibile in forma chiusa per $T>1$. Serve un metodo numerico di ricerca
+di zeri --- il tema della Sezione~\ref{sec:radici}.
+
+\subsection{Monotonia e unicità del rendimento}
+
+Prima di cercare $y^\ast$ conviene sapere che esiste ed è unico.
+
+\begin{proposizione}[Monotonia del prezzo]
+\label{prop:monotonia}
+Per ogni titolo con flussi $CF_t>0$, la funzione $y\mapsto P(y)$ è strettamente decrescente su
+$(-1,+\infty)$.
+\end{proposizione}
+La verifica è immediata derivando la~\eqref{eq:prezzo} termine a termine:
+\begin{equation}
+  P'(y) = -\sum_{t=1}^{T} \frac{t\,CF_t}{(1+y)^{t+1}} < 0 \qquad \text{per ogni } y>-1,
+  \label{eq:dprezzo}
+\end{equation}
+essendo ogni addendo strettamente positivo (per $y>-1$ tutte le potenze $(1+y)^{t+1}$ sono
+positive). Una funzione strettamente monotona è iniettiva: se una soluzione di
+$\varphi(y)=0$ esiste, è \textbf{unica}. L'esistenza segue da $P(y)\to+\infty$ per
+$y\to -1^+$ e $P(y)\to 0$ per $y\to+\infty$ (continuità + teorema degli zeri), purché
+$0<P_{\mathrm{mkt}}$ sia un valore intermedio --- condizione sempre soddisfatta per un titolo
+quotato a un prezzo positivo di mercato.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_prezzo_rendimento.pdf}
+\caption{Bond A: prezzo $P(y)$ in funzione del rendimento. La curva è strettamente decrescente
+(Proposizione~\ref{prop:monotonia}) e convessa (Sezione~\ref{sec:convexity}): il rendimento a
+scadenza è l'unico punto in cui la curva incrocia il prezzo di mercato (linea tratteggiata).}
+\label{fig:prezzo-rendimento}
+\end{figure}
+
+% ============================================================
+\section{Il calcolo del rendimento: bisezione e Newton-Raphson}
+\label{sec:radici}
+% ============================================================
+
+\subsection{Il problema di ricerca di zeri}
+
+La Proposizione~\ref{prop:monotonia} garantisce che $\varphi(y)=P(y)-P_{\mathrm{mkt}}$ ha
+un'unica radice: resta da \textbf{calcolarla}. \`E il primo di una serie di problemi di ricerca
+di zeri che attraverserà tutto il corso --- lo stesso schema tornerà, identico nella sostanza,
+per i tenor non consecutivi del bootstrap (dispensa~02) e per la calibrazione del parametro
+$\alpha$ di Smith--Wilson (dispensa~03). Qui lo introduciamo nel caso più semplice: una sola
+equazione scalare, di cui conosciamo già segno e monotonia.
+
+\subsection{Bisezione}
+
+Il metodo di \textbf{bisezione} sfrutta solo la continuità e il cambio di segno: se
+$\varphi(a)$ e $\varphi(b)$ hanno segno opposto, il punto medio $m=(a+b)/2$ dimezza
+l'intervallo che deve contenere lo zero, e si itera su $[a,m]$ o $[m,b]$ a seconda del segno di
+$\varphi(m)$. La convergenza è \textbf{lineare}: l'ampiezza dell'intervallo si dimezza a ogni
+passo, quindi servono $\approx \log_2((b-a)/\mathrm{tol})$ iterazioni per raggiungere una data
+precisione --- lento ma infallibile, e per questo è lo standard di confronto ``robusto'' contro
+cui misurare metodi più veloci (\cite{burden2016}, cap.~2; lo stesso ruolo che gioca nella
+dispensa~02).
+
+\input{../output/01_bond_duration_convexity/tab_bisezione_ytm.tex}
+
+\subsection{Newton-Raphson}
+
+Il metodo di \textbf{Newton-Raphson} sfrutta invece la derivata, disponibile qui in forma
+chiusa dalla~\eqref{eq:dprezzo}: approssima $\varphi$ con la sua retta tangente e ne calcola lo
+zero,
+\begin{equation}
+  y_{k+1} = y_k - \frac{\varphi(y_k)}{\varphi'(y_k)}, \qquad \varphi'(y) = P'(y).
+  \label{eq:newton-ytm}
+\end{equation}
+Quando converge, lo fa \textbf{quadraticamente}: il numero di cifre corrette raddoppia a ogni
+iterazione, a fronte del costo di calcolare anche la derivata. Una buona inizializzazione è
+$y_0 = c$ (la cedola): il rendimento a scadenza tipicamente non se ne discosta troppo.
+
+\input{../output/01_bond_duration_convexity/tab_newton_ytm.tex}
+
+\subsection{Confronto numerico}
+
+La Figura~\ref{fig:convergenza} confronta l'errore $\abs{y_k-y^\ast}$ dei due metodi sul Bond A,
+in scala logaritmica: la bisezione scende con pendenza costante (convergenza lineare), Newton
+precipita in poche iterazioni (convergenza quadratica) --- coerentemente con le
+Tabelle~\ref{tab:bisezione-ytm} e~\ref{tab:newton-ytm}, dove Newton raggiunge la precisione di
+macchina in 4 iterazioni contro le oltre 30 della bisezione.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_convergenza_bisezione_newton.pdf}
+\caption{Bond A: errore $\abs{y_k-y^\ast}$ (scala log) per bisezione e Newton-Raphson. La
+pendenza costante della bisezione è la firma della convergenza lineare; il crollo di Newton è
+la firma della convergenza quadratica.}
+\label{fig:convergenza}
+\end{figure}
+
+\begin{algobox}[Ricerca del rendimento a scadenza (in R)]
+\begin{Verbatim}[fontsize=\small]
+# cf, times: flussi di cassa e relative scadenze (anni)
+bond_price  <- function(y, cf, times)  sum(cf / (1+y)^times)
+bond_dprice <- function(y, cf, times) -sum(times * cf / (1+y)^(times+1))
+
+phi  <- function(y) bond_price(y, cf, times) - Pmkt
+dphi <- function(y) bond_dprice(y, cf, times)
+
+# Newton-Raphson, inizializzato alla cedola
+y <- c
+repeat {
+  y_new <- y - phi(y) / dphi(y)
+  if (abs(y_new - y) < tol) break
+  y <- y_new
+}
+\end{Verbatim}
+\end{algobox}
+
+% ============================================================
+\section{Sensitivity: duration e convexity}
+% ============================================================
+
+\subsection{Lo sviluppo di Taylor del prezzo}
+
+Trovato il rendimento a scadenza $y^\ast$ e il prezzo corrispondente $P_0=P(y^\ast)$, la
+domanda successiva è: se il rendimento si sposta di una piccola quantità $\Delta y$, di quanto
+si muove il prezzo? Rispondere ricalcolando $P(y^\ast+\Delta y)$ dalla~\eqref{eq:prezzo} è
+sempre possibile, ma costoso se bisogna farlo per molti scenari o per molti titoli in
+portafoglio. Lo \textbf{sviluppo di Taylor} di $P$ attorno a $y^\ast$ fornisce
+un'approssimazione locale, in termini di sole due grandezze --- la derivata prima e la
+derivata seconda in $y^\ast$ --- che si calcolano una volta sola:
+\begin{equation}
+  P(y^\ast+\Delta y) \;\approx\; P_0 + P'(y^\ast)\,\Delta y + \tfrac12 P''(y^\ast)\,\Delta y^2.
+  \label{eq:taylor-P}
+\end{equation}
+Le prossime tre sottosezioni danno un nome finanziario a $P'(y^\ast)/P_0$ (duration modificata)
+e a $P''(y^\ast)/P_0$ (convexity), riscrivendo la~\eqref{eq:taylor-P} in forma relativa.
+
+\subsection{Duration di Macaulay}
+
+\begin{definizione}[Duration di Macaulay]
+\label{def:macaulay}
+La \textbf{duration di Macaulay} è la media dei tempi di pagamento, pesata con il valore
+attuale di ciascun flusso:
+\begin{equation}
+  D_{\mathrm{Mac}} = \sum_{t=1}^{T} t \cdot \frac{\mathrm{pv}_t}{P(y^\ast)},
+  \qquad \mathrm{pv}_t \defeq \frac{CF_t}{(1+y^\ast)^t}.
+  \label{eq:macaulay}
+\end{equation}
+\end{definizione}
+Poiché i pesi $\mathrm{pv}_t/P$ sono positivi e sommano a 1, $D_{\mathrm{Mac}}$ è una media
+pesata: un \textbf{baricentro temporale} dei flussi. Per un titolo con cedole $D_{\mathrm{Mac}}
+< T$ sempre (parte del valore arriva prima della scadenza); per uno zero-coupon bond
+$D_{\mathrm{Mac}}=T$ esattamente (un solo flusso, tutto il peso su di esso).
+
+La Tabella~\ref{tab:flussi-bondA} mostra il calcolo completo per il Bond A: la colonna dei pesi
+e quella del contributo $t\cdot$peso, la cui somma è $D_{\mathrm{Mac}}$.
+
+\input{../output/01_bond_duration_convexity/tab_flussi_bondA.tex}
+
+\subsection{Duration modificata}
+
+\begin{definizione}[Duration modificata]
+\label{def:modified}
+La \textbf{duration modificata} è la derivata logaritmica del prezzo cambiata di segno,
+\begin{equation}
+  D_{\mathrm{mod}} \defeq -\frac{P'(y^\ast)}{P_0}.
+  \label{eq:modified-def}
+\end{equation}
+\end{definizione}
+Confrontando la~\eqref{eq:dprezzo} con la~\eqref{eq:macaulay} si trova la relazione, valida per
+la capitalizzazione annua composta usata in questa dispensa,
+\begin{equation}
+  D_{\mathrm{mod}} = \frac{D_{\mathrm{Mac}}}{1+y^\ast}.
+  \label{eq:mod-da-mac}
+\end{equation}
+Il fattore $1/(1+y^\ast)$ è il prezzo della convenzione discreta: se si lavorasse a
+capitalizzazione \emph{continua} (come farà internamente la curva EIOPA nella dispensa~03) le
+due duration coinciderebbero esattamente, perché $\frac{d}{dy}e^{-yt} = -t\,e^{-yt}$ senza
+alcun fattore correttivo.
+
+Con $D_{\mathrm{mod}}$ la~\eqref{eq:taylor-P} tronca al 1\textsuperscript{o} ordine si scrive
+in forma \textbf{relativa}, la forma in cui si trova quasi sempre nei testi:
+\begin{equation}
+  \frac{\Delta P}{P_0} \;\approx\; -D_{\mathrm{mod}}\,\Delta y.
+  \label{eq:taylor-lineare}
+\end{equation}
+$D_{\mathrm{mod}}$ è dunque la \emph{sensibilità percentuale} del prezzo a un movimento di
+tasso: un'obbligazione con $D_{\mathrm{mod}}=5$ perde circa il 5\% del suo valore per un rialzo
+di 100 bps del rendimento.
+
+\subsection{Convexity}
+\label{sec:convexity}
+
+\begin{definizione}[Convexity]
+\label{def:convexity}
+La \textbf{convexity} è il termine di secondo ordine, normalizzato allo stesso modo:
+\begin{equation}
+  C \defeq \frac{P''(y^\ast)}{P_0}
+  = \frac{1}{P_0}\sum_{t=1}^{T} \frac{t(t+1)\,CF_t}{(1+y^\ast)^{t+2}} \;>\;0.
+  \label{eq:convexity-def}
+\end{equation}
+\end{definizione}
+$C>0$ sempre, per la stessa ragione della Proposizione~\ref{prop:monotonia}: ogni addendo è
+positivo. Geometricamente è la curvatura di $P(y)$, già visibile in
+Figura~\ref{fig:prezzo-rendimento}: la curva sta \emph{sopra} la propria retta tangente. Con la
+convexity, la~\eqref{eq:taylor-P} tronca al 2\textsuperscript{o} ordine diventa
+\begin{equation}
+  \frac{\Delta P}{P_0} \;\approx\; -D_{\mathrm{mod}}\,\Delta y + \tfrac12\,C\,\Delta y^2.
+  \label{eq:taylor-quadratica}
+\end{equation}
+Il segno $+$ davanti a $C$ è una buona notizia per chi detiene il titolo: la convexity
+\emph{attenua} le perdite quando i tassi salgono e \emph{amplifica} i guadagni quando i tassi
+scendono, un'asimmetria a favore dell'obbligazionista.
+
+La Tabella~\ref{tab:riepilogo-duration} riassume $\YTM$, $D_{\mathrm{Mac}}$, $D_{\mathrm{mod}}$
+e $C$ per entrambi i titoli di esempio: il Bond B, con scadenza doppia, ha duration e
+convexity molto più alte --- è più sensibile ai movimenti di tasso, come ci si aspetta da un
+titolo più lungo.
+
+\input{../output/01_bond_duration_convexity/tab_riepilogo_duration.tex}
+
+\subsection{Bontà dell'approssimazione}
+
+Quanto sono buone le approssimazioni~\eqref{eq:taylor-lineare}
+e~\eqref{eq:taylor-quadratica}? La Figura~\ref{fig:taylor-prezzo} sovrappone il prezzo esatto
+del Bond A alle due approssimazioni al variare di $\Delta y$; la
+Figura~\ref{fig:taylor-errore} e la Tabella~\ref{tab:taylor-confronto} quantificano l'errore in
+punti base di prezzo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{fig_taylor_prezzo.pdf}
+\caption{Bond A: prezzo esatto vs approssimazioni di Taylor al 1\textsuperscript{o} e
+2\textsuperscript{o} ordine. Per $\Delta y$ piccoli le tre curve sono indistinguibili; per
+$\Delta y$ grandi la sola duration (retta tangente) si allontana visibilmente dall'esatto,
+mentre la correzione di convexity la insegue.}
+\label{fig:taylor-prezzo}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_taylor_errore.pdf}
+\caption{Bond A: errore di troncamento (bps di prezzo) delle due approssimazioni. L'errore
+lineare cresce come $\Delta y^2$ (resta il termine di convexity trascurato), quello quadratico
+come $\Delta y^3$ --- una cifra di precisione in più per ogni raddoppio della finezza dello
+sviluppo.}
+\label{fig:taylor-errore}
+\end{figure}
+
+\input{../output/01_bond_duration_convexity/tab_taylor_confronto.tex}
+
+\begin{osservazione}[Errore di troncamento, non di arrotondamento]
+Gli errori di Tabella~\ref{tab:taylor-confronto} non hanno nulla a che fare con la precisione
+di macchina: sono l'errore di troncamento intrinseco dello sviluppo di Taylor, esattamente
+analogo a quello studiato per l'interpolazione polinomiale. Raddoppiando $\Delta y$ l'errore
+lineare quadruplica e quello quadratico ottuplica --- si legga la Tabella~\ref{tab:taylor-confronto}
+confrontando le righe a $\pm 50$ e $\pm 100$ bps.
+\end{osservazione}
+
+% ============================================================
+\section{Duration di portafoglio e immunizzazione}
+% ============================================================
+
+\subsection{Duration di portafoglio}
+
+Chi detiene più titoli è interessato alla sensibilità dell'intero portafoglio, non dei singoli
+titoli. Se un portafoglio di valore totale $V$ è composto da titoli di valore $V_i$ (pesi
+$w_i=V_i/V$, $\sum_i w_i=1$) e duration modificata $D_i$, la duration del portafoglio è
+semplicemente la \textbf{media pesata}
+\begin{equation}
+  D_{\mathrm{port}} = \sum_i w_i\, D_i,
+  \label{eq:duration-portafoglio}
+\end{equation}
+perché il prezzo del portafoglio è la somma dei prezzi, e la derivata di una somma è la somma
+delle derivate. \`E il primo uso, in questo corso, di una combinazione lineare per aggregare
+grandezze finanziarie di titoli diversi --- lo stesso principio, in forma via via più elaborata,
+tornerà nella media pesata dei forward della dispensa~02 e nella proiezione su
+componenti principali della dispensa~04.
+
+\subsection{Immunizzazione}
+
+Un fondo pensione o una compagnia assicurativa hanno passività (pagamenti futuri dovuti agli
+assicurati) oltre che attività (il portafoglio obbligazionario che le finanzia). Se attivo e
+passivo hanno duration diverse, un movimento dei tassi li fa muovere in modo diverso e crea uno
+squilibrio patrimoniale. L'\textbf{immunizzazione} elementare consiste nello scegliere i pesi
+del portafoglio in modo che la sua duration coincida con quella della passività da coprire:
+dati due titoli con duration $D_A\neq D_B$ e una passività di duration target $D_L$, si
+risolve il sistema lineare $2\times 2$
+\begin{equation}
+  \begin{cases} w_A + w_B = 1\\[2pt] w_A D_A + w_B D_B = D_L \end{cases}
+  \quad\Longrightarrow\quad
+  w_A = \dfrac{D_L - D_B}{D_A - D_B}, \qquad w_B = 1-w_A.
+  \label{eq:immunizzazione}
+\end{equation}
+\`E esattamente questo tipo di vincolo --- rendere il rischio di tasso di attivo e passivo
+confrontabile --- a motivare, in Solvency~II, l'uso di un'unica curva dei tassi ufficiale
+per tutte le imprese (Sezione~\ref{sec:verso-curva}).
+
+\subsection{Esempio numerico}
+
+Immunizziamo una passività unica (un solo pagamento futuro, quindi di duration pari alla
+propria scadenza) di $D_L=7$ anni con un portafoglio composto dai due titoli di
+Sezione~\ref{sec:due-titoli}. La Figura~\ref{fig:immunizzazione} mostra la duration del
+portafoglio al variare del peso $w_A$: una retta (per la linearità
+della~\eqref{eq:duration-portafoglio}) che incrocia il target $D_L$ in un unico punto, i cui
+pesi sono riportati in Tabella~\ref{tab:immunizzazione}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_immunizzazione.pdf}
+\caption{Duration del portafoglio $\{$Bond A, Bond B$\}$ in funzione del peso $w_A$
+(eq.~\eqref{eq:duration-portafoglio}). Il punto evidenziato è la soluzione
+della~\eqref{eq:immunizzazione} per una passività di duration $D_L=7$.}
+\label{fig:immunizzazione}
+\end{figure}
+
+\input{../output/01_bond_duration_convexity/tab_immunizzazione.tex}
+
+\begin{osservazione}
+L'immunizzazione per matching di duration protegge solo da spostamenti \emph{paralleli e
+piccoli} della curva dei tassi (coerentemente con l'approssimazione lineare
+della~\eqref{eq:taylor-lineare}, qui applicata titolo per titolo). Per una passività reale,
+distribuita su più scadenze, non basta un'unica duration bersaglio: serve un'intera curva di
+sconto $P(0,t)$ --- il problema delle dispense~02 e~03 --- e, per capire quali movimenti della
+curva sono storicamente più probabili, l'analisi statistica della dispensa~04.
+\end{osservazione}
+
+% ============================================================
+\section{Dal rendimento singolo alla curva dei tassi}
+\label{sec:verso-curva}
+% ============================================================
+
+Il modello di questa dispensa ha un limite strutturale, visibile già nei due titoli di
+esempio: il Bond A (5 anni) e il Bond B (10 anni) hanno rendimenti a scadenza \emph{diversi}
+(rispettivamente $\approx 4{,}57\%$ e $\approx 3{,}48\%$, Tabella~\ref{tab:riepilogo-duration}),
+pur essendo entrambi titoli di alta qualità nella stessa valuta. Non esiste, nella realtà, ``il''
+rendimento di mercato: esiste un rendimento diverso per ogni scadenza. L'insieme di questi
+rendimenti al variare della scadenza è la \textbf{struttura a termine dei tassi di interesse},
+o curva dei tassi.
+
+\begin{keybox}[Perché serve una curva, non un numero]
+Un unico $y$ può prezzare correttamente \emph{un} titolo (per costruzione, è il suo YTM), ma
+non è in generale coerente con il prezzo di un secondo titolo a scadenza diversa: usare lo YTM
+del Bond A per scontare i flussi del Bond B darebbe un prezzo sbagliato. Per prezzare
+\emph{simultaneamente} titoli di scadenze diverse in modo coerente (nessun arbitraggio) serve
+una funzione $t\mapsto P(0,t)$ --- un fattore di sconto per ogni scadenza, non un rendimento
+unico per tutte.
+\end{keybox}
+
+Costruire questa funzione a partire dai prezzi di mercato --- che tipicamente non coprono ogni
+scadenza possibile, esattamente come qui avevamo solo due titoli a 5 e 10 anni --- è il problema
+di cui si occupa la \textbf{dispensa~02} (bootstrap) e, con un metodo più raffinato, la
+\textbf{dispensa~03} (Smith--Wilson). Il vocabolario che introdurranno --- fattore di sconto,
+tasso spot, tasso forward --- è la naturale generalizzazione del rendimento $y$ di questa
+lezione al caso di una curva intera.
+
+% ============================================================
+\section{Conclusioni}
+% ============================================================
+
+\begin{itemize}
+  \item Il \textbf{prezzo} di un'obbligazione è il valore attuale dei suoi flussi di cassa a un
+        rendimento $y$; il \textbf{rendimento a scadenza} è il valore di $y$ che riprezza
+        esattamente il titolo quotato sul mercato --- un problema di \textbf{ricerca di zeri}
+        (bisezione, robusta ma lineare; Newton-Raphson, quadratico ma bisognoso della
+        derivata), risolto qui per la prima volta e ritrovato, nella stessa forma, nelle
+        dispense~02 e~03.
+  \item La \textbf{duration di Macaulay} è il baricentro temporale dei flussi; la
+        \textbf{duration modificata} e la \textbf{convexity} sono il 1\textsuperscript{o} e il
+        2\textsuperscript{o} termine dello sviluppo di \textbf{Taylor} del prezzo rispetto al
+        rendimento, e quantificano quanto bene un'approssimazione lineare (o quadratica)
+        sostituisce un ricalcolo esatto.
+  \item La \textbf{duration di portafoglio} è una media pesata delle duration dei singoli
+        titoli --- prima comparsa, in questo corso, di una combinazione lineare elementare per
+        aggregare grandezze finanziarie --- e sta alla base dell'\textbf{immunizzazione} di una
+        passività, la motivazione pratica per cui la gestione del rischio di tasso richiede una
+        curva dei tassi comune e condivisa.
+  \item Un singolo rendimento $y$ non è sufficiente a descrivere titoli di scadenze diverse:
+        serve una \textbf{curva dei tassi} $P(0,t)$, oggetto delle dispense~02 (bootstrap),~03
+        (Smith--Wilson) e, per la sua dinamica storica,~04 (PCA).
+\end{itemize}
+
+% ============================================================
+\renewcommand{\refname}{Riferimenti bibliografici}
+\begin{thebibliography}{9}
+
+\bibitem{hull2018}
+  \textbf{Hull, J.C.} (2018).
+  \textit{Options, Futures, and Other Derivatives}, 10th ed. Pearson.
+  Cap.~4: valore temporale del denaro, tassi di interesse, prezzo e rendimento delle
+  obbligazioni, duration e convexity.
+
+\bibitem{fabozzi2012}
+  \textbf{Fabozzi, F.J.} (2012).
+  \textit{Bond Markets, Analysis, and Strategies}, 8th ed. Pearson.
+  Riferimento classico su duration, convexity e immunizzazione di portafoglio.
+
+\bibitem{burden2016}
+  \textbf{Burden, R.L., Faires, J.D.} (2016).
+  \textit{Numerical Analysis}, 10th ed. Cengage.
+  Bisezione e Newton-Raphson: ordine di convergenza e criteri d'arresto.
+
+\bibitem{quarteroni2017}
+  \textbf{Quarteroni, A., Saleri, F., Gervasio, P.} (2017).
+  \textit{Calcolo Scientifico}, 6a ed. Springer.
+  Metodi per la ricerca di zeri (cap.~2).
+
+\end{thebibliography}
+
+\end{document}

@@ -16,13 +16,40 @@ Each lesson uses the prefix `NN_topic` consistently across **three** files:
 
 | Lesson | Dispensa | Script R | Output |
 |--------|----------|----------|--------|
-| 01 | `dispense/01_eiopa_rfr_bootstrap.tex` | `R/01_eiopa_rfr_bootstrap.R` | `output/01_eiopa_rfr_bootstrap/` |
+| 01 | `dispense/01_bond_duration_convexity.tex` | `R/01_bond_duration_convexity.R` | `output/01_bond_duration_convexity/` |
+| 02 | `dispense/02_eiopa_rfr_bootstrap.tex` | `R/02_eiopa_rfr_bootstrap.R` | `output/02_eiopa_rfr_bootstrap/` |
 | 03 | `dispense/03_eiopa_rfr_smith_wilson.tex` | `R/03_eiopa_rfr_smith_wilson.R` | `output/03_eiopa_rfr_smith_wilson/` |
+| 03c | `dispense/03c_eiopa_rfr_smith_wilson.tex` | *(nessuno — riusa 03)* | *(nessuno — riusa `output/03_eiopa_rfr_smith_wilson/`)* |
 | 04 | `dispense/04_pca_ecb.tex` | `R/04_pca_ecb.R` | `output/04_pca_ecb/` |
 | 04b | `dispense/04b_pca_ecb.tex` | `R/04b_pca_ecb.R` | `output/04b_pca_ecb/` |
 | 04c | `dispense/04c_pca_eiopa.tex` | `R/04c_pca_eiopa.R` | `output/04c_pca_eiopa/` |
 
 Adding a new lesson: create `NN_topic.tex`, `NN_topic.R`, `output/NN_topic/`.
+
+**La famiglia "03" (Smith-Wilson):** 03 e 03c sono due varianti della stessa lezione, che
+differiscono **solo** nella dimostrazione della positiva definitezza della matrice di Wilson
+(Sez. 4.2); tutto il resto del testo è identico.
+
+- **03** è la versione **canonica**: la positiva definitezza è dimostrata con una
+  rappresentazione integrale *ad hoc* del nucleo (funzioni ausiliarie
+  $\varphi_t(x)=1-e^{-\alpha(t-x)}$) più un'induzione discendente sui nodi.
+- **03c** ricava la stessa proprietà **per via variazionale**, seguendo Gach (2017,
+  `materiale/03/NoteontheSmith-Wilsoninterestratecurve_v14July2017.pdf`): il funzionale che
+  Smith-Wilson effettivamente minimizza induce un prodotto scalare esplicito, di cui
+  $W(t,u)$ è il rappresentante della valutazione puntuale
+  ($\langle W(\cdot,u),h\rangle = h(u)$, verificata per parti); quindi $[W(u_i,u_j)]$ è
+  letteralmente una matrice di Gram. Effetto collaterale voluto: l'«energia»
+  $\zeta^\top H \zeta$ smette di essere una metafora e coincide col funzionale originale.
+  L'apparato di analisi funzionale di Gach (Sobolev, Riesz, completezza) è **deliberatamente
+  evitato** — la classe non ha fatto analisi funzionale; resta solo integrazione per parti.
+  La dimostrazione della 03 è conservata nell'**Appendice A** della 03c, con un'osservazione
+  finale che confronta le due strade.
+
+03c **non ha né script R né cartella output propri**: i numeri non cambiano, quindi riusa
+figure e tabelle di `output/03_eiopa_rfr_smith_wilson/` prodotte da
+`R/03_eiopa_rfr_smith_wilson.R` (stesso principio con cui 04b riusa
+`svd_geometria_esempio.pdf` della 04). Per compilarla serve aver eseguito almeno una volta
+lo script della 03.
 
 **La famiglia "04" (PCA su curve dei tassi):** 04, 04b e 04c sono tre varianti
 della stessa lezione (PCA sulle variazioni mensili di una curva dei tassi),
@@ -62,8 +89,11 @@ non la rigenera**, va eseguito prima `04_pca_ecb.R` almeno una volta.
 All R scripts auto-detect their directory via `rstudioapi` and set `setwd()` accordingly. When running from the command line, invoke from the `R/` directory so relative paths resolve correctly.
 
 ```bash
-# Lezione 01 — EIOPA RFR nuovo approccio (bootstrap, BoS-26-198)
-Rscript R/01_eiopa_rfr_bootstrap.R       # writes PDFs to output/01_eiopa_rfr_bootstrap/
+# Lezione 01 — Titoli obbligazionari: prezzo, rendimento, duration, convexity
+Rscript R/01_bond_duration_convexity.R   # writes PDFs to output/01_bond_duration_convexity/ (nessun dato esterno)
+
+# Lezione 02 — EIOPA RFR nuovo approccio (bootstrap, BoS-26-198)
+Rscript R/02_eiopa_rfr_bootstrap.R       # writes PDFs to output/02_eiopa_rfr_bootstrap/
 
 # Lezione 03 — EIOPA RFR Smith-Wilson (approccio variazionale, BoS-25-599)
 Rscript R/03_eiopa_rfr_smith_wilson.R    # writes PDFs to output/03_eiopa_rfr_smith_wilson/
@@ -107,12 +137,17 @@ ZIPs must be placed in `dati/eiopa_zips/`. Two filename formats are accepted: `E
 | `04b_pca_ecb.R` | `data.table`, `openxlsx`, `ggplot2`, `lubridate`, `scales`, `plot3D` (optional) |
 | `04c_pca_eiopa_prep.R` | `data.table`, `openxlsx` |
 | `04c_pca_eiopa.R` | `data.table`, `openxlsx`, `ggplot2`, `lubridate`, `scales`, `plot3D` (optional) |
-| `01_eiopa_rfr_bootstrap.R` | `ggplot2`, `reshape2`, `openxlsx` |
+| `01_bond_duration_convexity.R` | `data.table`, `ggplot2` |
+| `02_eiopa_rfr_bootstrap.R` | `ggplot2`, `reshape2`, `openxlsx` |
 | `03_eiopa_rfr_smith_wilson.R` | `ggplot2`, `openxlsx` |
 
 ## Data flow
 
 ```
+(nessun dato esterno)
+        ↓ 01_bond_duration_convexity.R   → output/01_bond_duration_convexity/*.pdf
+          (due titoli didattici, definiti hardcoded nello script — niente file in dati/)
+
 dati/04_dati_originali_ecb_2004_2025.csv (export SDMX grezzo ECB, storico)
 dati/04_dati_originali_ecb_2026_finoLuglio.csv (export SDMX grezzo ECB, 2026,
                                                 scaricato a parte dal portale)
@@ -146,11 +181,11 @@ dati/eiopa_zips/*.zip (127 archivi mensili, dic 2015 → giu 2026)
                         ↓ 04c_pca_eiopa.R
                  output/04c_pca_eiopa/*.pdf
 
-dati/01_swap_euribor6m_ric_dic2025.xlsx (par swap EUR vs EURIBOR 6M, dic 2025)
-dati/01_dec25_eiopa_rfr_newapproach.csv (benchmark: curva ufficiale EIOPA
+dati/02_swap_euribor6m_ric_dic2025.xlsx (par swap EUR vs EURIBOR 6M, dic 2025)
+dati/02_dec25_eiopa_rfr_newapproach.csv (benchmark: curva ufficiale EIOPA
                                          ricalcolata col nuovo metodo bootstrap,
                                          per il confronto like-for-like in Sez. 6)
-        ↓ 01_eiopa_rfr_bootstrap.R       → output/01_eiopa_rfr_bootstrap/*.pdf
+        ↓ 02_eiopa_rfr_bootstrap.R       → output/02_eiopa_rfr_bootstrap/*.pdf
 
 dati/03_eusa.xlsx (par IRS EUR vs EURIBOR 6M, luglio 2025)
 dati/03_eiopa_input_swap_dec2025.csv (par swap input EIOPA grezzi, dic 2025,
@@ -163,7 +198,7 @@ dati/03_eiopa_input_swap_dec2025.csv (par swap input EIOPA grezzi, dic 2025,
 Sottocartelle numeriche allineate alla lezione che citano il materiale
 (stesso principio di `dispense/`, `R/`, `output/`, `dati/`):
 
-- `materiale/01/` — documentazione EIOPA-BoS-26-198 e il tool ufficiale
+- `materiale/02/` — documentazione EIOPA-BoS-26-198 e il tool ufficiale
   EIOPA `RFR extrapolation and VA calculation (19 May 2026) (2).xlsm`
   (riferimento manuale, non letto da alcuno script).
 - `materiale/03/` — documentazione EIOPA-BoS-25-599, le note
@@ -175,14 +210,19 @@ Sottocartelle numeriche allineate alla lezione che citano il materiale
   dell'illustrazione geometrica generata dal blocco `local({...})` in
   `R/04_pca_ecb.R` (Sezione 4, "Grafico 0b").
 - `materiale/Options Futures and Other Derivatives by John C Hull.PDF`
-  resta nella root: citato sia dalla 01 sia dalla 03 (`\cite{hull2018}`),
-  non è specifico di una singola lezione.
+  resta nella root: citato dalla 01, dalla 02 e dalla 03 (`\cite{hull2018}`),
+  non è specifico di una singola lezione. La 01 non ha una propria
+  sottocartella `materiale/`: la bibliografia (Hull cap.~4, Fabozzi, e i
+  riferimenti su bisezione/Newton già condivisi con 02/03) non richiede
+  documentazione aggiuntiva.
 
 ## Key implementation notes
 
-**Lezione 01 — Bootstrap (`01_eiopa_rfr_bootstrap.R`):** Implements the *current* EIOPA EUR methodology per **EIOPA-BoS-26-198** (May 2026), which replaced Smith-Wilson following the Solvency II amendments (Dir (EU) 2025/2, Reg (EU) 2026/269). Pipeline: (1) **bootstrap** with the constant-forward assumption (Annex D) — consecutive tenors solved linearly, non-consecutive ("gap") tenors solved via **Newton-Raphson** with the analytic derivative from Annex D.6 (bisection provided as a robust comparison); (2) **extrapolation** beyond the First Smoothing Point (FSP=20y) toward the UFR via the closed-form weight `B(α,h)=(1−e^{−αh})/(αh)`, using the Last Liquid Forward Rate (LLFR). Parameters (UFR=3.30%, FSP=20y, CRA=10bps, α fixed at the regulatory value with phasing-in 20%→11%) are at the top of the file. Input par rates are read from `dati/01_swap_euribor6m_ric_dic2025.xlsx` (par swap EUR vs EURIBOR 6M, dicembre 2025) with a hardcoded fallback. Sezione 6 confronta la ricostruzione con la curva ufficiale EIOPA ricalcolata col nuovo metodo, letta da `dati/01_dec25_eiopa_rfr_newapproach.csv` (se presente). Note: this is **no longer Smith-Wilson** — there is no dense H matrix, no LU solve, and α is not calibrated.
+**Lezione 01 — Bond, duration, convexity (`01_bond_duration_convexity.R`):** Prima lezione del corso, autosufficiente (nessun file in `dati/`): due titoli didattici hardcoded in cima allo script, Bond A (cedola 4%, $T=5$, $P_{\mathrm{mkt}}=97.50$) e Bond B (cedola 3%, $T=10$, $P_{\mathrm{mkt}}=96.00$), cedole annue, capitalizzazione annua composta ($P(y)=\sum CF_t(1+y)^{-t}$) — convenzione diversa dall'intensità continua usata internamente dalla curva EIOPA (dispensa 03), scelta apposta per far emergere la relazione $D_{\mathrm{mod}}=D_{\mathrm{Mac}}/(1+y)$. Il rendimento a scadenza (YTM) si trova con bisezione **e** Newton-Raphson (stesso schema, stesso stile di tracciamento delle iterazioni, della dispensa 02); su Bond A, dic. 2025-style: YTM ≈ 4.5706%, Newton converge in 4 iterazioni contro le 31 della bisezione. Duration di Macaulay/modificata e convexity sono derivate/verificate simbolicamente (`bond_dprice`, `bond_d2price`) e confrontate con l'errore di troncamento dell'approssimazione di Taylor su una griglia di shock ±200 bps. La Sezione 5 immunizza una passività a duration singola ($D_L=7$) risolvendo un sistema lineare $2\times 2$ nei pesi di portafoglio — prima comparsa nel corso di una combinazione lineare per aggregare grandezze finanziarie. Nota di implementazione: nei `geom_point()` con `data=` esplicito bisogna passare colonne già nell'unità del `ggplot()` padre (es. `y` in decimale, non already-scaled `y*100`), perché l'estetica ereditata (`aes(x = y*100)`) si applica anche ai dati del nuovo layer — un bug di questo tipo (scala raddoppiata sull'asse x) è stato corretto durante la stesura.
 
-**Lezione 03 — Smith-Wilson variazionale (`03_eiopa_rfr_smith_wilson.R`):** Derives Smith-Wilson from a minimum-energy variational principle (Lagrange multipliers, SPD projection). Ref: EIOPA-BoS-25-599 (Dec 2025, historical methodology). Input principale: `dati/03_eusa.xlsx` (Bloomberg EUSA*, July 2025 worked example). La Parte 4 (ricostruzione dicembre 2025) confronta anche con i par swap di input EIOPA grezzi in `dati/03_eiopa_input_swap_dec2025.csv`, citati anche nel commento di apertura della dispensa 01 come esempio di ricostruzione condivisa fra le due lezioni.
+**Lezione 02 — Bootstrap (`02_eiopa_rfr_bootstrap.R`):** Implements the *current* EIOPA EUR methodology per **EIOPA-BoS-26-198** (May 2026), which replaced Smith-Wilson following the Solvency II amendments (Dir (EU) 2025/2, Reg (EU) 2026/269). Pipeline: (1) **bootstrap** with the constant-forward assumption (Annex D) — consecutive tenors solved linearly, non-consecutive ("gap") tenors solved via **Newton-Raphson** with the analytic derivative from Annex D.6 (bisection provided as a robust comparison); (2) **extrapolation** beyond the First Smoothing Point (FSP=20y) toward the UFR via the closed-form weight `B(α,h)=(1−e^{−αh})/(αh)`, using the Last Liquid Forward Rate (LLFR). Parameters (UFR=3.30%, FSP=20y, CRA=10bps, α fixed at the regulatory value with phasing-in 20%→11%) are at the top of the file. Input par rates are read from `dati/02_swap_euribor6m_ric_dic2025.xlsx` (par swap EUR vs EURIBOR 6M, dicembre 2025) with a hardcoded fallback. Sezione 6 confronta la ricostruzione con la curva ufficiale EIOPA ricalcolata col nuovo metodo, letta da `dati/02_dec25_eiopa_rfr_newapproach.csv` (se presente). Note: this is **no longer Smith-Wilson** — there is no dense H matrix, no LU solve, and α is not calibrated.
+
+**Lezione 03 — Smith-Wilson variazionale (`03_eiopa_rfr_smith_wilson.R`):** Derives Smith-Wilson from a minimum-energy variational principle (Lagrange multipliers, SPD projection). Ref: EIOPA-BoS-25-599 (Dec 2025, historical methodology). Input principale: `dati/03_eusa.xlsx` (Bloomberg EUSA*, July 2025 worked example). La Parte 4 (ricostruzione dicembre 2025) confronta anche con i par swap di input EIOPA grezzi in `dati/03_eiopa_input_swap_dec2025.csv`, citati anche nel commento di apertura della dispensa 02 come esempio di ricostruzione condivisa fra le due lezioni.
 
 **Lezione 04 — PCA ECB calibrazione/validazione (`04_pca_ecb.R`):** Versione **canonica/finale** della famiglia 04: rende esplicito lo schema train/test rispetto alla variante full-sample (lezione 04b). Legge `dati/04_ecb_spot.xlsx` (condiviso con la 04b, prodotto da `04_pca_ecb_prep.R`) ma lo tronca a `data_calibrazione <- as.Date("2025-12-31")`: `monthly_full` tiene tutta la serie (serve solo per pescare i target), `monthly_dt` è il campione di calibrazione (256 mesi, 255 variazioni) da cui si stimano i loadings. Anche `curve_df` giornaliero è troncato, così nessun grafico "di lezione" mostra dati post-calibrazione. Varianza spiegata 89,67/8,41/1,43% (η₃ = 99,51%), RMSE in-sample k=3 = 1,40 pb. Mesi campione: ott 2004 / **mag 2015** (centrale) / **dic 2025** (ultimo); la ricostruzione progressiva usa il **centrale**, non l'ultimo, perché a dic 2025 lo score PC2 vale −1,7 pb e la pendenza sarebbe invisibile (mag 2015: PC1 +77,8 / PC2 −42,7 / PC3 −13,2 pb).
 

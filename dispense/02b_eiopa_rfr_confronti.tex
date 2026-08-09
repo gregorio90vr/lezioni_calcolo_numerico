@@ -1,7 +1,7 @@
 % ============================================================
-%  Dispensa 01b: Curva EIOPA Risk-Free a bootstrap —
+%  Dispensa 02b: Curva EIOPA Risk-Free a bootstrap —
 %                confronto tra fonti di dati e analisi dell'LLFR
-%  Companion di 01_eiopa_rfr_bootstrap.tex
+%  Companion di 02_eiopa_rfr_bootstrap.tex
 %  Corso di Calcolo Numerico — Laboratorio
 %  Università degli Studi di Verona — A.A. 2026–2027
 %  Registro dell'indagine sul residuo di estrapolazione (delta vs benchmark)
@@ -29,7 +29,7 @@
 \usepackage{titlesec}
 \usepackage{bm}
 
-\graphicspath{{../output/01_eiopa_rfr_bootstrap/}}
+\graphicspath{{../output/02_eiopa_rfr_bootstrap/}}
 
 \geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
 \setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
@@ -161,7 +161,7 @@ Le Fonti A, B, C usano tutte la definizione ``naturale'' dell'LLFR (singolo forw
 $f^c_{19,20}$); la Fonte~D isola l'effetto della \emph{scelta dell'LLFR}. La
 Tabella~\ref{tab:input-dic} raccoglie i par di input delle prime tre fonti.
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_input_dic.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_input_dic.tex}
 
 I par impliciti (Fonte~B) e i par di input originali (Fonte~C) sono quasi identici, ed
 entrambi molto vicini agli \texttt{EUSA*} after-CRA (Fonte~A): le piccole differenze di
@@ -181,7 +181,7 @@ in bps, con le metriche RMSE/max separate per zona liquida ($T\le\FSP$) ed estra
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_eusa.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_vs_newmethod_eusa.pdf}
 \caption{Fonte~A (bootstrap \texttt{EUSA*}) vs curva EIOPA ufficiale ricalcolata col nuovo
 metodo, dicembre~2025. \emph{Sopra}: spot ricostruito (blu) e ufficiale (rosso, cerchi aperti),
 tenor 1--120. \emph{Sotto}: scarti in bps; blu = zona liquida ($T\le\FSP$), rosso =
@@ -197,7 +197,7 @@ cresce fino a $\sim 3.4$ bps (RMSE $2.07$ bps).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_impl.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_vs_newmethod_impl.pdf}
 \caption{Fonte~B (bootstrap dei par impliciti) vs benchmark nuovo metodo, dicembre~2025. In
 zona liquida l'accordo \`e a frazioni di bp su tutti i tenor.}
 \label{fig:vs-impl}
@@ -212,7 +212,7 @@ Fonte~A: la fonte dati non cambia il residuo in estrapolazione.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_input.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_vs_newmethod_input.pdf}
 \caption{Fonte~C (bootstrap dei dati di input EIOPA originali) vs benchmark nuovo metodo,
 dicembre~2025. In zona liquida l'accordo \`e a frazioni di bp, coerente con la Fonte~B.}
 \label{fig:vs-input}
@@ -228,9 +228,9 @@ dipende dai dati di input --- nemmeno usando quelli autentici di EIOPA.
 Le Tabelle~\ref{tab:delta-new-eusa}, \ref{tab:delta-new-impl} e~\ref{tab:delta-new-input}
 riportano il delta puntuale ai nodi DLT per le tre fonti.
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_delta_new_eusa.tex}
-\input{../output/01_eiopa_rfr_bootstrap/tab_delta_new_impl.tex}
-\input{../output/01_eiopa_rfr_bootstrap/tab_delta_new_input.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_delta_new_eusa.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_delta_new_impl.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_delta_new_input.tex}
 
 % ============================================================
 \section{Fonte D e la scoperta}
@@ -250,7 +250,7 @@ l'ipotesi che sia questo a fare la differenza: ripete la ricostruzione di Fonte~
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_newmethod_llfr.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_vs_newmethod_llfr.pdf}
 \caption{Fonte~D (bootstrap Fonte~C, LLFR a media pesata $=3.2249\%$) vs benchmark nuovo
 metodo, dicembre~2025. L'accordo si estende ora anche in estrapolazione.}
 \label{fig:vs-llfr}
@@ -268,7 +268,7 @@ dati n\'e a dettagli di arrotondamento.
 
 La Tabella~\ref{tab:summary-fonti} riassume le quattro ricostruzioni.
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_summary_fonti.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_summary_fonti.tex}
 
 \begin{osservazione}[Due lezioni, una per zona]
 \emph{Zona liquida $\Rightarrow$ conta la fonte dati.} Fonte~B (par impliciti) e Fonte~C
@@ -446,7 +446,7 @@ Applicando la formula~\eqref{eq:llfr-weighted} ai cinque tenor pesati del tool (
 capitalizzazione continua della colonna K; $\text{LLPbeforeFSP}=15$, $z^c_{15}=3.06008\%$), si
 ottengono i cinque forward e i loro contributi pesati (Tabella~\ref{tab:llfr-weighted}).
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_llfr_weighted.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_llfr_weighted.tex}
 
 \begin{osservazione}[Perché il risultato è basso]
 Ognuno dei cinque forward ($3.455\%, 3.203\%, 3.121\%, 2.985\%, 2.770\%$) \`e gi\`a vicino o

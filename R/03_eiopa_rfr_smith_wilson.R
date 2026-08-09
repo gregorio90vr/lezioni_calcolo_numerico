@@ -259,7 +259,7 @@ cat(sprintf("  CRA = %.0f bps,  alpha ufficiale = %.4f\n\n", CRA_ref * 1e4, a_re
 # propria cartella di output. I duplicati (stessa figura in due cartelle) sono
 # voluti, cosi' le due dispense sono indipendenti.
 
-# Tabella dati di input (Sez.2, analoga a quella della dispensa 01).
+# Tabella dati di input (Sez.2, analoga a quella della dispensa 02).
 {
   lines <- c("% GENERATO da R/03_eiopa_rfr_smith_wilson.R",
     "\\begin{table}[H]\\centering\\small",
@@ -793,7 +793,7 @@ fwd_a_tab   <- sw_fwd_ann (tenor_tab, Qb_jul, a_jul) * 100
 }
 
 # --- Excel: curva SW completa (continua e annua composta), 1-100a ------------
-#     Nella cartella della dispensa 03; la dispensa 01 ha il proprio file.
+#     Nella cartella della dispensa 03; la dispensa 02 ha il proprio file.
 if (have_openxlsx) {
   xlsx_path  <- file.path(dir_out, "curva_ricostruita_dic2025.xlsx")
   mats_full  <- 1:100

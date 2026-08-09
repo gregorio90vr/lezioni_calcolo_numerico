@@ -1,5 +1,5 @@
 % ============================================================
-%  Dispensa 01: Costruzione della Curva EIOPA Risk-Free Rate
+%  Dispensa 02: Costruzione della Curva EIOPA Risk-Free Rate
 %               Bootstrap (constant forward) ed estrapolazione FSP/LLFR
 %  Corso di Calcolo Numerico — Laboratorio
 %  Università degli Studi di Verona — A.A. 2026–2027
@@ -32,8 +32,8 @@
 \usepackage{bm}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 
-% le figure sono prodotte da R/01_eiopa_rfr_bootstrap.R in output/01_eiopa_rfr_bootstrap/
-\graphicspath{{../output/01_eiopa_rfr_bootstrap/}}
+% le figure sono prodotte da R/02_eiopa_rfr_bootstrap.R in output/02_eiopa_rfr_bootstrap/
+\graphicspath{{../output/02_eiopa_rfr_bootstrap/}}
 
 \geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
 \setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
@@ -302,7 +302,7 @@ mediante l'applicazione di opportuni fattori di sconto.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.80\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_fattori_sconto.pdf}
+\includegraphics[width=0.80\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_fattori_sconto.pdf}
 \caption{Esempio di fattori di sconto $P(0,T)$. La curva decresce monotonamente:
 $P(0,T)<1$ riflette la preferenza temporale (un euro oggi vale pi\`u di un euro domani).}
 \label{fig:sconto-intro}
@@ -427,7 +427,7 @@ rispetto a quella dello spot.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.88\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf}
+\includegraphics[width=0.88\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf}
 \caption{Andamento del tasso spot $r^c(t)$ e del forward istantaneo $f(t)$.} 
 \label{fig:spot-fwd-media}
 \end{figure}
@@ -599,7 +599,7 @@ riporta i valori usati pi\`u avanti per la ricostruzione di dicembre~2025. % con
 %
 %\begin{figure}[H]
 %\centering
-%\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig08_confronto_spline.pdf}
+%\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig08_confronto_spline.pdf}
 %\caption{Estrapolazione: spline cubica naturale vs metodo EIOPA (bootstrap + FSP/LLFR),
 %dicembre~2025. Nella zona interpolata ($T\le 20$) entrambe seguono i nodi; oltre
 %l'FSP (zona grigia) la spline estrapola senza vincolo mentre il metodo EIOPA converge
@@ -1073,7 +1073,7 @@ $20\%$ in vigore nel primo anno di applicazione.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.88\textwidth]{../output/01_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf}
+\includegraphics[width=0.88\textwidth]{../output/02_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf}
 \caption{Il peso di convergenza $B(\alpha,h)$ per tre valori di $\alpha$. Parte da $1$ all'FSP
 ($h=0$, forward $=\LLFR$) e tende a $0$ ($h\to\infty$, forward $=\UFR$). }
 \label{fig:Bah}
@@ -1174,7 +1174,7 @@ giorno lavorativo del mese di riferimento.
 %con il ticker di provenienza, il valore lordo e il valore dopo la sottrazione del CRA
 %(Sez.~\ref{sec:cra}).
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_input_ric_dic.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_input_ric_dic.tex}
 
 \begin{warningbox}
 \textbf{Due gruppi di tenor, due ruoli diversi.} I tenor da $1$ a $20$ anni sono utilizzati
@@ -1250,7 +1250,7 @@ Figura~\ref{fig:cf} (i forward annuali, dove si vedono i ``gradini'' piatti nei 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.90\textwidth]{../output/01_eiopa_rfr_bootstrap/fig01_input_par.pdf}
+\includegraphics[width=0.90\textwidth]{../output/02_eiopa_rfr_bootstrap/fig01_input_par.pdf}
 \caption{Par swap di input EIOPA lordi e after-CRA per le 15 scadenze DLT EUR al
 31/12/2025.}
 \label{fig:input}
@@ -1258,7 +1258,7 @@ Figura~\ref{fig:cf} (i forward annuali, dove si vedono i ``gradini'' piatti nei 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf}
 \caption{Curva zero ricostruita per bootstrap (1--20 anni). Cerchi pieni: tenor DLT
 osservati; cerchi vuoti: tenor non osservati ($14,16$--$19$) ricavati dall'ipotesi di forward
 costante.}
@@ -1267,7 +1267,7 @@ costante.}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig03_constant_forward.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig03_constant_forward.pdf}
 \caption{Forward annuali $f_{t-1,t}$. Nei tratti tra tenor non consecutivi il
 forward \`e costante per costruzione: si vedono i ``gradini'' piatti in corrispondenza dei
 gap $13\!\to\!15$ e $15\!\to\!20$.}
@@ -1344,11 +1344,11 @@ Sul secondo gap
 $f^\star \approx 3.5147\%$, usato per generare in un colpo i quattro fattori di sconto interni
 $d^{(1)}_{15},\ldots,d^{(4)}_{15}$ tramite la~\eqref{eq:cf}.
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_newton_esempio.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_newton_esempio.tex}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.90\textwidth]{../output/01_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf}
+\includegraphics[width=0.90\textwidth]{../output/02_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf}
 \caption{Convergenza di Newton sui due gap del bootstrap di dicembre~2025: residuo
 $|\varphi(f_k)|$ a ogni iterazione $k$ (scala log). In entrambi i casi la precisione macchina si
 raggiunge in $3$ iterazioni.}
@@ -1361,7 +1361,7 @@ la curva ricostruita a tutti i tenor interi da $1$ a $\FSP$: fattore di sconto $
 zero continuo $r^c_t$, tasso zero annuo composto $r_t$ e forward annuale $f_{t-1,t}$. I tenor
 contrassegnati non sono quotati e nascono interamente dall'ipotesi di forward costante.
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_curva_bootstrap.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_curva_bootstrap.tex}
 
 La verifica di re-pricing conferma che le radici trovate sono quelle corrette: per ogni tenor
 osservato, $s_i\sum_{j=1}^{T_i}d_j+d_{T_i}=1$. 
@@ -1410,9 +1410,9 @@ LLFR_c <- sum(fwd_c_per_media * w_llfr)
 La Tabella~\ref{tab:bootstrap-esteso} raccoglie i valori del bootstrap esteso ai sei tenor che
 servono; la Tabella~\ref{tab:llfr-calcolo} mostra il calcolo completo, un contributo per riga. $\ $ \\
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_bootstrap_esteso.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_bootstrap_esteso.tex}
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_llfr_calcolo.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_llfr_calcolo.tex}
 
 Il risultato \`e
 \[
@@ -1487,7 +1487,7 @@ fissato per legge e non calibrato sui dati (Sez.~\ref{sec:alpha}).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.90\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_b_alpha_h.pdf}
+\includegraphics[width=0.90\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_b_alpha_h.pdf}
 \caption{Il peso di convergenza $B(\alpha,h)=(1-e^{-\alpha h})/(\alpha h)$ per i tre valori
 rilevanti di $\alpha$: il regime ($11\%$), il phasing-in 2027 ($20\%$) e il valore SEK
 ($40\%$). Parte da $1$ all'$\FSP$ (forward $=\LLFR$) e tende a $0$ (forward $=\UFR$).}
@@ -1552,14 +1552,14 @@ Il benchmark \`e la curva ufficiale EIOPA di dicembre~2025, ricalcolata da EIOPA
 nuovo metodo a bootstrap: il confronto \`e cos\`i \emph{like-for-like}, stesso metodo su
 entrambi i lati.
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_confronto_eiopa.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_confronto_eiopa.tex}
 
 Come si vede sia dal grafico sia dalla tabella, la differenza \`e minima: pochi centesimi di
 punto base ovunque, sia in zona liquida sia in estrapolazione.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf}
 \caption{Ricostruzione vs curva ufficiale EIOPA, dicembre~2025. \emph{Sopra}: spot ricostruito
 (blu) e ufficiale (rosso, cerchi aperti), tenor $1$--$60$ (vista; le statistiche RMSE/max sono
 calcolate sull'intero orizzonte disponibile, 1--120). \emph{Sotto}: scarti in bps; blu =
@@ -1616,7 +1616,7 @@ convergenza, non il livello --- che $\alpha$ agisce direttamente.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.80\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_alpha_curve.pdf}
+\includegraphics[width=0.80\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_alpha_curve.pdf}
 \caption{Velocit\`a di convergenza: distanza $|f(t)-\UFR|$ in bps (scala logaritmica), oltre
 l'$\FSP$, per il valore base $\alpha=11\%$ (continua) e lo scenario di phasing-in
 $\alpha=20\%$ (tratteggiata). Le due curve divergono e diventano asintoticamente parallele,
@@ -1638,7 +1638,7 @@ La Figura~\ref{fig:alpha-delta} riporta la differenza in punti base tenor per te
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_alpha_delta.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_alpha_delta.pdf}
 \caption{Differenza tra gli zero rate dei due scenari (phasing-in $\alpha=20\%$ meno base
 $\alpha=11\%$), in bps. Esattamente nulla fino all'$\FSP$; cresce nel tratto estrapolato fino
 a un massimo, per poi riassorbirsi lentamente man mano che entrambe le curve si schiacciano
@@ -1655,7 +1655,7 @@ contesto di mercato con $\LLFR$ molto distante dall'$\UFR$ --- per esempio a val
 movimento dei tassi lunghi --- lo stesso esercizio produrrebbe differenze maggiori, e la
 scelta tra il valore a regime e quello di phasing-in diventerebbe rilevante anche in pratica.
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_alpha_sens.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_alpha_sens.tex}
 
 Le ultime due colonne della Tabella~\ref{tab:alpha-sens} misurano direttamente la velocit\`a di
 convergenza, come distanza residua $|f^c_t - \UFR^c|$ del forward dall'ancora. Il confronto \`e
@@ -1755,18 +1755,18 @@ Smith--Wilson) in bps, tenor per tenor.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_sw_vs_new_rivisto.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_sw_vs_new_rivisto.pdf}
 \caption{Curva spot EUR di dicembre~2025: nuovo metodo (bootstrap) vs Smith--Wilson, tenor
 $1$--$60$. Fino all'$\FSP$ (20 anni, linea verticale) le due curve sono sovrapposte; oltre,
 si separano leggermente nell'avvicinarsi all'$\UFR$ (linea punteggiata).}
 \label{fig:sw-vs-new-curves}
 \end{figure}
 
-\input{../output/01_eiopa_rfr_bootstrap/tab_sw_vs_new_rivisto.tex}
+\input{../output/02_eiopa_rfr_bootstrap/tab_sw_vs_new_rivisto.tex}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/01_eiopa_rfr_bootstrap/fig_sw_delta_rivisto.pdf}
+\includegraphics[width=0.92\textwidth]{../output/02_eiopa_rfr_bootstrap/fig_sw_delta_rivisto.pdf}
 \caption{Scarto tra la curva spot EUR di dicembre~2025 costruita col nuovo metodo (bootstrap)
 e quella col metodo Smith--Wilson, in bps. Fino all'$\FSP$ le due curve coincidono a frazioni
 di bp (interpolano gli stessi nodi liquidi); oltre l'$\FSP$ (zona grigia) divergono, con un

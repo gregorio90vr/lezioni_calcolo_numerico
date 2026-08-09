@@ -6,7 +6,7 @@ require(openxlsx)
 
 #------ caricamento dati
 
-swap_eur_dec2025 <- data.table(read.xlsx("../dati/01_swap_euribor6m_ric_dic2025.xlsx"))#data.table(read.csv("~/SviluppoCodice/01_eiopa_rfr_bootstrap/INPUT_EIOPA_YE25.csv"))
+swap_eur_dec2025 <- data.table(read.xlsx("../dati/02_swap_euribor6m_ric_dic2025.xlsx"))#data.table(read.csv("~/SviluppoCodice/02_eiopa_rfr_bootstrap/INPUT_EIOPA_YE25.csv"))
 cra_eur <- 10/1e4 #10pbs
 
 #------ bootstrap per le scadenze vicine (dispensa Sez. 3.3: la condizione par e il bootstrap)
@@ -601,11 +601,11 @@ print(curve_finale)
 
 # ==============================================================================
 # ==============================================================================
-#  OUTPUT PER LA DISPENSA 01 (figure PDF e tabelle .tex)
+#  OUTPUT PER LA DISPENSA 02 (figure PDF e tabelle .tex)
 #
 #  Tutto quanto segue e' costruito SOLO a partire dagli oggetti gia' calcolati
 #  sopra (curve, curve_finale, LLFR_c, ...): non ricalcola nulla del bootstrap.
-#  Destinazione: ../output/01_eiopa_rfr_bootstrap/
+#  Destinazione: ../output/02_eiopa_rfr_bootstrap/
 #
 #  Notazione allineata alla dispensa: r(t) tasso zero, P(0,t) fattore di sconto,
 #  f(t) forward. Ai tenor interi: r_t, r^c_t, d_t.
@@ -614,7 +614,7 @@ print(curve_finale)
 
 suppressPackageStartupMessages(library(ggplot2))
 
-dir_out <- file.path("..", "output", "01_eiopa_rfr_bootstrap")
+dir_out <- file.path("..", "output", "02_eiopa_rfr_bootstrap")
 if (!dir.exists(dir_out)) dir.create(dir_out, recursive = TRUE)
 
 theme_dispensa <- theme_bw(base_size = 12) +
@@ -639,7 +639,7 @@ save_tab <- function(nome, lines) {
 tint <- function(i) if (i %% 2 == 1) "\\rowcolor{rowtint}" else ""
 
 cat("\n=====================================================================\n")
-cat("  OUTPUT DISPENSA 01 -> ", normalizePath(dir_out, mustWork = FALSE), "\n")
+cat("  OUTPUT DISPENSA 02 -> ", normalizePath(dir_out, mustWork = FALSE), "\n")
 cat("=====================================================================\n\n")
 
 # ------------------------------------------------------------------------------
@@ -660,7 +660,7 @@ tab_input[, uso := ifelse(tenor <= fsp, "bootstrap", "solo LLFR")]
 print(tab_input)
 
 {
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Tassi swap EUR di input a dicembre~2025 (valuation date 31/12/2025), ",
            "con il rispettivo \\emph{Reuters Instrument Code}. I ticker sono quelli prescritti ",
@@ -688,7 +688,7 @@ print(tab_input)
 tenor_osservati <- swap_eur_dec2025[, tenor]
 
 {
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Curva ricostruita per bootstrap nella zona liquida ($1\\le t\\le\\FSP$). ",
            "$d_t$ fattore di sconto, $r^c_t$ tasso zero continuo, $r_t$ tasso zero annuo ",
@@ -738,7 +738,7 @@ cat("  Newton gap 13->15: f* =", sprintf("%.10f%%", tail(tr_1315$f,1)*100),
 print(tr_1315)
 
 {
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Metodo di Newton sull'equazione non lineare~\\eqref{eq:boot-nl} per il gap ",
            "$13\\to15$ ($g=2$). Inizializzazione $f_0$ = forward annuale del tenor 13; ",
@@ -766,7 +766,7 @@ print(tr_1315)
 # forward continui che entrano nella media pesata dell'LLFR.
 {
   t_ext <- c(15, 20, 25, 30, 40, 50)
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Valori del bootstrap esteso oltre l'$\\FSP$, ai tenor DLT che entrano ",
            "nel calcolo dell'$\\LLFR$. Il tratto $21\\le t\\le 50$ \\emph{non} fa parte della ",
@@ -791,7 +791,7 @@ print(tr_1315)
   # prima dell'FSP), per gli altri e' l'FSP stesso
   rif <- c(15, rep(fsp, length(tenor_llfr) - 1))
   contrib <- w_llfr * fwd_c_per_media
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Calcolo dell'$\\LLFR$ come media pesata dei forward continui attorno ",
            "all'$\\FSP$ (eq.~\\eqref{eq:llfr}). Ogni riga: forward continuo $f^c_{a,b}$ tra il ",
@@ -849,7 +849,7 @@ B_weight <- function(a, h) ifelse(h == 0, 1, (1 - exp(-a*h)) / (a*h))
 # Benchmark like-for-like: curva ufficiale di dicembre 2025 RICALCOLATA da EIOPA
 # col nuovo metodo (bootstrap), cosi' il confronto isola i soli dati di input.
 read_eiopa_newmethod <- function() {
-  f <- file.path("..", "dati", "01_dec25_eiopa_rfr_newapproach.csv")
+  f <- file.path("..", "dati", "02_dec25_eiopa_rfr_newapproach.csv")
   if (!file.exists(f)) return(NULL)
   tryCatch({
     df <- read.csv(f, stringsAsFactors = FALSE)
@@ -894,7 +894,7 @@ if (!is.null(eiopa_new)) {
   ok     <- is.finite(delta)
   cat(sprintf("  Confronto vs ufficiale: max|delta| liquida = %.3f bps, estrapolazione = %.3f bps\n",
               max(abs(delta[ok & Tsel <= fsp])), max(abs(delta[ok & Tsel > fsp]))))
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Curva ricostruita vs curva ufficiale EIOPA di dicembre~2025 (ricalcolata ",
            "col nuovo metodo a bootstrap: confronto \\emph{like-for-like}, stesso metodo su ",
@@ -986,7 +986,7 @@ stopifnot(max(abs(c_lo$rann - curve_finale$rann)) < 1e-12)
 
 {
   Tsel <- c(20, 25, 30, 40, 50, 60, 80, 100, 120, 150)
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Sensitivit\\`a al parametro di convergenza $\\alpha$: confronto tra il ",
            sprintf("valore di regime ($\\alpha=%.0f\\%%$) e quello di phasing-in ", alpha_lo*100),
@@ -1064,7 +1064,7 @@ if (!is.null(eiopa_sw)) {
   save_fig("fig_sw_delta_rivisto", p_ds)
 
   Tsel <- c(1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120)
-  lines <- c("% GENERATO da R/01_eiopa_rfr_bootstrap_rivisto.R",
+  lines <- c("% GENERATO da R/02_eiopa_rfr_bootstrap.R",
     "\\begin{table}[H]\\centering\\small",
     paste0("\\caption{Confronto metodologico a parit\\`a di dati: curva spot EUR ufficiale di ",
            "dicembre~2025 col nuovo metodo (bootstrap) e col metodo Smith--Wilson. Lo scarto ",
@@ -1088,7 +1088,7 @@ if (!is.null(eiopa_sw)) {
 }
 
 # ------------------------------------------------------------------------------
-# 9. FIGURA fattori di sconto (era in output/shared: ora propria della disp. 01)
+# 9. FIGURA fattori di sconto (era in output/shared: ora propria della disp. 02)
 # ------------------------------------------------------------------------------
 {
   sel <- curve_finale$tenor <= 25

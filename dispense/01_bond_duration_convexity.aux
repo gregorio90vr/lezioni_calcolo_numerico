@@ -1,0 +1,88 @@
+\relax 
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
+\@nameuse{bbl@beforestart}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\babel@aux{italian}{}
+\babel@aux{italian}{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Motivazioni economiche}{2}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Il problema: valutare oggi un flusso di pagamenti futuri}{2}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Obbligazioni, portafogli e gestione del rischio di tasso}{2}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Il percorso di queste dispense}{2}{subsection.1.3}\protected@file@percent }
+\newlabel{sec:percorso}{{1.3}{2}{Il percorso di queste dispense}{subsection.1.3}{}}
+\citation{hull2018}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Prezzo e rendimento di un titolo obbligazionario}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Flussi di cassa di un titolo a cedola fissa}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Il prezzo come valore attuale}{3}{subsection.2.2}\protected@file@percent }
+\newlabel{def:prezzo-bond}{{2.1}{3}{Prezzo di un'obbligazione}{teorema.2.1}{}}
+\newlabel{eq:prezzo}{{1}{3}{Prezzo di un'obbligazione}{equation.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Due titoli di esempio}{3}{subsection.2.3}\protected@file@percent }
+\newlabel{sec:due-titoli}{{2.3}{3}{Due titoli di esempio}{subsection.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Il rendimento a scadenza (YTM)}{3}{subsection.2.4}\protected@file@percent }
+\newlabel{def:ytm}{{2.2}{3}{Rendimento a scadenza}{teorema.2.2}{}}
+\newlabel{eq:ytm-eq}{{2}{3}{Rendimento a scadenza}{equation.2}{}}
+\citation{burden2016}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Monotonia e unicità del rendimento}{4}{subsection.2.5}\protected@file@percent }
+\newlabel{prop:monotonia}{{2.3}{4}{Monotonia del prezzo}{teorema.2.3}{}}
+\newlabel{eq:dprezzo}{{3}{4}{Monotonia e unicità del rendimento}{equation.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Bond A: prezzo $P(y)$ in funzione del rendimento. La curva è strettamente decrescente (Proposizione~\ref {prop:monotonia}) e convessa (Sezione~\ref {sec:convexity}): il rendimento a scadenza è l'unico punto in cui la curva incrocia il prezzo di mercato (linea tratteggiata).}}{4}{figure.1}\protected@file@percent }
+\newlabel{fig:prezzo-rendimento}{{1}{4}{Bond A: prezzo $P(y)$ in funzione del rendimento. La curva è strettamente decrescente (Proposizione~\ref {prop:monotonia}) e convessa (Sezione~\ref {sec:convexity}): il rendimento a scadenza è l'unico punto in cui la curva incrocia il prezzo di mercato (linea tratteggiata)}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Il calcolo del rendimento: bisezione e Newton-Raphson}{4}{section.3}\protected@file@percent }
+\newlabel{sec:radici}{{3}{4}{Il calcolo del rendimento: bisezione e Newton-Raphson}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Il problema di ricerca di zeri}{4}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Bisezione}{4}{subsection.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Bisezione su $[0,0.20]$ per il rendimento a scadenza del Bond A: punto medio $m_k$, residuo $\varphi (m_k)=P(m_k)-P_{\mathrm  {mkt}}$ e ampiezza dell'intervallo. Si mostrano le prime 10 e le ultime 2 iterazioni.}}{5}{table.1}\protected@file@percent }
+\newlabel{tab:bisezione-ytm}{{1}{5}{Bisezione su $[0,0.20]$ per il rendimento a scadenza del Bond A: punto medio $m_k$, residuo $\varphi (m_k)=P(m_k)-P_{\mathrm {mkt}}$ e ampiezza dell'intervallo. Si mostrano le prime 10 e le ultime 2 iterazioni}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Newton-Raphson}{5}{subsection.3.3}\protected@file@percent }
+\newlabel{eq:newton-ytm}{{4}{5}{Newton-Raphson}{equation.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Newton-Raphson per il rendimento a scadenza del Bond A, inizializzato a $y_0=$ cedola $=4\%$. Il residuo crolla quadraticamente: gia' alla terza iterazione l'incremento e' sotto la precisione macchina.}}{5}{table.2}\protected@file@percent }
+\newlabel{tab:newton-ytm}{{2}{5}{Newton-Raphson per il rendimento a scadenza del Bond A, inizializzato a $y_0=$ cedola $=4\%$. Il residuo crolla quadraticamente: gia' alla terza iterazione l'incremento e' sotto la precisione macchina}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Confronto numerico}{5}{subsection.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Bond A: errore $\left \lvert y_k-y^\ast  \right \rvert $ (scala log) per bisezione e Newton-Raphson. La pendenza costante della bisezione è la firma della convergenza lineare; il crollo di Newton è la firma della convergenza quadratica.}}{6}{figure.2}\protected@file@percent }
+\newlabel{fig:convergenza}{{2}{6}{Bond A: errore $\abs {y_k-y^\ast }$ (scala log) per bisezione e Newton-Raphson. La pendenza costante della bisezione è la firma della convergenza lineare; il crollo di Newton è la firma della convergenza quadratica}{figure.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Sensitivity: duration e convexity}{6}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Lo sviluppo di Taylor del prezzo}{6}{subsection.4.1}\protected@file@percent }
+\newlabel{eq:taylor-P}{{5}{6}{Lo sviluppo di Taylor del prezzo}{equation.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Duration di Macaulay}{7}{subsection.4.2}\protected@file@percent }
+\newlabel{def:macaulay}{{4.1}{7}{Duration di Macaulay}{teorema.4.1}{}}
+\newlabel{eq:macaulay}{{6}{7}{Duration di Macaulay}{equation.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Bond A: flussi di cassa, valore attuale al rendimento $y=4.5706\%$, peso $\mathrm  {pv}_t/P$ e contributo $t\cdot \mathrm  {pv}_t/P$ alla duration di Macaulay~\eqref  {eq:macaulay}. La somma dell'ultima colonna \`e $D_{\mathrm  {Mac}}$.}}{7}{table.3}\protected@file@percent }
+\newlabel{tab:flussi-bondA}{{3}{7}{Bond A: flussi di cassa, valore attuale al rendimento $y=4.5706\%$, peso $\mathrm {pv}_t/P$ e contributo $t\cdot \mathrm {pv}_t/P$ alla duration di Macaulay~\eqref {eq:macaulay}. La somma dell'ultima colonna \`e $D_{\mathrm {Mac}}$}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Duration modificata}{7}{subsection.4.3}\protected@file@percent }
+\newlabel{def:modified}{{4.2}{7}{Duration modificata}{teorema.4.2}{}}
+\newlabel{eq:modified-def}{{7}{7}{Duration modificata}{equation.7}{}}
+\newlabel{eq:mod-da-mac}{{8}{7}{Duration modificata}{equation.8}{}}
+\newlabel{eq:taylor-lineare}{{9}{7}{Duration modificata}{equation.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Convexity}{8}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:convexity}{{4.4}{8}{Convexity}{subsection.4.4}{}}
+\newlabel{def:convexity}{{4.3}{8}{Convexity}{teorema.4.3}{}}
+\newlabel{eq:convexity-def}{{10}{8}{Convexity}{equation.10}{}}
+\newlabel{eq:taylor-quadratica}{{11}{8}{Convexity}{equation.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Riepilogo dei due titoli di esempio al proprio rendimento a scadenza.}}{8}{table.4}\protected@file@percent }
+\newlabel{tab:riepilogo-duration}{{4}{8}{Riepilogo dei due titoli di esempio al proprio rendimento a scadenza}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Bontà dell'approssimazione}{8}{subsection.4.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Bond A: prezzo esatto vs approssimazioni di Taylor al 1\textsuperscript  {o} e 2\textsuperscript  {o} ordine. Per $\Delta y$ piccoli le tre curve sono indistinguibili; per $\Delta y$ grandi la sola duration (retta tangente) si allontana visibilmente dall'esatto, mentre la correzione di convexity la insegue.}}{9}{figure.3}\protected@file@percent }
+\newlabel{fig:taylor-prezzo}{{3}{9}{Bond A: prezzo esatto vs approssimazioni di Taylor al 1\textsuperscript {o} e 2\textsuperscript {o} ordine. Per $\Delta y$ piccoli le tre curve sono indistinguibili; per $\Delta y$ grandi la sola duration (retta tangente) si allontana visibilmente dall'esatto, mentre la correzione di convexity la insegue}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Bond A: errore di troncamento (bps di prezzo) delle due approssimazioni. L'errore lineare cresce come $\Delta y^2$ (resta il termine di convexity trascurato), quello quadratico come $\Delta y^3$ --- una cifra di precisione in più per ogni raddoppio della finezza dello sviluppo.}}{9}{figure.4}\protected@file@percent }
+\newlabel{fig:taylor-errore}{{4}{9}{Bond A: errore di troncamento (bps di prezzo) delle due approssimazioni. L'errore lineare cresce come $\Delta y^2$ (resta il termine di convexity trascurato), quello quadratico come $\Delta y^3$ --- una cifra di precisione in più per ogni raddoppio della finezza dello sviluppo}{figure.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Bond A: prezzo esatto e approssimazioni di Taylor al 1\textsuperscript  {o} e 2\textsuperscript  {o} ordine, per diversi shock $\Delta y$. Errore in bps di prezzo rispetto all'esatto.}}{10}{table.5}\protected@file@percent }
+\newlabel{tab:taylor-confronto}{{5}{10}{Bond A: prezzo esatto e approssimazioni di Taylor al 1\textsuperscript {o} e 2\textsuperscript {o} ordine, per diversi shock $\Delta y$. Errore in bps di prezzo rispetto all'esatto}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Duration di portafoglio e immunizzazione}{10}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Duration di portafoglio}{10}{subsection.5.1}\protected@file@percent }
+\newlabel{eq:duration-portafoglio}{{12}{10}{Duration di portafoglio}{equation.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Immunizzazione}{10}{subsection.5.2}\protected@file@percent }
+\newlabel{eq:immunizzazione}{{13}{10}{Immunizzazione}{equation.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Esempio numerico}{11}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Duration del portafoglio $\{$Bond A, Bond B$\}$ in funzione del peso $w_A$ (eq.~\eqref  {eq:duration-portafoglio}). Il punto evidenziato è la soluzione della~\eqref  {eq:immunizzazione} per una passività di duration $D_L=7$.}}{11}{figure.5}\protected@file@percent }
+\newlabel{fig:immunizzazione}{{5}{11}{Duration del portafoglio $\{$Bond A, Bond B$\}$ in funzione del peso $w_A$ (eq.~\eqref {eq:duration-portafoglio}). Il punto evidenziato è la soluzione della~\eqref {eq:immunizzazione} per una passività di duration $D_L=7$}{figure.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Immunizzazione di una passivita' di duration $D_L=7$ con il portafoglio $\{$Bond A, Bond B$\}$: pesi che risolvono il sistema~\eqref  {eq:immunizzazione} e duration/convexity risultanti.}}{11}{table.6}\protected@file@percent }
+\newlabel{tab:immunizzazione}{{6}{11}{Immunizzazione di una passivita' di duration $D_L=7$ con il portafoglio $\{$Bond A, Bond B$\}$: pesi che risolvono il sistema~\eqref {eq:immunizzazione} e duration/convexity risultanti}{table.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Dal rendimento singolo alla curva dei tassi}{11}{section.6}\protected@file@percent }
+\newlabel{sec:verso-curva}{{6}{11}{Dal rendimento singolo alla curva dei tassi}{section.6}{}}
+\bibcite{hull2018}{1}
+\bibcite{fabozzi2012}{2}
+\bibcite{burden2016}{3}
+\bibcite{quarteroni2017}{4}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusioni}{12}{section.7}\protected@file@percent }
+\gdef \@abspage@last{12}

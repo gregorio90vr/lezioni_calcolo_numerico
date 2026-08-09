@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  9 AUG 2026 23:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  9 AUG 2026 23:22
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**./02_eiopa_rfr_bootstrap.tex
-(02_eiopa_rfr_bootstrap.tex
+**./01_bond_duration_convexity.tex
+(01_bond_duration_convexity.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
@@ -856,64 +856,10 @@ Package bm Info: No bold for \U/msa/m/n, using \pmb.
 Package bm Info: No bold for \U/msb/m/n, using \pmb.
 LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 149.
 )
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/algorithm2e\algorithm2e
-.sty
-Package: algorithm2e 2017/07/18 v5.2 algorithms environments
-\c@AlgoLine=\count354
- (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty
-Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
-)
-\algocf@hangindent=\skip68
-
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/ifoddpage\ifoddpage.sty
-Package: ifoddpage 2022/10/18 v1.2 Conditionals for odd/even page detection
-\c@checkoddpage=\count355
-) (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/tools\xspace.sty
-Package: xspace 2014/10/28 v1.13 Space after command names (DPC,MH)
-)
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/relsize\relsize.sty
-Package: relsize 2013/03/29 ver 4.1
-)
-\skiptotal=\skip69
-\skiplinenumber=\skip70
-\skiprule=\skip71
-\skiphlne=\skip72
-\skiptext=\skip73
-\skiplength=\skip74
-\algomargin=\skip75
-\skipalgocfslide=\skip76
-\algowidth=\dimen311
-\inoutsize=\dimen312
-\inoutindent=\dimen313
-\interspacetitleruled=\dimen314
-\interspacealgoruled=\dimen315
-\interspacetitleboxruled=\dimen316
-\algocf@ruledwidth=\skip77
-\algocf@inoutbox=\box86
-\algocf@inputbox=\box87
-\AlCapSkip=\skip78
-\AlCapHSkip=\skip79
-\algoskipindent=\skip80
-\algocf@nlbox=\box88
-\algocf@hangingbox=\box89
-\algocf@untilbox=\box90
-\algocf@skipuntil=\skip81
-\algocf@capbox=\box91
-\algocf@lcaptionbox=\skip82
-\algoheightruledefault=\skip83
-\algoheightrule=\skip84
-\algotitleheightruledefault=\skip85
-\algotitleheightrule=\skip86
-\c@algocfline=\count356
-\c@algocfproc=\count357
-\c@algocf=\count358
-\algocf@algoframe=\box92
-\algocf@algobox=\box93
-)
 Package hyperref Info: Option `colorlinks' set `true' on input line 42.
-\c@teorema=\count359
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 10
-4.
+\c@teorema=\count354
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 99
+.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
@@ -921,30 +867,30 @@ File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdf
 tex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count360
-) (02_eiopa_rfr_bootstrap.aux)
-\openout1 = `02_eiopa_rfr_bootstrap.aux'.
+\l__color_backend_stack_int=\count355
+) (01_bond_duration_convexity.aux)
+\openout1 = `01_bond_duration_convexity.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 104.
-LaTeX Font Info:    ... okay on input line 104.
-LaTeX Info: Redefining \it@ocap on input line 104.
-LaTeX Info: Redefining \it@ccap on input line 104.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 99.
+LaTeX Font Info:    ... okay on input line 99.
+LaTeX Info: Redefining \it@ocap on input line 99.
+LaTeX Info: Redefining \it@ccap on input line 99.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -984,16 +930,16 @@ LaTeX Info: Redefining \it@ccap on input line 104.
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
 ii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count361
-\scratchdimen=\dimen317
-\scratchbox=\box94
-\nofMPsegments=\count362
-\nofMParguments=\count363
+\scratchcounter=\count356
+\scratchdimen=\dimen311
+\scratchbox=\box86
+\nofMPsegments=\count357
+\nofMParguments=\count358
 \everyMPshowfont=\toks52
-\MPscratchCnt=\count364
-\MPscratchDim=\dimen318
-\MPnumerator=\count365
-\makeMPintoPDFobject=\count366
+\MPscratchCnt=\count359
+\MPscratchDim=\dimen312
+\MPnumerator=\count360
+\makeMPintoPDFobject=\count361
 \everyMPtoPDFconversion=\toks53
 )
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
@@ -1006,392 +952,242 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 fg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-Package hyperref Info: Link coloring ON on input line 104.
- (02_eiopa_rfr_bootstrap.out) (02_eiopa_rfr_bootstrap.out)
+Package hyperref Info: Link coloring ON on input line 99.
+ (01_bond_duration_convexity.out) (01_bond_duration_convexity.out)
 \@outlinefile=\write5
-\openout5 = `02_eiopa_rfr_bootstrap.out'.
+\openout5 = `01_bond_duration_convexity.out'.
 
 LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
-06.
+01.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-06.
+01.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-106.
+101.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-106.
+101.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 106.
+(Font)              <12> on input line 101.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 106.
+(Font)              <8> on input line 101.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 106.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 106
+(Font)              <6> on input line 101.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 101
 .
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 106
+LaTeX Font Info:    Trying to load font information for U+msb on input line 101
 .
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-(02_eiopa_rfr_bootstrap.toc
+(01_bond_duration_convexity.toc
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <10.95> on input line 4.
 )
 \tf@toc=\write6
-\openout6 = `02_eiopa_rfr_bootstrap.toc'.
+\openout6 = `01_bond_duration_convexity.toc'.
 
  [1
 
 {C:/Users/grego/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/greg
-o/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users/grego/Ap
-pData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}] [2]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 2
-05.
+o/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}]
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
+48.
 
 (C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [3{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}
-{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}
-{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}{C:
-/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc}]
-
-LaTeX Warning: Command \texteuro invalid in math mode on input line 297.
-
-
-LaTeX Warning: Command \texteuro invalid in math mode on input line 297.
-
-<../output/02_eiopa_rfr_bootstrap/fig_fattori_sconto.pdf, id=196, 578.16pt x 36
-1.35pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_fattori_sconto.pdf Graphic file (typ
-e pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig_fattori_sconto.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_fattori_sconto.pd
-f  used on input line 305.
-(pdftex.def)             Requested size: 350.53915pt x 219.08333pt.
-[4] [5
+) [2{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.
+enc}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc
+}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc
+}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}] [
+3{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc
+}]
+<../output/01_bond_duration_convexity/fig_prezzo_rendimento.pdf, id=178, 578.16
+pt x 361.35pt>
+File: ../output/01_bond_duration_convexity/fig_prezzo_rendimento.pdf Graphic fi
+le (type pdf)
+<use ../output/01_bond_duration_convexity/fig_prezzo_rendimento.pdf>
+Package pdftex.def Info: ../output/01_bond_duration_convexity/fig_prezzo_rendim
+ento.pdf  used on input line 257.
+(pdftex.def)             Requested size: 372.4491pt x 232.7795pt.
+ [4
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.377 \[
-         <../output/02_eiopa_rfr_bootstrap/fig_fattori_sconto.pdf>]
-<../output/02_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf, id=228, 650.43pt 
-x 397.485pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf Graphic file 
-(type pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_spot_fwd_bootstra
-p.pdf  used on input line 430.
-(pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
- [6]
-[7
-pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.489 \begin{equation}
-                       <../output/02_eiopa_rfr_bootstrap/fig_spot_fwd_bootstrap
-.pdf>]
+l.288 
+       <../output/01_bond_duration_convexity/fig_prezzo_rendimento.pdf>]
+(../output/01_bond_duration_convexity/tab_bisezione_ytm.tex
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 502.
+(Font)              <10> on input line 5.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 502.
+(Font)              <7> on input line 5.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 502.
- [8] [9] [10] [11] [12] [13]
-<../output/02_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf, id=342, 650.43pt x 397.48
-5pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf Graphic file (type pd
-f)
-<use ../output/02_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf  u
-sed on input line 1076.
-(pdftex.def)             Requested size: 385.59373pt x 235.64828pt.
- [14
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1112 
-        <../output/02_eiopa_rfr_bootstrap/fig05_peso_Bah.pdf>]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-141.
-
-(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
-File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+(Font)              <5> on input line 5.
 )
-(../output/02_eiopa_rfr_bootstrap/tab_input_ric_dic.tex) [15] [16
+(../output/01_bond_duration_convexity/tab_newton_ytm.tex)
+<../output/01_bond_duration_convexity/fig_convergenza_bisezione_newton.pdf, id=
+202, 578.16pt x 361.35pt>
+File: ../output/01_bond_duration_convexity/fig_convergenza_bisezione_newton.pdf
+ Graphic file (type pdf)
+<use ../output/01_bond_duration_convexity/fig_convergenza_bisezione_newton.pdf>
+
+Package pdftex.def Info: ../output/01_bond_duration_convexity/fig_convergenza_b
+isezione_newton.pdf  used on input line 316.
+(pdftex.def)             Requested size: 372.4491pt x 232.7795pt.
+ [5
 pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1238 \end{codebox}
-                    ]
-<../output/02_eiopa_rfr_bootstrap/fig01_input_par.pdf, id=380, 650.43pt x 397.4
-85pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig01_input_par.pdf Graphic file (type p
-df)
-<use ../output/02_eiopa_rfr_bootstrap/fig01_input_par.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig01_input_par.pdf  
-used on input line 1253.
-(pdftex.def)             Requested size: 394.35236pt x 240.99773pt.
-<../output/02_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf, id=381, 650.43pt x 
-397.485pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf Graphic file (t
-ype pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig02_bootstrap_zero.
-pdf  used on input line 1261.
-(pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [17
-pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1267 
-        <../output/02_eiopa_rfr_bootstrap/fig01_input_par.pdf>]
-<../output/02_eiopa_rfr_bootstrap/fig03_constant_forward.pdf, id=395, 650.43pt 
-x 397.485pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig03_constant_forward.pdf Graphic file 
-(type pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig03_constant_forward.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig03_constant_forwar
-d.pdf  used on input line 1270.
-(pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [18
-pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1294 
-       
-pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1294 
-        <../output/02_eiopa_rfr_bootstrap/fig02_bootstrap_zero.pdf> <../output/
-02_eiopa_rfr_bootstrap/fig03_constant_forward.pdf>]
-(../output/02_eiopa_rfr_bootstrap/tab_newton_esempio.tex) [19]
-<../output/02_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf, id=425, 650.43p
-t x 397.485pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf Graphic fil
-e (type pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig04_newton_converge
-nza.pdf  used on input line 1351.
-(pdftex.def)             Requested size: 394.35236pt x 240.99773pt.
-
-(../output/02_eiopa_rfr_bootstrap/tab_curva_bootstrap.tex) [20
+l.321 \end{figure}
+                  
 pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1365 
-       
-pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
+l.321 \end{figure}
+                  ]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 3
+24.
+
+(C:\Users\grego\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+) [6
+pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1365 
-        <../output/02_eiopa_rfr_bootstrap/fig04_newton_convergenza.pdf>]
-[21
+l.362 \subsection{Duration di Macaulay}
+                                        <../output/01_bond_duration_convexity/f
+ig_convergenza_bisezione_newton.pdf>]
+(../output/01_bond_duration_convexity/tab_flussi_bondA.tex) [7
 pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1407 \end{codebox}
+l.425 \end{equation}
                     ]
-Underfull \hbox (badness 10000) in paragraph at lines 1410--1412
-
- []
-
-(../output/02_eiopa_rfr_bootstrap/tab_bootstrap_esteso.tex)
-(../output/02_eiopa_rfr_bootstrap/tab_llfr_calcolo.tex) [22
+(../output/01_bond_duration_convexity/tab_riepilogo_duration.tex)
+<../output/01_bond_duration_convexity/fig_taylor_prezzo.pdf, id=258, 614.295pt 
+x 397.485pt>
+File: ../output/01_bond_duration_convexity/fig_taylor_prezzo.pdf Graphic file (
+type pdf)
+<use ../output/01_bond_duration_convexity/fig_taylor_prezzo.pdf>
+Package pdftex.def Info: ../output/01_bond_duration_convexity/fig_taylor_prezzo
+.pdf  used on input line 456.
+(pdftex.def)             Requested size: 385.59373pt x 249.50104pt.
+ [8
 pdfTeX warning (ext4): destination with the same identifier (name{table.4}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1448 \]
-         
+l.463 
+      ]
+<../output/01_bond_duration_convexity/fig_taylor_errore.pdf, id=270, 578.16pt x
+ 361.35pt>
+File: ../output/01_bond_duration_convexity/fig_taylor_errore.pdf Graphic file (
+type pdf)
+<use ../output/01_bond_duration_convexity/fig_taylor_errore.pdf>
+Package pdftex.def Info: ../output/01_bond_duration_convexity/fig_taylor_errore
+.pdf  used on input line 466.
+(pdftex.def)             Requested size: 372.4491pt x 232.7795pt.
+ (../output/01_bond_duration_convexity/tab_taylor_confronto.tex)
+[9
+pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.475 
+      
+pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.475 
+       <../output/01_bond_duration_convexity/fig_taylor_prezzo.pdf> <../output/
+01_bond_duration_convexity/fig_taylor_errore.pdf>] [10
 pdfTeX warning (ext4): destination with the same identifier (name{table.5}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1448 \]
-         ]
-<../output/02_eiopa_rfr_bootstrap/fig_b_alpha_h.pdf, id=460, 650.43pt x 397.485
-pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_b_alpha_h.pdf Graphic file (type pdf
-)
-<use ../output/02_eiopa_rfr_bootstrap/fig_b_alpha_h.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_b_alpha_h.pdf  us
-ed on input line 1490.
-(pdftex.def)             Requested size: 394.35236pt x 240.99773pt.
- [23
-pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) ha
+l.531 
+      ]
+<../output/01_bond_duration_convexity/fig_immunizzazione.pdf, id=302, 578.16pt 
+x 361.35pt>
+File: ../output/01_bond_duration_convexity/fig_immunizzazione.pdf Graphic file 
+(type pdf)
+<use ../output/01_bond_duration_convexity/fig_immunizzazione.pdf>
+Package pdftex.def Info: ../output/01_bond_duration_convexity/fig_immunizzazion
+e.pdf  used on input line 534.
+(pdftex.def)             Requested size: 372.4491pt x 232.7795pt.
+ (../output/01_bond_duration_convexity/tab_immunizzazione.tex) [11
+pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1499 
-        <../output/02_eiopa_rfr_bootstrap/fig_b_alpha_h.pdf>]
-(../output/02_eiopa_rfr_bootstrap/tab_confronto_eiopa.tex) [24]
-<../output/02_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf, id=476, 650.43pt x 
-542.025pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf Graphic file (t
-ype pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.
-pdf  used on input line 1562.
-(pdftex.def)             Requested size: 403.11768pt x 335.93623pt.
- [25
+l.572 \end{keybox}
+                  
 pdfTeX warning (ext4): destination with the same identifier (name{table.6}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.1569 
-       ] [26
-pdfTeX warning (ext4): destination with the same identifier (name{figure.9}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1606 \end{codebox}
-                     <../output/02_eiopa_rfr_bootstrap/fig_vs_benchmark_dic.pdf
->]
-<../output/02_eiopa_rfr_bootstrap/fig_alpha_curve.pdf, id=499, 650.43pt x 397.4
-85pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_alpha_curve.pdf Graphic file (type p
-df)
-<use ../output/02_eiopa_rfr_bootstrap/fig_alpha_curve.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_alpha_curve.pdf  
-used on input line 1619.
-(pdftex.def)             Requested size: 350.53915pt x 214.2202pt.
-<../output/02_eiopa_rfr_bootstrap/fig_alpha_delta.pdf, id=501, 650.43pt x 397.4
-85pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_alpha_delta.pdf Graphic file (type p
-df)
-<use ../output/02_eiopa_rfr_bootstrap/fig_alpha_delta.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_alpha_delta.pdf  
-used on input line 1641.
-(pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [27
-pdfTeX warning (ext4): destination with the same identifier (name{figure.10}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1648 
-        <../output/02_eiopa_rfr_bootstrap/fig_alpha_curve.pdf>]
-(../output/02_eiopa_rfr_bootstrap/tab_alpha_sens.tex) [28
-pdfTeX warning (ext4): destination with the same identifier (name{figure.11}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1668 
-       
-pdfTeX warning (ext4): destination with the same identifier (name{table.7}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1668 
-        <../output/02_eiopa_rfr_bootstrap/fig_alpha_delta.pdf>] [29]
-<../output/02_eiopa_rfr_bootstrap/fig_sw_vs_new_rivisto.pdf, id=542, 650.43pt x
- 397.485pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_sw_vs_new_rivisto.pdf Graphic file (
-type pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig_sw_vs_new_rivisto.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_sw_vs_new_rivisto
-.pdf  used on input line 1758.
-(pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
-
-(../output/02_eiopa_rfr_bootstrap/tab_sw_vs_new_rivisto.tex) [30
-pdfTeX warning (ext4): destination with the same identifier (name{figure.12}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1766 
-        <../output/02_eiopa_rfr_bootstrap/fig_sw_vs_new_rivisto.pdf>]
-<../output/02_eiopa_rfr_bootstrap/fig_sw_delta_rivisto.pdf, id=556, 650.43pt x 
-397.485pt>
-File: ../output/02_eiopa_rfr_bootstrap/fig_sw_delta_rivisto.pdf Graphic file (t
-ype pdf)
-<use ../output/02_eiopa_rfr_bootstrap/fig_sw_delta_rivisto.pdf>
-Package pdftex.def Info: ../output/02_eiopa_rfr_bootstrap/fig_sw_delta_rivisto.
-pdf  used on input line 1769.
-(pdftex.def)             Requested size: 403.11768pt x 246.35324pt.
- [31
-pdfTeX warning (ext4): destination with the same identifier (name{table.8}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1789 
-       
-pdfTeX warning (ext4): destination with the same identifier (name{figure.13}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1789 
-        <../output/02_eiopa_rfr_bootstrap/fig_sw_delta_rivisto.pdf>] [32]
-[33] (02_eiopa_rfr_bootstrap.aux)
+l.572 \end{keybox}
+                   <../output/01_bond_duration_convexity/fig_immunizzazione.pdf
+>] [12] (01_bond_duration_convexity.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
-Package rerunfilecheck Info: File `02_eiopa_rfr_bootstrap.out' has not changed.
-
-(rerunfilecheck)             Checksum: 2DFBB33F4AA6B9712193A6C36876CF2B;6187.
+Package rerunfilecheck Info: File `01_bond_duration_convexity.out' has not chan
+ged.
+(rerunfilecheck)             Checksum: 4D8463E9738D4745F4BBF0097A2C59E9;5624.
  ) 
 Here is how much of TeX's memory you used:
- 28352 strings out of 467871
- 544548 string characters out of 5418376
- 962224 words of memory out of 5000000
- 56576 multiletter control sequences out of 15000+600000
- 726050 words of font info for 115 fonts, out of 8000000 for 9000
+ 27086 strings out of 467871
+ 520857 string characters out of 5418376
+ 927220 words of memory out of 5000000
+ 55395 multiletter control sequences out of 15000+600000
+ 717197 words of font info for 112 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 98i,14n,108p,561b,799s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 98i,12n,108p,565b,638s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pf
 b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pf
-b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbxi10.p
-fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.p
-fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.p
-fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi12.p
-fb><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi5.pf
-b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi6.pfb
-><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb>
-<C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><
-C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C
-:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:
-/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/U
-sers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Use
-rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Users
-/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users
-/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users
-/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy6.pfb><C:/Users/
-grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/g
-rego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Users/gr
-ego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
-Output written on 02_eiopa_rfr_bootstrap.pdf (33 pages, 621942 bytes).
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pf
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pf
+b><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb
+><C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb>
+<C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><
+C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C
+:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/
+Users/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr8.pfb><C:/Us
+ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Us
+ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Us
+ers/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Use
+rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/User
+s/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
+Output written on 01_bond_duration_convexity.pdf (12 pages, 380930 bytes).
 PDF statistics:
- 724 PDF objects out of 1000 (max. 8388607)
- 136 named destinations out of 1000 (max. 500000)
- 318 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 422 PDF objects out of 1000 (max. 8388607)
+ 74 named destinations out of 1000 (max. 500000)
+ 254 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -1,0 +1,29 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {section}{\numberline {1}Motivazioni economiche}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Il problema: valutare oggi un flusso di pagamenti futuri}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Obbligazioni, portafogli e gestione del rischio di tasso}{2}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Il percorso di queste dispense}{2}{subsection.1.3}%
+\contentsline {section}{\numberline {2}Prezzo e rendimento di un titolo obbligazionario}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Flussi di cassa di un titolo a cedola fissa}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Il prezzo come valore attuale}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Due titoli di esempio}{3}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Il rendimento a scadenza (YTM)}{3}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Monotonia e unicità del rendimento}{4}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Il calcolo del rendimento: bisezione e Newton-Raphson}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Il problema di ricerca di zeri}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Bisezione}{4}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Newton-Raphson}{5}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Confronto numerico}{5}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Sensitivity: duration e convexity}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Lo sviluppo di Taylor del prezzo}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Duration di Macaulay}{7}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Duration modificata}{7}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Convexity}{8}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Bontà dell'approssimazione}{8}{subsection.4.5}%
+\contentsline {section}{\numberline {5}Duration di portafoglio e immunizzazione}{10}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Duration di portafoglio}{10}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Immunizzazione}{10}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Esempio numerico}{11}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Dal rendimento singolo alla curva dei tassi}{11}{section.6}%
+\contentsline {section}{\numberline {7}Conclusioni}{12}{section.7}%
