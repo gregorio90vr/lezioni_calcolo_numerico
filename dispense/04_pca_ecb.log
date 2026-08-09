@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  9 AUG 2026 22:06
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.17)  10 AUG 2026 00:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -995,9 +995,9 @@ o/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Users/grego/Ap
 pData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/grego/AppDat
 a/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step0_esempio_curva_tas
-si.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
-wed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step0_esempio_curv
+a_tassi.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5>
+ allowed
 <../output/04_pca_ecb/step0_esempio_curva_tassi.pdf, id=143, 578.16pt x 325.215
 pt>
 File: ../output/04_pca_ecb/step0_esempio_curva_tassi.pdf Graphic file (type pdf
@@ -1037,8 +1037,9 @@ Underfull \hbox (badness 10000) in paragraph at lines 208--210
 c}{C:/Users/grego/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}]
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/svd_geometria_esempio.p
-df): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/svd_geometria_esem
+pio.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> all
+owed
 <../output/04_pca_ecb/svd_geometria_esempio.pdf, id=187, 614.295pt x 614.295pt>
 
 File: ../output/04_pca_ecb/svd_geometria_esempio.pdf Graphic file (type pdf)
@@ -1054,8 +1055,9 @@ s been already used, duplicate ignored
 l.346 \]
          <../output/04_pca_ecb/svd_geometria_esempio.pdf>] [6]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step1_curve_livelli_m.p
-df): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_curve_livell
+i_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> all
+owed
 <../output/04_pca_ecb/step1_curve_livelli_m.pdf, id=247, 650.43pt x 361.35pt>
 File: ../output/04_pca_ecb/step1_curve_livelli_m.pdf Graphic file (type pdf)
 <use ../output/04_pca_ecb/step1_curve_livelli_m.pdf>
@@ -1069,8 +1071,9 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <7> on input line 602.
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step1_delta_mensili.pdf
-): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_delta_mensil
+i.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allow
+ed
 <../output/04_pca_ecb/step1_delta_mensili.pdf, id=257, 722.7pt x 361.35pt>
 File: ../output/04_pca_ecb/step1_delta_mensili.pdf Graphic file (type pdf)
 <use ../output/04_pca_ecb/step1_delta_mensili.pdf>
@@ -1092,13 +1095,13 @@ l.747
        <../output/04_pca_ecb/step1_curve_livelli_m.pdf> <../output/04_pca_ecb/s
 tep1_delta_mensili.pdf
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step1_delta_mensili.pdf
-): PDF inclusion: multiple pdfs with page group included in a single page
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step1_delta_mensil
+i.pdf): PDF inclusion: multiple pdfs with page group included in a single page
 >]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step2_varianza_spiegata
-_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
-wed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step2_varianza_spi
+egata_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5>
+ allowed
 <../output/04_pca_ecb/step2_varianza_spiegata_m.pdf, id=294, 650.43pt x 361.35p
 t>
 File: ../output/04_pca_ecb/step2_varianza_spiegata_m.pdf Graphic file (type pdf
@@ -1109,9 +1112,9 @@ ed on input line 752.
 (pdftex.def)             Requested size: 403.11768pt x 223.95749pt.
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_loadings_pc1_pc3_
-m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allow
-ed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_loadings_pc1
+_pc3_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> 
+allowed
 <../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf, id=295, 650.43pt x 361.35pt
 >
 File: ../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf Graphic file (type pdf)
@@ -1133,9 +1136,9 @@ Underfull \hbox (badness 10000) in paragraph at lines 798--799
 
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_scores_mensili_ma
-_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
-wed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_scores_mensi
+li_ma_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5>
+ allowed
 <../output/04_pca_ecb/step3_scores_mensili_ma_m.pdf, id=317, 794.97pt x 650.43p
 t>
 File: ../output/04_pca_ecb/step3_scores_mensili_ma_m.pdf Graphic file (type pdf
@@ -1152,9 +1155,9 @@ s been already used, duplicate ignored
 l.839 
        <../output/04_pca_ecb/step3_loadings_pc1_pc3_m.pdf>]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_serie_storica_ten
-or.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
-wed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_serie_storic
+a_tenor.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5>
+ allowed
 <../output/04_pca_ecb/step3_serie_storica_tenor.pdf, id=340, 794.97pt x 433.62p
 t>
 File: ../output/04_pca_ecb/step3_serie_storica_tenor.pdf Graphic file (type pdf
@@ -1177,9 +1180,9 @@ s been already used, duplicate ignored
 l.898 \end{itemize}
                     <../output/04_pca_ecb/step3_serie_storica_tenor.pdf>]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_confronto_ricostr
-uzione_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5
-> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_confronto_ri
+costruzione_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version
+ <1.5> allowed
 <../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf, id=380, 650.43pt x 6
 50.43pt>
 File: ../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf Graphic file (ty
@@ -1190,9 +1193,9 @@ df  used on input line 988.
 (pdftex.def)             Requested size: 350.53915pt x 350.54216pt.
 [13]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_errore_ricostruzi
-one_tenor_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <
-1.5> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_errore_ricos
+truzione_tenor_m.pdf): PDF inclusion: found PDF version <1.7>, but at most vers
+ion <1.5> allowed
 <../output/04_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf, id=389, 650.43pt 
 x 650.43pt>
 File: ../output/04_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf Graphic file 
@@ -1209,9 +1212,9 @@ s been already used, duplicate ignored
 l.1013 
         <../output/04_pca_ecb/step3_confronto_ricostruzione_m.pdf>]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/step3_ricostruzione_pro
-gressiva_m.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1
-.5> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/step3_ricostruzion
+e_progressiva_m.pdf): PDF inclusion: found PDF version <1.7>, but at most versi
+on <1.5> allowed
 <../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf, id=410, 722.7pt x 
 397.485pt>
 File: ../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf Graphic file (
@@ -1235,8 +1238,8 @@ l.1086 \]
           <../output/04_pca_ecb/step3_ricostruzione_progressiva_m.pdf>]
 [17]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_curva.pdf): 
-PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_mar26_curva.p
+df): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
 <../output/04_pca_ecb/sez4_mar26_curva.pdf, id=459, 650.43pt x 361.35pt>
 File: ../output/04_pca_ecb/sez4_mar26_curva.pdf Graphic file (type pdf)
 <use ../output/04_pca_ecb/sez4_mar26_curva.pdf>
@@ -1245,9 +1248,9 @@ ut line 1206.
 (pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_errore_tenor
-.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowe
-d
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_mar26_errore_
+tenor.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> a
+llowed
 <../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf, id=460, 650.43pt x 361.35pt>
 
 File: ../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf Graphic file (type pdf)
@@ -1257,9 +1260,9 @@ Package pdftex.def Info: ../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf  used
 (pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_convergenza.
-pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_mar26_converg
+enza.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> al
+lowed
 <../output/04_pca_ecb/sez4_mar26_convergenza.pdf, id=461, 650.43pt x 361.35pt>
 File: ../output/04_pca_ecb/sez4_mar26_convergenza.pdf Graphic file (type pdf)
 <use ../output/04_pca_ecb/sez4_mar26_convergenza.pdf>
@@ -1293,8 +1296,9 @@ l.1252
         <../output/04_pca_ecb/sez4_mar26_errore_tenor.pdf> <../output/04_pca_ec
 b/sez4_mar26_convergenza.pdf
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_mar26_convergenza.
-pdf): PDF inclusion: multiple pdfs with page group included in a single page
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_mar26_converg
+enza.pdf): PDF inclusion: multiple pdfs with page group included in a single pa
+ge
 >] [20
 pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
  been already used, duplicate ignored
@@ -1303,8 +1307,8 @@ pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
 l.1253 \newpage
                ]
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_curva.pdf): 
-PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_giu26_curva.p
+df): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
 <../output/04_pca_ecb/sez4_giu26_curva.pdf, id=527, 650.43pt x 361.35pt>
 File: ../output/04_pca_ecb/sez4_giu26_curva.pdf Graphic file (type pdf)
 <use ../output/04_pca_ecb/sez4_giu26_curva.pdf>
@@ -1313,9 +1317,9 @@ ut line 1320.
 (pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_errore_tenor
-.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowe
-d
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_giu26_errore_
+tenor.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> a
+llowed
 <../output/04_pca_ecb/sez4_giu26_errore_tenor.pdf, id=528, 650.43pt x 361.35pt>
 
 File: ../output/04_pca_ecb/sez4_giu26_errore_tenor.pdf Graphic file (type pdf)
@@ -1325,9 +1329,9 @@ Package pdftex.def Info: ../output/04_pca_ecb/sez4_giu26_errore_tenor.pdf  used
 (pdftex.def)             Requested size: 385.59373pt x 214.22572pt.
 
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_convergenza.
-pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_giu26_converg
+enza.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> al
+lowed
 <../output/04_pca_ecb/sez4_giu26_convergenza.pdf, id=529, 650.43pt x 361.35pt>
 File: ../output/04_pca_ecb/sez4_giu26_convergenza.pdf Graphic file (type pdf)
 <use ../output/04_pca_ecb/sez4_giu26_convergenza.pdf>
@@ -1355,8 +1359,9 @@ l.1362
         <../output/04_pca_ecb/sez4_giu26_curva.pdf> <../output/04_pca_ecb/sez4_
 giu26_errore_tenor.pdf
 
-pdfTeX warning: pdflatex.exe (file ../output/04_pca_ecb/sez4_giu26_errore_tenor
-.pdf): PDF inclusion: multiple pdfs with page group included in a single page
+pdfTeX warning: miktex-pdftex.exe (file ../output/04_pca_ecb/sez4_giu26_errore_
+tenor.pdf): PDF inclusion: multiple pdfs with page group included in a single p
+age
 >] [23
 pdfTeX warning (ext4): destination with the same identifier (name{figure.17}) h
 as been already used, duplicate ignored
@@ -1381,7 +1386,7 @@ Package rerunfilecheck Info: File `04_pca_ecb.out' has not changed.
 Here is how much of TeX's memory you used:
  26918 strings out of 467871
  519057 string characters out of 5418376
- 920305 words of memory out of 5000000
+ 920304 words of memory out of 5000000
  55224 multiletter control sequences out of 15000+600000
  739982 words of font info for 114 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1406,7 +1411,7 @@ rs/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/User
 s/grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt9.pfb><C:/Users
 /grego/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10
 .pfb>
-Output written on 04_pca_ecb.pdf (24 pages, 1053590 bytes).
+Output written on 04_pca_ecb.pdf (24 pages, 1053593 bytes).
 PDF statistics:
  710 PDF objects out of 1000 (max. 8388607)
  96 named destinations out of 1000 (max. 500000)
