@@ -1,0 +1,19 @@
+% GENERATO da R/02_eiopa_rfr_bootstrap.R
+\begin{table}[H]\centering\small
+\caption{Calcolo dell'$\LLFR$ come media pesata dei forward continui attorno all'$\FSP$ (eq.~\eqref{eq:llfr}). Ogni riga: forward continuo $f^c_{a,b}$ tra il tenor di riferimento $a$ e il tenor $b$, moltiplicato per il peso EIOPA $w$. La somma dei contributi \`e l'$\LLFR^c$.}
+\label{tab:llfr-calcolo}\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{rrccccc}
+\toprule
+$b$ & $a$ & $d_b$ & $r^c_b$ (\%) & $f^c_{a,b}$ (\%) & $w_b$ & $w_b f^c_{a,b}$ (\%)\\
+\midrule
+\rowcolor{rowtint}20 & 15 & 0.5316709 & 3.1587 & 3.4544 & 0.33 & 1.1399\\
+25 & 20 & 0.4529860 & 3.1676 & 3.2033 & 0.12 & 0.3844\\
+\rowcolor{rowtint}30 & 20 & 0.3891375 & 3.1461 & 3.1209 & 0.48 & 1.4980\\
+40 & 20 & 0.2926655 & 3.0718 & 2.9850 & 0.04 & 0.1194\\
+\rowcolor{rowtint}50 & 20 & 0.2315791 & 2.9257 & 2.7703 & 0.03 & 0.0831\\
+\midrule
+\multicolumn{5}{r}{\textbf{$\LLFR^c$}} & \textbf{1.00} & \textbf{3.2249}\\
+\multicolumn{5}{r}{\textit{per confronto:} $\UFR^c$} & & \textit{3.2467}\\
+\bottomrule
+\end{tabular}
+\end{table}

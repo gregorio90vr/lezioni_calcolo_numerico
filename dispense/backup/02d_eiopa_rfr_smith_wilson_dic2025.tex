@@ -1,0 +1,468 @@
+% ============================================================
+%  Nota di verifica: tre modi di ricostruire la curva EIOPA
+%                     Smith-Wilson di dicembre 2025
+%  Companion di dispense/backup/02c_eiopa_rfr_smith_wilson.tex (backup, non piu'
+%  la dispensa ufficiale: vedi dispense/02_eiopa_rfr_bootstrap_smith_wilson.tex)
+%  Laboratorio di Calcolo Numerico — UniVR, A.A. 2026-2027
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+
+% le figure sono prodotte da R/03b_eiopa_rfr_smith_wilson_dic2025.R
+% in output/03b_eiopa_rfr_smith_wilson_dic2025/
+\graphicspath{{}}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black}
+
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+
+\newcommand{\UFR}{\ensuremath{\mathrm{UFR}}}
+\newcommand{\LLP}{\ensuremath{\mathrm{LLP}}}
+\newcommand{\CP}{\ensuremath{\mathrm{CP}}}
+\newcommand{\CRA}{\ensuremath{\mathrm{CRA}}}
+\newcommand{\Qmat}{\mathbf{Q}}
+\newcommand{\Hmat}{\mathbf{H}}
+\newcommand{\transp}{^{\!\top}}
+
+\title{%
+  \textbf{Tre modi di ricostruire la curva EIOPA Smith--Wilson}\\[6pt]
+  \large Sensibilit\`a a dati di input e $\alpha$ --- dicembre~2025\\[4pt]
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+\section{Scopo di questa nota}
+% ============================================================
+
+La dispensa principale (\texttt{03\_eiopa\_rfr\_smith\_wilson.tex}) ricostruisce passo a
+passo la curva EIOPA EUR con il metodo Smith--Wilson per luglio~2025, ottenendo un accordo
+con la curva ufficiale di RMSE $=0.28$ bps in zona liquida. Ripetendo l'esercizio su
+dicembre~2025 emergeva un fatto interessante: il divario tra l'$\alpha$ ottenuto dal criterio
+di ricerca di zeri (Sez.~\ref{sec:alpha-criterio}) e l'$\alpha$ effettivamente pubblicato da
+EIOPA \`e molto pi\`u ampio a dicembre che a luglio. Questa nota usa dicembre~2025 come banco
+di prova per una domanda pi\`u generale: \textbf{quanto contano, per la curva ricostruita, la
+scelta dei dati di input e la scelta di $\alpha$?}
+
+Rispondiamo confrontando \textbf{tre scenari} di ricostruzione, cambiando una variabile alla
+volta:
+\begin{itemize}
+  \item[\textbf{S1}] par \texttt{EUSA*} (swap) $+$ $\alpha^\star$, lo zero del criterio di
+        ricerca di zeri (Sez.~9.14);
+  \item[\textbf{S2}] par \texttt{EUSA*} (swap) $+$ $\alpha$ ufficiale pubblicato da EIOPA;
+  \item[\textbf{S3}] nodi della curva RFR \emph{ufficiale} (zip EIOPA, convenzione
+        zero-coupon) $+$ lo stesso $\alpha$ ufficiale di S2.
+\end{itemize}
+S1$\to$S2 cambia solo $\alpha$ (stessi dati): isola l'\textbf{effetto di $\alpha$}. S2$\to$S3
+cambia solo la fonte dei dati (stesso $\alpha$): isola l'\textbf{effetto della fonte dati}.
+Per la derivazione del metodo (rappresentazione variazionale, nucleo di Wilson) si rimanda
+alla dispensa 03; qui si richiamano solo le formule necessarie a leggere i risultati.
+
+Script: \url{R/03b_eiopa_rfr_smith_wilson_dic2025.R}. Output in
+\url{output/03b_eiopa_rfr_smith_wilson_dic2025/}.
+
+% ============================================================
+\section{Dati comuni}
+\label{sec:dati-comuni}
+% ============================================================
+
+Gli strumenti di mercato sono i par rate degli \textbf{Interest Rate Swap EUR contro
+EURIBOR~6M} (ticker Bloomberg \texttt{EUSA<tenor> CMPL Curncy}), alle 15 scadenze DLT
+ufficiali valide da giugno a dicembre~2025:
+\[
+  \{1,2,3,4,5,6,7,8,9,10,11,12,13,15,20\}\ \text{anni}.
+\]
+Il tasso di input per il bootstrap swap \`e il par rate after-CRA, $r_j = s_j - \CRA$, con
+$\CRA = 10$ bps (letto dal file ufficiale EIOPA del mese).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{rrr}
+\toprule
+Tenor (anni) & EUSA* (\%) & after-CRA (\%) \\
+\midrule
+1  & 2.1725 & 2.0725 \\
+2  & 2.2620 & 2.1620 \\
+3  & 2.3815 & 2.2815 \\
+4  & 2.4810 & 2.3810 \\
+5  & 2.5690 & 2.4690 \\
+6  & 2.6510 & 2.5510 \\
+7  & 2.7300 & 2.6300 \\
+8  & 2.8020 & 2.7020 \\
+9  & 2.8710 & 2.7710 \\
+10 & 2.9270 & 2.8270 \\
+11 & 2.9810 & 2.8810 \\
+12 & 3.0310 & 2.9310 \\
+13 & 3.0730 & 2.9730 \\
+15 & 3.1460 & 3.0460 \\
+20 & 3.2340 & 3.1340 \\
+\bottomrule
+\end{tabular}
+\caption{Par rate \texttt{EUSA*} e after-CRA per dicembre~2025 (\%). Alimentano S1 e S2.}
+\label{tab:input-eusa}
+\end{table}
+
+Da questi 15 tassi si costruisce la matrice dei flussi di cassa
+$\mathbf{C}\in\mathbb{R}^{20\times 15}$ (Tabella~\ref{tab:C-dicembre}, convenzione swap:
+cedola ogni anno pi\`u rimborso alla scadenza) e da essa gli oggetti del sistema $\Qmat$, $q$,
+$\Hmat$ e $\Qmat\transp\Hmat\Qmat$, esattamente come nella dispensa 03.
+
+\input{../output/03b_eiopa_rfr_smith_wilson_dic2025/tab_C_dicembre.tex}
+
+Per lo Scenario S3 useremo invece, agli stessi 15 tenor, i tassi \textbf{gi\`a pubblicati da
+EIOPA} come curva RFR ufficiale (foglio \texttt{RFR\_spot\_no\_VA} di
+\texttt{EIOPA\_RFR\_20251231.zip}) --- quindi \textbf{gi\`a al netto del CRA}, nessuna
+sottrazione ulteriore:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{rr}
+\toprule
+Tenor (anni) & RFR ufficiale, gi\`a al netto del CRA (\%) \\
+\midrule
+1  & 2.076 \\
+2  & 2.163 \\
+3  & 2.283 \\
+4  & 2.386 \\
+5  & 2.479 \\
+6  & 2.565 \\
+7  & 2.651 \\
+8  & 2.724 \\
+9  & 2.793 \\
+10 & 2.863 \\
+11 & 2.921 \\
+12 & 2.975 \\
+13 & 3.033 \\
+15 & 3.107 \\
+20 & 3.209 \\
+\bottomrule
+\end{tabular}
+\caption{Tassi della curva RFR ufficiale EIOPA (dicembre~2025) ai 15 tenor DLT. Alimentano
+S3.}
+\label{tab:input-rfr}
+\end{table}
+
+Questi 15 valori sono tassi \textbf{spot (zero)}, non par rate di uno swap: usarli nella
+matrice $\mathbf{C}$ della Tabella~\ref{tab:C-dicembre} sarebbe concettualmente sbagliato
+(equivarrebbe a far pagare allo strumento cedole annue pari a un tasso definito solo
+puntualmente, alla scadenza). La documentazione EIOPA prevede infatti due tipi di strumento
+per il bootstrap --- \texttt{SWP} (swap) e \texttt{GVT} (titolo zero-coupon) --- e per un
+tasso zero lo strumento ``nozionale 1'' ha un \textbf{unico flusso alla scadenza}:
+\[
+  C_{ij} = \begin{cases}
+    (1+r_j)^{T_j} & i = T_j,\\
+    0             & i \neq T_j.
+  \end{cases}
+\]
+Con questa convenzione la calibrazione riprezza \emph{esattamente} il tasso zero al nodo (il
+riprezzamento $\mathbf{C}\transp P=\mathbf{1}$ implica direttamente
+$P(0,T_j)=(1+r_j)^{-T_j}$): in zona liquida l'accordo di S3 con la curva ufficiale sar\`a
+quindi perfetto per costruzione, e tutta l'informazione di S3 star\`a nella zona di
+estrapolazione ($T>\LLP$).
+
+% ============================================================
+\section{Il parametro $\alpha$: due criteri a confronto}
+\label{sec:alpha-criterio}
+% ============================================================
+
+Il criterio EIOPA (sez.~9.14) sceglie il pi\`u piccolo $\alpha\ge 0.05$ tale che
+$|f(0,\CP;\alpha)-\omega|\le 1$~bp, cio\`e lo \textbf{zero} (entro tolleranza) della funzione
+$g(\alpha)=f(0,\CP;\alpha)-\omega$. Applicato ai par rate \texttt{EUSA*} di dicembre d\`a
+$\alpha^\star=0.0635$ (Figura~\ref{fig:alpha-eusa}); EIOPA pubblica per lo stesso mese
+$\alpha=0.0736$. Il divario, $0.0736-0.0635=0.0101$, \`e sorprendentemente ampio (a
+luglio~2025 era $0.0011$, dieci volte pi\`u piccolo) --- non un segno di errore, ma il fatto
+che $g(\alpha)$ \`e piatta vicino allo zero: piccoli scarti nei dati di input (Bloomberg
+\texttt{EUSA*} vs quella usata da EIOPA) si amplificano in scarti pi\`u grandi su $\alpha$.
+\`E esattamente questo divario che rende dicembre un caso di studio pi\`u istruttivo di
+luglio per la domanda di questa nota.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_alpha_eusa_dic.pdf}
+\caption{Calibrazione di $\alpha$ sui dati \texttt{EUSA*}, dicembre~2025. Linea blu
+tratteggiata: $\alpha^\star=0.0635$ (criterio); linea verde: $\alpha=0.0736$ ufficiale.}
+\label{fig:alpha-eusa}
+\end{figure}
+
+Lo stesso criterio applicato ai 15 nodi RFR ufficiali (Tabella~\ref{tab:input-rfr}, con la
+convenzione zero-coupon) d\`a invece $\alpha^\star=0.0738$
+(Figura~\ref{fig:alpha-rfr})~--- praticamente identico all'$\alpha$ ufficiale: un primo
+segnale che quei nodi sono molto vicini a quelli effettivamente usati da EIOPA per calibrare
+la curva pubblicata.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_alpha_rfr_dic.pdf}
+\caption{Calibrazione di $\alpha$ sui nodi RFR ufficiali, dicembre~2025. Le due linee (criterio
+e ufficiale) sono quasi sovrapposte.}
+\label{fig:alpha-rfr}
+\end{figure}
+
+% ============================================================
+\section{Scenario S1: \texttt{EUSA*} $+$ $\alpha^\star$}
+\label{sec:s1}
+% ============================================================
+
+Si calibra Smith--Wilson sui par \texttt{EUSA*} (Tabella~\ref{tab:input-eusa}, matrice
+$\mathbf{C}$ swap) con $\alpha=\alpha^\star=0.0635$: si risolve
+$(\Qmat\transp\Hmat\Qmat)b=p-q$ via Cholesky, $\zeta=\Qmat b$. Il riprezzamento
+$\mathbf{C}\transp P=\mathbf{1}$ \`e verificato a precisione di macchina
+($\max_j|(\mathbf{C}\transp P)_j-1|\approx 2.2\cdot 10^{-15}$).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_curve_s1_dic.pdf}
+\caption{Curva Smith--Wilson calibrata, Scenario S1 (\texttt{EUSA*} $+\ \alpha^\star$),
+dicembre~2025.}
+\label{fig:curve-s1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_vs_eiopa_s1_dic.pdf}
+\caption{Scenario S1 vs curva ufficiale EIOPA, dicembre~2025. \emph{Sopra}: overlay spot 1--60a.
+\emph{Sotto}: scarti in bps, tenor 1--80a (blu = zona liquida, rosso = estrapolazione).}
+\label{fig:vs-s1}
+\end{figure}
+
+Risultato: RMSE zona liquida $=0.34$ bps (max $0.84$ bps), RMSE zona di estrapolazione
+$=1.10$ bps (max $1.43$ bps).
+
+% ============================================================
+\section{Scenario S2: \texttt{EUSA*} $+$ $\alpha$ ufficiale}
+\label{sec:s2}
+% ============================================================
+
+Stessi dati e stessa matrice $\mathbf{C}$ di S1, ma $\alpha=0.0736$ (il valore pubblicato da
+EIOPA).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_curve_s2_dic.pdf}
+\caption{Curva Smith--Wilson calibrata, Scenario S2 (\texttt{EUSA*} $+\ \alpha$ ufficiale),
+dicembre~2025.}
+\label{fig:curve-s2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_vs_eiopa_s2_dic.pdf}
+\caption{Scenario S2 vs curva ufficiale EIOPA, dicembre~2025.}
+\label{fig:vs-s2}
+\end{figure}
+
+Risultato: RMSE zona liquida $=0.34$ bps (max $0.84$ bps), RMSE zona di estrapolazione
+$=1.41$ bps (max $1.72$ bps).
+
+% ----------------------------------------------------------
+\subsection{Confronto S1$\leftrightarrow$S2: effetto di $\alpha$}
+\label{sec:s1-vs-s2}
+% ----------------------------------------------------------
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{rrrr}
+\toprule
+Tenor (anni) & EIOPA ufficiale, zero (\%) & SW, S1 e S2, zero (\%) & Scarto (bps) \\
+\midrule
+1  & 2.076 & 2.0725 & $-0.35$ \\
+2  & 2.163 & 2.1630 & $\phantom{-}0.00$ \\
+3  & 2.283 & 2.2849 & $\phantom{-}0.19$ \\
+4  & 2.386 & 2.3873 & $\phantom{-}0.13$ \\
+5  & 2.479 & 2.4787 & $-0.03$ \\
+6  & 2.565 & 2.5648 & $-0.02$ \\
+7  & 2.651 & 2.6488 & $-0.22$ \\
+8  & 2.724 & 2.7262 & $\phantom{-}0.22$ \\
+9  & 2.793 & 2.8014 & $\phantom{-}0.84$ \\
+10 & 2.863 & 2.8628 & $-0.02$ \\
+11 & 2.921 & 2.9229 & $\phantom{-}0.19$ \\
+12 & 2.975 & 2.9793 & $\phantom{-}0.43$ \\
+13 & 3.033 & 3.0269 & $-0.61$ \\
+15 & 3.107 & 3.1110 & $\phantom{-}0.40$ \\
+20 & 3.209 & 3.2093 & $\phantom{-}0.03$ \\
+\bottomrule
+\end{tabular}
+\caption{Tasso zero ai 15 nodi DLT: S1 ($\alpha^\star=0.0635$) e S2 ($\alpha=0.0736$) danno
+\textbf{esattamente gli stessi 4 decimali}, nonostante l'$\alpha$ diverso.}
+\label{tab:s1-s2-nodi}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_residui_s2_dic.pdf}
+\caption{Residui ai 15 nodi DLT (identici per S1 e S2, cfr. Tabella~\ref{tab:s1-s2-nodi}):
+segno alternante, nessun trend con la scadenza --- rumore, non bias sistematico.}
+\label{fig:residui-s1-s2}
+\end{figure}
+
+\begin{osservazione}[In zona liquida $\alpha$ non conta; in estrapolazione s\`i --- ma in modo
+non ovvio]
+La Tabella~\ref{tab:s1-s2-nodi} mostra che il tasso zero calibrato ai 15 nodi DLT \`e
+\textbf{identico} tra S1 e S2: cambiare $\alpha$ da $0.0635$ a $0.0736$ non sposta di una
+sola unit\`a in bps la curva in zona liquida. Questo conferma che $\alpha$ controlla
+soprattutto la \emph{velocit\`a di convergenza} all'$\UFR$ oltre il $\LLP$, non il livello
+dei tassi liquidi (gi\`a osservato nella dispensa 03).
+
+Ci si aspetterebbe quindi che $\alpha$ ufficiale, essendo quello \emph{effettivamente} usato
+da EIOPA, dia un'estrapolazione pi\`u vicina alla curva ufficiale. Il risultato \`e invece
+\textbf{controintuitivo}: RMSE di estrapolazione $=1.10$ bps con $\alpha^\star$ contro
+$1.41$ bps con $\alpha$ ufficiale --- $\alpha^\star$ estrapola \emph{meglio}, non peggio. Non
+si tratta di un'evidenza che $\alpha^\star$ sia ``pi\`u corretto'' in generale: dato che il
+punto di partenza in zona liquida \`e identico per S1 e S2, la differenza in estrapolazione
+viene interamente dal tasso di convergenza diverso applicato allo \emph{stesso} residuo di
+rumore (Tabella~\ref{tab:s1-s2-nodi}); un $\alpha$ pi\`u basso (convergenza pi\`u lenta)
+capita qui di compensare parzialmente, in modo non causale n\'e generalizzabile, la direzione
+di quel rumore. Il messaggio robusto \`e un altro: entrambi gli scarti di estrapolazione
+restano nell'ordine di 1--1.5 bps, un ordine di grandezza pi\`u piccoli di quanto si vedr\`a
+cambiando la \textbf{fonte dei dati} (Sez.~\ref{sec:s2-vs-s3}).
+\end{osservazione}
+
+% ============================================================
+\section{Scenario S3: nodi RFR ufficiali $+$ $\alpha$ ufficiale}
+\label{sec:s3}
+% ============================================================
+
+Si sostituiscono i dati \texttt{EUSA*} con i 15 tassi ufficiali di Tabella~\ref{tab:input-rfr}
+(convenzione zero-coupon, Sez.~\ref{sec:dati-comuni}), tenendo $\alpha=0.0736$ come in S2 ---
+cos\`i S2$\to$S3 cambia \emph{solo} la fonte dei dati.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_curve_s3_dic.pdf}
+\caption{Curva Smith--Wilson calibrata, Scenario S3 (nodi RFR ufficiali $+\ \alpha$ ufficiale),
+dicembre~2025.}
+\label{fig:curve-s3}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{../output/03b_eiopa_rfr_smith_wilson_dic2025/fig_vs_eiopa_s3_dic.pdf}
+\caption{Scenario S3 vs curva ufficiale EIOPA, dicembre~2025. In zona liquida le due curve
+coincidono per costruzione (convenzione zero-coupon, Sez.~\ref{sec:dati-comuni}).}
+\label{fig:vs-s3}
+\end{figure}
+
+Risultato: RMSE zona liquida $=0.00$ bps (esatto per costruzione), RMSE zona di estrapolazione
+$=0.04$ bps (max $0.08$ bps).
+
+% ----------------------------------------------------------
+\subsection{Confronto S2$\leftrightarrow$S3: effetto della fonte dati}
+\label{sec:s2-vs-s3}
+% ----------------------------------------------------------
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+Scenario & RMSE liquida (bps) & Max liquida (bps) & RMSE estrapolazione (bps) & Max estrapolazione (bps) \\
+\midrule
+S2: \texttt{EUSA*} + $\alpha$ ufficiale     & 0.34 & 0.84 & 1.41 & 1.72 \\
+S3: nodi RFR ufficiali + $\alpha$ ufficiale & 0.00 & 0.00 & 0.04 & 0.08 \\
+\bottomrule
+\end{tabular}}
+\caption{S2 vs S3, stesso $\alpha=0.0736$: cambia solo la fonte dei dati. L'errore di
+estrapolazione crolla di un fattore $\sim 35$.}
+\label{tab:s2-s3}
+\end{table}
+
+\begin{osservazione}[Rumore in zona liquida, bias liscio in estrapolazione]
+I 15 scarti di Tabella~\ref{tab:s1-s2-nodi} (identici per S1 e S2) cambiano segno senza un
+pattern legato alla scadenza (massimo positivo $+0.84$ bps al nodo $9$Y, massimo negativo
+$-0.61$ bps al nodo $13$Y): \`e la firma di \textbf{rumore genuino} nella fonte dati
+(\texttt{EUSA*} Bloomberg vs quella usata da EIOPA), non un errore sistematico del bootstrap
+--- confrontare direttamente il par rate \texttt{EUSA*} con lo zero rate ufficiale, saltando
+il bootstrap, non sarebbe una misura di rumore corretta, dato che par rate e zero rate sono
+oggetti diversi su una curva non piatta.
+
+In zona di estrapolazione, invece, lo scarto di S2 (i primi valori $T=21,\dots,30$: $-0.25$,
+$-0.47$, $-0.70$, $-0.92$, $-1.02$, $-1.20$, $-1.33$, $-1.42$, $-1.46$, $-1.53$ bps) \`e
+\textbf{liscio, monotono e a segno costante}. Il motivo: oltre il $\LLP$ la curva
+Smith--Wilson non \`e pi\`u
+vincolata da 15 punti indipendenti, ma \`e funzione liscia di pochi gradi di libert\`a
+effettivi --- in sostanza la forma della curva calibrata vicino al $\LLP$ (il \emph{Last
+Liquid Forward Rate}). Il rumore nei 15 nodi, per quanto piccolo e a segno alternante, non si
+cancella quando viene compresso in questa condizione al bordo: lascia un residuo netto
+piccolo ma non nullo, che si propaga liscio oltre il $\LLP$ --- dove non c'\`e pi\`u nessun
+dato di mercato a ricorreggerlo --- invece di essere ri-ancorato ogni anno come in zona
+liquida. Lo Scenario S3 conferma questa lettura per differenza: partendo da nodi gi\`a esatti
+(condizione al bordo gi\`a corretta per costruzione), il residuo in estrapolazione crolla a
+$0.04$ bps.
+\end{osservazione}
+
+% ============================================================
+\section{Confronto complessivo}
+% ============================================================
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrr}
+\toprule
+Scenario & Dati & $\alpha$ & RMSE liquida (bps) & Max liquida (bps) & RMSE estrap.\ (bps) & Max estrap.\ (bps) \\
+\midrule
+S1 & \texttt{EUSA*} (swap)     & $0.0635$ ($\alpha^\star$) & 0.34 & 0.84 & 1.10 & 1.43 \\
+S2 & \texttt{EUSA*} (swap)     & $0.0736$ (ufficiale)      & 0.34 & 0.84 & 1.41 & 1.72 \\
+S3 & nodi RFR uff.\ (zero-coupon) & $0.0736$ (ufficiale)   & 0.00 & 0.00 & 0.04 & 0.08 \\
+\bottomrule
+\end{tabular}}
+\caption{Le tre ricostruzioni a confronto, dicembre~2025.}
+\label{tab:confronto-scenari}
+\end{table}
+
+% ============================================================
+\section{Conclusioni}
+% ============================================================
+
+\begin{itemize}
+  \item \textbf{Effetto di $\alpha$ (S1$\to$S2, stessi dati \texttt{EUSA*})}: la curva in
+        zona liquida \`e \emph{identica} indipendentemente da $\alpha$ (Tabella~
+        \ref{tab:s1-s2-nodi}); in estrapolazione l'errore resta comunque piccolo in entrambi i
+        casi ($1.10$ vs $1.41$ bps) e, sorprendentemente, $\alpha^\star$ estrapola \emph{meglio}
+        di $\alpha$ ufficiale --- un effetto di compensazione fortuita sul rumore residuo, non
+        un'evidenza generale che l'auto-calibrazione batta il valore ufficiale
+        (Sez.~\ref{sec:s1-vs-s2}).
+  \item \textbf{Effetto della fonte dati (S2$\to$S3, stesso $\alpha$ ufficiale)}: l'errore di
+        estrapolazione crolla da $1.41$ a $0.04$ bps, un fattore $\sim 35$
+        (Sez.~\ref{sec:s2-vs-s3}). Questo effetto \`e di gran lunga il pi\`u grande dei due:
+        \textbf{la fonte dei dati conta molto pi\`u della scelta di $\alpha$} per la qualit\`a
+        dell'estrapolazione.
+  \item Il meccanismo \`e lo stesso in entrambi i confronti: oltre il $\LLP$ la curva \`e
+        funzione liscia di pochi gradi di libert\`a effettivi (il Last Liquid Forward Rate), e
+        non c'\`e pi\`u mercato a correggerla; piccole imprecisioni nei dati o nella scelta di
+        $\alpha$ non si cancellano ma si propagano lisce nella coda, invece di attenuarsi.
+  \item In sintesi numerico-metodologico: la ricostruzione Smith--Wilson \`e robusta (accordo
+        sub-bp in zona liquida in tutti e tre gli scenari), ma la sua estrapolazione \`e
+        sensibile --- soprattutto alla qualit\`a dei dati di input, meno alla precisione con
+        cui si calibra $\alpha$. Un promemoria numerico sul perch\'e EIOPA specifica con tanta
+        cura fonte dati e convenzioni di bootstrap nella documentazione ufficiale.
+\end{itemize}
+
+\end{document}

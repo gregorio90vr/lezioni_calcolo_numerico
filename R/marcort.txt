@@ -1,0 +1,251 @@
+Option Explicit
+Option Base 1
+
+Function RangeToArray(RangeIn As Range)
+'This function transforms a Range variable to an Array variable
+Dim Arr()
+With Application.WorksheetFunction
+If RangeIn.Columns.Count = 1 Then
+    Arr = .Transpose(RangeIn) 'a (n x 1) Range variable is transformed into a (1 x n)-row array/vector
+Else
+    Arr = .Transpose(.Transpose(RangeIn)) 'a (n x m) Range variable is transformed into a (n x m)-array
+End If
+End With
+RangeToArray = Arr
+End Function
+
+Function hh(z As Double) As Double
+'Help function for function Hmat
+    hh = (z + Exp(-z)) / 2
+End Function
+
+Function Hmat(u As Double, v As Double) As Double
+'The big h-function according to 139 of the specs
+    Hmat = hh(u + v) - hh(Abs(u - v))
+End Function
+
+Function SmithWilsonBruteForce(Instrument As String, DataIn As Range, nrofcoup As Integer, CRA As Double, UFRac As Double, alfamin As Double, Tau As Double, T2 As Integer) As Variant
+' Input:
+' Instrument = {"Zero", "Bond", "Swap"}, nrofcoup = Number of Coupon Payments per Year, CRA= Credit Risk Adjustment in basispoints, UFRac = Ultimate Forward Rate annual commpounded (perunage), T2 = Convergence Maturity
+' DataIn = range (50 rows x 3 columns)
+' Column1: Indicator Vector indicating if corresponding maturity is DLT to qualify as credible input
+' Column2: Maturity Vector
+' Column3: Rate Vector
+
+With Application.WorksheetFunction
+    
+    Dim time As Double
+    time = Timer
+    Dim data()
+    data = RangeToArray(DataIn)
+    Dim nrofrates As Integer
+    nrofrates = .Sum(.Index(data, 0, 1)) 'Sum first column of data to determine number of liquid input rates
+    ReDim u(1 To nrofrates) As Double 'row vector containing liquid maturities
+    ReDim r(1 To nrofrates) As Double 'row vector containing liquid rates
+    Dim umax As Double
+        
+    Dim i As Integer, j As Integer
+    j = 0
+    For i = 1 To UBound(data, 1)
+        If data(i, 1) Then                      ' Indicator = 1 <=> liquid maturity/rate
+            j = j + 1
+            u(j) = data(i, 2)                   ' store liquid maturity in u-vector
+            r(j) = data(i, 3) - CRA / 10000     ' store liquid rate including cra in r-vector
+        End If
+    Next
+    umax = .Max(u)                              ' maximum liquid maturity
+    
+' Note: prices of all instruments are set to 1 by construction
+' Hence 1: if Instrument = Zero then for Zero i there is only one pay-off of (1+r(i))^u(i) at time u(i)
+' Hence 2: if Instrument = Swap or Bond then for Swap/Bond i there are pay-offs of r(i)/nrofcoup at time 1/nrofcoup, 2/nrofcoup, ... u(i)-1/nrofcoup plus a final pay-off of 1+r(i)/nrofcoup at time u(i)
+    
+    Dim lnUFR As Double
+    lnUFR = Log(1 + UFRac)
+    'Creating Q' matrix according to 146 of specs;
+    If Instrument = "Zero" Then nrofcoup = 1
+    ReDim Q(1 To nrofrates, 1 To umax * nrofcoup) As Double
+    Select Case Instrument
+        Case "Zero" 'nrofcoup = 1 by definition
+            For i = 1 To nrofrates
+                Q(i, u(i)) = Exp(-lnUFR * u(i)) * ((1 + r(i)) ^ u(i))
+            Next i
+        Case "Swap", "Bond"
+            For i = 1 To nrofrates
+                For j = 1 To u(i) * nrofcoup - 1
+                    Q(i, j) = Exp(-lnUFR * j / nrofcoup) * r(i) / nrofcoup
+                Next j
+                Q(i, j) = Exp(-lnUFR * j / nrofcoup) * (1 + r(i) / nrofcoup)
+            Next i
+    End Select
+    
+    Dim alfa As Double
+    Dim galfa_output As Variant, gamma As Variant
+        
+    Const precision = 6 'number of decimals for optimal alfa
+    Dim alfascanoutput As Variant
+    Dim stepsize As Double
+    
+    Tau = Tau / 10000 'As input is in basispoints it has to be transformed to number format
+    
+    galfa_output = Galfa(alfamin, Q, nrofrates, umax, nrofcoup, T2, Tau)
+    ' This function calculates 2 outputs:
+    ' output(1): g(alfa)-tau where g(alfa) is according to 165 of the specs
+    ' output(2): gamma = Qb according to 148 of the specs
+
+    If galfa_output(1) <= 0 Then 'g(alfa)<=tau => alfamin is optimal
+        alfa = alfamin
+        gamma = galfa_output(2)
+    Else ' scanning for the optimal alfa is based on the scan-procedure taken from Eiopa matlab production code
+         ' in each for-next loop the next optimal alfa decimal is scanned for, starting with an stepsize of 0.1 (first decimal) followed by the a next decimal through stepsize = stepsize/10
+        stepsize = 0.1
+        For alfa = alfamin + stepsize To 20 Step stepsize
+            If Galfa(alfa, Q, nrofrates, umax, nrofcoup, T2, Tau)(1) <= 0 Then Exit For
+        Next alfa
+        For i = 1 To precision - 1
+             alfascanoutput = AlfaScan(alfa, stepsize, Q, nrofrates, umax, nrofcoup, T2, Tau)
+             alfa = alfascanoutput(1)
+             stepsize = stepsize / 10
+        Next i
+        gamma = alfascanoutput(2)
+    End If
+    
+    ' Optimal alfa and corresponding gamma have been determined
+    ' Now the SW-present value function according to 154 of the specs can be calculated: p(v)=exp(-lnUFR*v)*(1+H(v,u)*Qb)
+    
+    ReDim h(0 To 121, 1 To umax * nrofcoup) As Double 'The H(v,u) matrix for maturities v = 1 to 121 according to 139 of the technical specs (Note: maturity 121 will not be used; see later)
+    ReDim g(0 To 121, 1 To umax * nrofcoup) As Double 'The G(v,u) matrix for maturities v = 1 to 121 according to 142 of the technical specs (Note: maturity 121 will not be used; see later)
+    For i = 0 To 121
+        For j = 1 To umax * nrofcoup
+            h(i, j) = Hmat(alfa * i, alfa * j / nrofcoup)
+            If (j / nrofcoup) > i Then
+                g(i, j) = alfa * (1 - Exp(-alfa * j / nrofcoup) * .Cosh(alfa * i))
+            Else
+                g(i, j) = alfa * Exp(-alfa * i) * .Sinh(alfa * j / nrofcoup)
+            End If
+        Next j
+    Next i
+    
+        
+    Dim temptempdiscount
+    Dim temptempintensity
+    ReDim tempdiscount(0 To 121) As Double
+    ReDim tempintensity(0 To 121) As Double
+    
+    ReDim discount(0 To 121) As Double
+    ReDim fwintensity(0 To 121) As Double
+    ReDim yldintensity(0 To 121) As Double
+    ReDim forwardac(0 To 121) As Double
+    ReDim zeroac(0 To 121) As Double
+    ReDim forwardcc(0 To 121) As Double
+    ReDim zerocc(0 To 121) As Double
+
+    temptempdiscount = .Transpose(.MMult(h, gamma)) 'First a temporary discount-vector will be used to store the in-between result H(v,u)*Qb = H(v,u)*gamma (see 154 of the specs)
+    temptempintensity = .Transpose(.MMult(g, gamma)) 'Calculating G(v,u)*Qb according to 158 of the specs
+    For i = 0 To 121
+        tempdiscount(i) = temptempdiscount(i + 1)
+        tempintensity(i) = temptempintensity(i + 1)
+    Next i
+    
+    Dim temp As Double
+    temp = 0
+    For i = 1 To umax * nrofcoup
+        temp = temp + (1 - Exp(-alfa * i / nrofcoup)) * gamma(i, 1) 'calculating (1'-exp(-alfa*u'))Qb as subresult for 160 of specs
+    Next i
+    yldintensity(0) = lnUFR - alfa * temp 'calculating 160 of the specs
+    fwintensity(0) = yldintensity(0)
+    discount(0) = 1
+    yldintensity(1) = lnUFR - Log(1 + tempdiscount(1)) 'calculating 158 of the specs for maturity 1 year
+    fwintensity(1) = lnUFR - tempintensity(1) / (1 + tempdiscount(1)) 'calculating 158 of the specs for maturity 1 year
+    discount(1) = Exp(-lnUFR) * (1 + tempdiscount(1)) 'Then the in-between result from the discount vector will be used to store the right discount factor into the discount vector
+    zeroac(1) = 1 / discount(1) - 1 'The default output format for calculated rates is Annual Compounding
+    forwardac(1) = zeroac(1)
+    For i = 2 To 120
+        yldintensity(i) = lnUFR - Log(1 + tempdiscount(i)) / i 'calculating 158 of the specs for higher maturities
+        fwintensity(i) = lnUFR - tempintensity(i) / (1 + tempdiscount(i)) 'calculating 158 of the specs for higher maturities
+        discount(i) = Exp(-lnUFR * i) * (1 + tempdiscount(i)) 'The in-between result from the temporary discount vector will be used to store the right discount factor into the discount vector
+        zeroac(i) = (1 / discount(i)) ^ (1 / i) - 1             'The default output format for calculated rates is Annual Compounding
+        forwardac(i) = discount(i - 1) / discount(i) - 1        'The default output format for calculated rates is Annual Compounding
+    Next
+    'After the last Next i=121 => now the last row of the output will be (ab)used to store one ohter output item: optimal alfa
+        
+    yldintensity(i) = 0
+    fwintensity(i) = 0
+    zeroac(i) = 0
+    forwardac(i) = 0
+    discount(i) = alfa 'storing optimal alfa
+    
+    For i = 1 To 120
+        forwardcc(i) = Log(1 + forwardac(i))
+        zerocc(i) = Log(1 + zeroac(i))
+    Next
+    
+    
+    ReDim output(6)
+    output(1) = discount
+    output(2) = yldintensity
+    output(3) = zeroac
+    output(4) = fwintensity
+    output(5) = forwardcc
+    output(6) = forwardac
+        
+SmithWilsonBruteForce = .Transpose(output)
+End With
+End Function
+
+Function AlfaScan(lastalfa As Double, stepsize As Double, Q As Variant, mm As Integer, umax As Double, nrofcoup As Integer, T2 As Integer, Tau As Double) As Variant
+
+Dim galfa_output As Variant
+Dim alfa As Double
+
+For alfa = lastalfa + stepsize / 10 - stepsize To lastalfa Step stepsize / 10
+    galfa_output = Galfa(alfa, Q, mm, umax, nrofcoup, T2, Tau)
+    If galfa_output(1) <= 0 Then Exit For
+Next alfa
+  
+Dim output(1 To 2)
+output(1) = alfa
+output(2) = galfa_output(2)
+AlfaScan = output
+End Function
+
+
+
+Function Galfa(alfa As Double, Q As Variant, mm As Integer, umax As Double, nrofcoup As Integer, T2 As Integer, Tau As Double) As Variant
+' This function calculates 2 outputs:
+' output1: g(alfa)-tau where g(alfa) is according to 165 of the specs
+' output(2): gamma = Qb according to 156 of the specs
+
+With Application.WorksheetFunction
+
+    Dim i As Integer, j As Integer
+    ReDim h(1 To umax * nrofcoup, 1 To umax * nrofcoup) As Double
+    For i = 1 To umax * nrofcoup
+        For j = 1 To umax * nrofcoup
+            h(i, j) = Hmat(alfa * i / nrofcoup, alfa * j / nrofcoup)
+        Next j
+    Next i
+    'Solving b according to 156 of specs, note: p = 1 by construction
+    ReDim temp1(1 To mm, 1 To 1) As Double  'temp = (1-Q'1)=(p-q), with p=1 and q=Q'1 according to 146 of the specs
+    For i = 1 To mm
+        temp1(i, 1) = 1 - .Sum(.Index(Q, i))
+    Next i
+    Dim b As Variant 'b = ((Q'HQ)^(-1))(1-Q'1) according to 156 of the specs
+    b = .MMult(.MInverse(.MMult(.MMult(Q, h), .Transpose(Q))), temp1)
+    Dim gamma As Variant 'gamma variable is used to store Qb according to 156 of specs
+    gamma = .MMult(.Transpose(Q), b)
+    Dim kappa As Double 'kappa according to 162 of specs
+    Dim temp2 As Double, temp3 As Double
+    temp2 = 0
+    temp3 = 0
+    For i = 1 To umax * nrofcoup
+        temp2 = temp2 + gamma(i, 1) * i / nrofcoup
+        temp3 = temp3 + gamma(i, 1) * .Sinh(alfa * i / nrofcoup)
+    Next i
+    kappa = (1 + alfa * temp2) / temp3
+    Dim output(1 To 2) As Variant
+    output(1) = alfa / Abs(1 - kappa * Exp(T2 * alfa)) - Tau
+    output(2) = gamma
+    Galfa = output
+
+End With
+End Function

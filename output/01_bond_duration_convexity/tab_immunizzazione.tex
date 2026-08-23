@@ -1,14 +1,16 @@
 % GENERATO da R/01_bond_duration_convexity.R
 \begin{table}[H]\centering\small
-\caption{Immunizzazione di una passivita' di duration $D_L=7$ con il portafoglio $\{$Bond A, Bond B$\}$: pesi che risolvono il sistema~\eqref{eq:immunizzazione} e duration/convexity risultanti.}
+\caption{Immunizzazione di una passivit\`a zero-coupon a $T_L=7$ anni con il portafoglio $\{$Bond A, Bond B$\}$: pesi che risolvono il sistema~\eqref{eq:immunizzazione} e grandezze risultanti. Si allineano le duration \emph{modificate}, che sono quelle che governano il P\&L.}
 \label{tab:immunizzazione}\renewcommand{\arraystretch}{1.15}
 \begin{tabular}{lc}
 \toprule
-\rowcolor{rowtint}peso Bond A, $w_A$ & 0.4250\\
-peso Bond B, $w_B=1-w_A$ & 0.5750\\
-\rowcolor{rowtint}duration di portafoglio $D_{\mathrm{port}}$ & 7.0000\\
-convexity di portafoglio $C_{\mathrm{port}}$ & 59.8760\\
-\rowcolor{rowtint}target $D_L$ & 7.0000\\
+\rowcolor{rowtint}rendimento della passivit\`a $y_L$ (interpolato, \%) & 4.1346\\
+target $D_{\mathrm{mod}}^{L} = T_L/(1+y_L)$ & 6.7221\\
+\rowcolor{rowtint}peso Bond A, $w_A$ & 0.4306\\
+peso Bond B, $w_B=1-w_A$ & 0.5694\\
+\rowcolor{rowtint}duration modificata di portafoglio & 6.7221\\
+convexity di portafoglio $C_{\mathrm{port}}$ & 59.5324\\
+\rowcolor{rowtint}convexity della passivit\`a $C_L$ & 51.6414\\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -1,0 +1,382 @@
+% ============================================================
+%  Dispensa 02g: Curva EIOPA Risk-Free — Metodo Smith-Wilson
+%               Approccio variazionale (struttura stile PCA)
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+%
+%  NOTA di approfondimento, non variante di lezione: contiene
+%  la dimostrazione elementare della positiva definitezza della
+%  matrice di Wilson (funzioni ausiliarie phi_t + rappresenta-
+%  zione integrale del nucleo + induzione discendente) che fino
+%  a questa riorganizzazione stava inline in 02c Sez. 4.2. È stata
+%  spostata qui, nella sua forma COMPATTA originale, per
+%  alleggerire 02c, che ora si limita a enunciare il risultato
+%  citando Gach (2017) e Lagerås-Lindholm (2016) e a rimandare
+%  qui per la dimostrazione. Stesso contenuto matematico della
+%  02e Appendice A. Per una versione della STESSA dimostrazione
+%  con molti più passaggi intermedi e verifiche numeriche, si
+%  veda invece la nota 02f.
+%  Nessuno script R né cartella output propri (nota solo
+%  testuale/matematica).
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{titlesec}
+
+\graphicspath{{}}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
+\titleformat{\subsubsection}{\small\bfseries\itshape}{\thesubsubsection.}{0.5em}{}
+
+%--- ambienti teorema (solo enunciati, niente dimostrazioni)
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[section]
+\newtheorem{proposizione}[teorema]{Proposizione}
+\theoremstyle{definition}
+\newtheorem{definizione}[teorema]{Definizione}
+\newtheorem{esempio}[teorema]{Esempio}
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+\newtheorem*{attenzione}{Nota numerica}
+
+%--- macro acronimi (funzionano dentro e fuori math mode)
+\newcommand{\UFR}{\ensuremath{\mathrm{UFR}}}
+\newcommand{\LLP}{\ensuremath{\mathrm{LLP}}}
+\newcommand{\CP}{\ensuremath{\mathrm{CP}}}
+\newcommand{\CRA}{\ensuremath{\mathrm{CRA}}}
+\newcommand{\Qmat}{\mathbf{Q}}
+\newcommand{\Hmat}{\mathbf{H}}
+\newcommand{\transp}{^{\!\top}}
+
+%--- colore righe tabella
+\definecolor{rowtint}{RGB}{243,247,253}
+
+%--- box colorati
+\tcbset{
+  mybase/.style={
+    colback=gray!5, colframe=gray!40,
+    boxrule=0.4pt, arc=2pt,
+    left=7pt, right=7pt, top=5pt, bottom=5pt,
+    fonttitle=\small\bfseries
+  }
+}
+\newtcolorbox{keybox}[1][Concetto chiave]{mybase,
+  colframe=blue!40!black, colback=blue!4, title={#1}}
+\newtcolorbox{algobox}[1][Algoritmo]{mybase,
+  colframe=teal!50!black, colback=teal!4, title={#1}}
+\newtcolorbox{warningbox}{mybase,
+  colframe=orange!70!black, colback=orange!5}
+\newtcolorbox{codebox}[1][Codice R]{mybase,
+  colframe=green!40!black, colback=green!3, title={#1}}
+
+% ============================================================
+\title{%
+  \textbf{Costruzione della Curva EIOPA Risk-Free}\\[6pt]
+  \large Il metodo Smith--Wilson: un approccio variazionale\\[4pt]
+  \normalsize La matrice di Wilson è definita positiva: dimostrazione elementare\\[2pt]
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\noindent
+Questa nota raccoglie la dimostrazione elementare della positiva definitezza della matrice di
+Wilson $\Hmat$, che fino alla riorganizzazione della dispensa 02c vi era inclusa per esteso
+(Sez.~4.2). Per mantenere 02c pi\`u snella, quella sezione ora si limita a \textbf{enunciare} il
+risultato (Proposizione~\ref{prop:H-spd} qui sotto) citando la letteratura --- Gach
+\cite{gach2017} per la via variazionale, Lager\aa s e Lindholm \cite{lageras2016} per quella
+probabilistica --- e a rimandare qui per una dimostrazione autosufficiente, che usa solo
+calcolo di integrali. Il contenuto \`e lo stesso, parola per parola, dell'Appendice A della
+dispensa 02e. Chi cerca ogni singolo passaggio algebrico reso esplicito, con verifiche
+numeriche, trova una versione molto pi\`u dettagliata di questa stessa dimostrazione nella nota
+\textbf{02f}.
+
+% ============================================================
+\section{Richiami}
+\label{sec:richiami}
+% ============================================================
+
+Fissiamo, senza dimostrarle, le definizioni sulle quali poggia questa nota; sono le stesse di
+02c (Sez.~4.1--4.2).
+
+\begin{definizione}[Nucleo di Wilson, \cite{eiopa2025} sez.~9.7]
+Per $\alpha>0$ fissato, il \textbf{nucleo di Wilson} è la funzione simmetrica
+\[
+  H(t,u) = \alpha\,\min(t,u) - e^{-\alpha\,\max(t,u)}\,\sinh\!\bigl(\alpha\,\min(t,u)\bigr),
+  \qquad H(t,u)=H(u,t).
+\]
+\end{definizione}
+
+\begin{definizione}[Matrice di Wilson e forma quadratica]
+Dati $m$ nodi di pagamento $0<u_1<\cdots<u_m$, la \textbf{matrice di Wilson} è
+$\Hmat = [H(u_i,u_j)]_{i,j=1}^m$; la sua \textbf{forma quadratica associata} (l'\emph{energia}
+della curva individuata da $\zeta\in\mathbb{R}^m$) è
+\[
+  E(\zeta) = \zeta\transp\Hmat\,\zeta = \sum_{i=1}^m\sum_{j=1}^m \zeta_i\,\zeta_j\,H(u_i,u_j).
+\]
+\end{definizione}
+
+\begin{keybox}[Perché conta]
+Se $E(\zeta)=\zeta\transp\Hmat\zeta>0$ per ogni $\zeta\neq 0$, allora $\Hmat$ è simmetrica
+definita positiva (SPD): il sistema lineare di calibrazione (02c, Sez.~4.3) ammette
+un'\textbf{unica} soluzione, risolvibile con Cholesky, ed $E$ induce un vero prodotto scalare
+$\langle x,y\rangle_\Hmat = x\transp\Hmat y$ su $\mathbb{R}^m$.
+\end{keybox}
+
+% ============================================================
+\section{La matrice di Wilson è definita positiva}
+\label{sec:dimostrazione}
+% ============================================================
+
+\paragraph{Perch\'e la matrice di Wilson \`e definita positiva.}
+La \textbf{matrice di Wilson} $\Hmat = [H(u_i,u_j)]_{i,j=1}^{m}$ \`e la matrice di Gram dei
+nuclei $H(\cdot,u_j)$ centrati nei nodi di pagamento. Che sia \emph{simmetrica} \`e evidente
+($H(t,u)=H(u,t)$); la \emph{definita positivit\`a} \`e il fatto su cui poggia tutta la
+costruzione (energia, prodotto scalare, convessit\`a stretta, Cholesky) e merita una
+giustificazione che usi solo gli strumenti di questa dispensa: un calcolo di integrali.
+Il punto di partenza \`e riscrivere $H$ come ``prodotto scalare di funzioni''.
+
+\begin{proposizione}[Rappresentazione integrale del nucleo di Wilson]
+\label{prop:H-int}
+Per $t>0$ si definisca la funzione
+\[
+  \varphi_t(x) =
+  \begin{cases}
+    1-e^{-\alpha(t-x)} & 0\le x\le t,\\[2pt]
+    0 & x>t .
+  \end{cases}
+\]
+Allora per ogni $s,t>0$ vale l'identit\`a
+\begin{equation}
+  H(s,t) \;=\; \varphi_s(0)\,\varphi_t(0)
+  \;+\; \alpha\!\int_0^{+\infty}\!\varphi_s(x)\,\varphi_t(x)\,dx .
+  \label{eq:H-int}
+\end{equation}
+\end{proposizione}
+
+La verifica \`e un calcolo diretto. Sia $s\le t$ (per la simmetria di ambo i membri non \`e
+restrittivo); il prodotto $\varphi_s\varphi_t$ \`e non nullo solo su $[0,s]$, dove
+\[
+  \varphi_s(x)\,\varphi_t(x)
+  = 1 - e^{-\alpha(s-x)} - e^{-\alpha(t-x)} + e^{-\alpha(s+t-2x)} .
+\]
+Integrando i quattro addendi su $[0,s]$ e moltiplicando per $\alpha$ si ottiene
+\[
+  \alpha\!\int_0^{s}\!\varphi_s\varphi_t\,dx
+  = \alpha s - \bigl(1-e^{-\alpha s}\bigr) - \bigl(e^{-\alpha(t-s)}-e^{-\alpha t}\bigr)
+    + \tfrac12\bigl(e^{-\alpha(t-s)}-e^{-\alpha(s+t)}\bigr) .
+\]
+Sommando $\varphi_s(0)\,\varphi_t(0) = (1-e^{-\alpha s})(1-e^{-\alpha t})
+= 1 - e^{-\alpha s} - e^{-\alpha t} + e^{-\alpha(s+t)}$, quasi tutti i termini si elidono e resta
+\begin{align*}
+  \alpha s - \tfrac12 e^{-\alpha(t-s)} + \tfrac12 e^{-\alpha(s+t)}
+  &= \alpha s - e^{-\alpha t}\,\frac{e^{\alpha s}-e^{-\alpha s}}{2}\\
+  &= \alpha\min(s,t) - e^{-\alpha\max(s,t)}\sinh\!\bigl(\alpha\min(s,t)\bigr)
+  \;=\; H(s,t) .
+\end{align*}
+
+\begin{osservazione}[Per approfondire]
+La rappresentazione~\eqref{eq:H-int} \`e un caso particolare di una tecnica generale per
+costruire nuclei definiti positivi come funzioni di Green di un operatore differenziale: si
+veda Wahba~\cite{wahba1990}, cap.~1, per la costruzione analoga (con un operatore del
+second'ordine) alla base delle spline cubiche di lisciamento. Per una versione di questa
+stessa dimostrazione con ogni passaggio dell'identit\`a~\eqref{eq:H-int} reso esplicito, si
+veda la nota 02f, Sez.~2.
+\end{osservazione}
+
+\begin{proposizione}[La matrice di Wilson \`e SPD]
+\label{prop:H-spd}
+Se i nodi $0<u_1<\cdots<u_m$ sono \textbf{distinti}, la matrice
+$\Hmat=[H(u_i,u_j)]_{i,j=1}^m$ \`e \textbf{simmetrica definita positiva}.
+\end{proposizione}
+
+Anche qui basta la rappresentazione~\eqref{eq:H-int}. Dato $\zeta\in\mathbb{R}^m$, si ponga
+$h(x) = \sum_{j=1}^m \zeta_j\,\varphi_{u_j}(x)$.
+
+\paragraph{Semipositivit\`a: la forma quadratica \`e un quadrato pi\`u l'integrale di un
+quadrato.} Sostituendo~\eqref{eq:H-int} in $\zeta\transp\Hmat\zeta=\sum_{i,j}\zeta_i\zeta_j
+H(u_i,u_j)$ e usando la linearit\`a della somma finita (per scambiare somma e integrale non
+serve altro che questo: \`e una somma finita di $m^2$ addendi),
+\begin{align*}
+  \zeta\transp\Hmat\,\zeta
+  &= \sum_{i,j}\zeta_i\,\zeta_j\Bigl[\varphi_{u_i}(0)\varphi_{u_j}(0)
+    + \alpha\!\int_0^{+\infty}\!\varphi_{u_i}(x)\varphi_{u_j}(x)\,dx\Bigr]\\
+  &= \Bigl(\sum_i \zeta_i\varphi_{u_i}(0)\Bigr)^{\!2}
+    + \alpha\!\int_0^{+\infty}\!\Bigl(\sum_i \zeta_i\varphi_{u_i}(x)\Bigr)^{\!2}\!dx ,
+\end{align*}
+cio\`e, con la notazione $h$,
+\begin{equation}
+  \zeta\transp\Hmat\,\zeta
+  = h(0)^2 + \alpha\!\int_0^{+\infty}\! h(x)^2\,dx \;\ge\; 0 .
+  \label{eq:energia-int}
+\end{equation}
+Essendo somma di due quadrati (uno puntuale, uno integrale), la forma quadratica non \`e mai
+negativa: $\Hmat$ \`e semidefinita positiva.
+
+\begin{osservazione}[I termini con $i\neq j$ non spariscono: sono nel quadrato]
+Il passaggio da $\sum_{i,j}\zeta_i\zeta_j\,\varphi_{u_i}(0)\varphi_{u_j}(0)$ a
+$\bigl(\sum_i\zeta_i\varphi_{u_i}(0)\bigr)^2$ (e l'analogo sotto integrale) non elimina i
+termini misti: \`e l'identit\`a elementare del quadrato di una somma, letta da destra a
+sinistra. Posto $a_i:=\zeta_i\varphi_{u_i}(0)$,
+\[
+  \Bigl(\sum_{i=1}^m a_i\Bigr)^{\!2} = \sum_{i=1}^m\sum_{j=1}^m a_i a_j
+  = \sum_i a_i^2 + \sum_{i\neq j} a_i a_j ,
+\]
+quindi il quadrato $\bigl(\sum_i a_i\bigr)^2$ \emph{contiene gi\`a} tutti i prodotti incrociati
+$a_ia_j$ con $i\neq j$: la somma doppia $\sum_{i,j}$ scorre su tutte le coppie ordinate,
+comprese sia $(i,j)$ sia $(j,i)$, cos\`i che $a_ia_j+a_ja_i=2a_ia_j$ ricostruisce esattamente
+il doppio prodotto dello sviluppo del binomio (per $m=2$: $(a_1+a_2)^2=a_1^2+a_2^2+2a_1a_2$).
+Nessun termine viene scartato: l'uguaglianza~\eqref{eq:energia-int} \`e un'identit\`a esatta,
+non una stima o un'approssimazione. Si noti che questo \`e un argomento diverso da quello dei
+termini che si annullano davvero nella dimostrazione della positivit\`a stretta qui sotto, dove
+$\varphi_{u_j}(x)=0$ per costruzione (fuori supporto) oppure $\zeta_j=0$ per ipotesi induttiva.
+\end{osservazione}
+
+\paragraph{Positivit\`a stretta: da $\zeta\transp\Hmat\zeta=0$ a $\zeta=0$.} Supponiamo
+$\zeta\transp\Hmat\,\zeta=0$. In~\eqref{eq:energia-int} i due addendi $h(0)^2$ e
+$\alpha\int h^2$ sono entrambi $\ge 0$ e sommano a zero, dunque si annullano separatamente:
+$h(0)=0$ e $\int_0^{+\infty}h(x)^2\,dx=0$. Ogni $\varphi_{u_j}$ \`e continua (agli estremi del
+proprio supporto vale $\varphi_{u_j}(u_j)=0$, senza salti), quindi $h$ \`e continua; una
+funzione continua non negativa ($h^2\ge0$) con integrale nullo \`e identicamente nulla, quindi
+$h(x)=0$ per ogni $x\ge 0$.
+
+Resta da dedurre $\zeta=0$ da $h\equiv 0$: lo si fa isolando un coefficiente alla volta, a
+partire dal nodo pi\`u lontano, sfruttando che ogni $\varphi_{u_j}$ \`e nulla oltre il proprio
+nodo (supporto $[0,u_j]$). Poniamo $u_0:=0$ e procediamo per \textbf{induzione discendente}
+su $k=m,m-1,\ldots,1$.
+
+\emph{Caso base ($k=m$).} Sull'intervallo aperto $(u_{m-1},u_m)$, per ogni $j<m$ si ha
+$u_j\le u_{m-1}<x$, quindi $x$ \`e fuori dal supporto $[0,u_j]$ e $\varphi_{u_j}(x)=0$; resta
+solo il termine $j=m$, cio\`e $h(x)=\zeta_m\,\varphi_{u_m}(x)$ per ogni $x\in(u_{m-1},u_m)$.
+La funzione $\varphi_{u_m}(x)=1-e^{-\alpha(u_m-x)}$ si annulla soltanto in $x=u_m$, che non
+appartiene all'intervallo aperto: dunque $\varphi_{u_m}$ non \`e identicamente nulla su
+$(u_{m-1},u_m)$ (ad esempio nel suo punto medio vale $1-e^{-\alpha(u_m-u_{m-1})/2}\neq0$). Da
+$h\equiv 0$ su $(u_{m-1},u_m)$ segue allora $\zeta_m=0$.
+
+\emph{Ipotesi induttiva.} Per un $k$ con $1\le k<m$, supponiamo gi\`a dimostrato
+$\zeta_{k+1}=\cdots=\zeta_m=0$.
+
+\emph{Passo induttivo.} Sull'intervallo aperto $(u_{k-1},u_k)$ (con $u_0=0$ se $k=1$): per
+$j<k$ vale come sopra $u_j\le u_{k-1}<x$, quindi $\varphi_{u_j}(x)=0$; per $j>k$ il
+coefficiente $\zeta_j$ \`e gi\`a nullo per ipotesi induttiva (indipendentemente dal valore di
+$\varphi_{u_j}(x)$, che pu\`o essere non nullo). Resta dunque solo il termine
+$h(x)=\zeta_k\,\varphi_{u_k}(x)$ su $(u_{k-1},u_k)$, e lo stesso argomento del caso base
+(applicato al nodo $u_k$) d\`a $\zeta_k=0$.
+
+Per induzione, $\zeta_k=0$ per ogni $k=1,\ldots,m$, cio\`e $\zeta=0$. Si noti che l'ipotesi di
+nodi \textbf{distinti} \`e ci\`o che rende ben definita e non degenere la partizione in
+intervalli $(u_{k-1},u_k)$: se due nodi coincidessero, l'intervallo corrispondente sarebbe
+vuoto e l'argomento non isolerebbe pi\`u un solo coefficiente. Abbiamo cos\`i mostrato che
+$\zeta\transp\Hmat\zeta=0$ implica $\zeta=0$, cio\`e $\zeta\transp\Hmat\zeta>0$ per ogni
+$\zeta\neq 0$: $\Hmat$ \`e definita positiva. $\blacksquare$
+
+\begin{osservazione}[Per approfondire]
+Una dimostrazione alternativa della positiva definitezza di $\Hmat$, per via probabilistica
+(total positivity del nucleo di un processo di Ornstein--Uhlenbeck e formula di
+Cauchy--Binet), si trova in Lager\aa s e Lindholm~\cite{lageras2016}, sez.~3 e~5; nello stesso
+lavoro (sez.~6.2) Smith--Wilson viene reinterpretato come predittore di kriging (BLUP) per un
+processo gaussiano --- una lettura complementare a quella puramente algebrica qui presentata.
+Una terza via, per via variazionale, si trova in Gach~\cite{gach2017}: si veda la dispensa 02e
+(Sez.~4.2) di questo corso.
+\end{osservazione}
+
+\begin{osservazione}
+La propriet\`a si trasferisce alla matrice della funzione di Wilson completa:
+$[W(u_i,u_j)] = \mathbf{D}\,\Hmat\,\mathbf{D}$ con
+$\mathbf{D}=\operatorname{diag}(e^{-\omega u_i})$ a elementi positivi, quindi anch'essa SPD.
+\end{osservazione}
+
+\begin{osservazione}[L'energia \`e un integrale]
+\label{oss:energia}
+Dalla Proposizione~\ref{prop:H-spd}, $\Hmat$ induce su $\mathbb{R}^m$ il prodotto scalare
+$\langle x,y\rangle_{\Hmat} = x\transp\Hmat\,y$ e la norma
+$\|x\|_{\Hmat} = \sqrt{x\transp\Hmat\,x}$, con $E(\zeta) = \zeta\transp \Hmat\, \zeta =
+\|\zeta\|_{\Hmat}^2 \ge 0$ (Sez.~\ref{sec:richiami}). La~\eqref{eq:energia-int} d\`a al nome
+``energia'' un significato concreto:
+\[
+  E(\zeta) = h(0)^2 + \alpha\!\int_0^{+\infty}\! h(x)^2\,dx
+\]
+\`e l'energia di tipo $L^2$ della funzione ausiliaria $h=\sum_j\zeta_j\varphi_{u_j}$,
+costruita con gli \emph{stessi} coefficienti della curva di sconto. Minimizzare $E$ significa
+scegliere, tra le curve compatibili con i dati, quella che ``carica'' il meno possibile i
+nuclei $H(\cdot,u_j)$: la correzione pi\`u piccola possibile al termine di base $e^{-\omega t}$,
+misurata nella metrica indotta dal nucleo.
+\end{osservazione}
+
+% ============================================================
+\section{Relazione con 02c, 02e e 02f}
+\label{sec:confronto}
+% ============================================================
+
+Questa nota non contiene una dimostrazione nuova: \`e il paragrafo che fino a questa
+riorganizzazione stava per esteso in 02c (Sez.~4.2), spostato qui parola per parola per
+alleggerire la dispensa principale, che ora enuncia soltanto il risultato
+(Proposizione~\ref{prop:H-spd}) rimandando alla letteratura e a questa nota. Lo stesso testo
+compare anche nell'Appendice A di 02e, dove affianca --- senza sostituirla --- la
+dimostrazione variazionale seguita nel corpo principale di quella dispensa. Per la stessa
+dimostrazione con ogni passaggio scomposto ulteriormente e verificato anche numericamente, si
+veda la nota 02f.
+
+% ============================================================
+\renewcommand{\refname}{Riferimenti bibliografici}
+\begin{thebibliography}{9}
+
+\bibitem{eiopa2025}
+  \textbf{EIOPA} (2025).
+  \textit{Technical documentation of the methodology to derive EIOPA's risk-free interest rate
+  term structures}, EIOPA-BoS-25-599.
+  Sezione~9 (Extrapolation and interpolation) per il metodo Smith--Wilson.
+
+\bibitem{gach2017}
+  \textbf{Gach, F.} (2017).
+  \textit{Note on the Smith--Wilson interest rate curve}.
+  International Journal of Theoretical and Applied Finance, 19(07), 1650039.
+  Dimostrazione alternativa, per via variazionale, della positiva definitezza della matrice di
+  Wilson (si veda 02e, Sez.~4.2).
+
+\bibitem{lageras2016}
+  \textbf{Lager\aa s, A., Lindholm, M.} (2016).
+  Issues with the Smith--Wilson method.
+  \textit{Insurance: Mathematics and Economics}, 68, 32--41.
+  Dimostrazione alternativa della positiva definitezza del nucleo via total positivity e
+  formula di Cauchy--Binet (sez.~3 e~5), interpretazione come kriging/BLUP (sez.~6.2).
+
+\bibitem{wahba1990}
+  \textbf{Wahba, G.} (1990).
+  \textit{Spline Models for Observational Data}.
+  CBMS-NSF Regional Conference Series in Applied Mathematics, Vol.~59. SIAM.
+  Cap.~1: costruzione di nuclei definiti positivi come funzioni di Green di un operatore
+  differenziale --- la tecnica generale di cui la Proposizione~\ref{prop:H-int} è un caso
+  particolare.
+
+\end{thebibliography}
+
+\end{document}

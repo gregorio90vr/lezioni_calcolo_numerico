@@ -1,0 +1,48 @@
+{
+    "general": {
+        "loggingEnabled": true
+    },
+    "connections": {
+        "database": {
+            "server": "tbc",
+            "name": "RFR",
+            "schema": "RFR"
+        },
+        "bloomberg": {
+            "server": "dlsftp.bloomberg.com",
+            "port": "30206",
+            "user": "tbc",
+            "password": "tbc",
+            "decryptCode": "tbc",
+            "autoCraReqFile": "templates\\EIOPA_RFR_CRAmmmyyyy_GEN.req",
+            "autoGvtReqFile": "templates\\EIOPA_RFR_GVTmmmyyyy_GEN.req",
+            "autoSwpReqFile": "templates\\EIOPA_RFR_SWPmmmyyyy_GEN.req",
+            "autoDkkReqFile": "templates\\EIOPA_RFR_DKKmmmyyyy_GEN.req"
+        },
+        "refinitiv": {
+            "datascopeSelect": {
+                "user": "tbc",
+                "password": "tbc",
+                "swpInstrumentList": "RFR Swap Data",
+                "gvtInstrumentList": "RFR Government Bond Data",
+                "ecbInstrumentList": "RFR ECB Curve Data",
+                "craInstrumentList": "RFR CRA Data"
+            },
+            "tickHistory": {
+                "user": "tbc",
+                "password": "tbc",
+                "swpInstrumentList": "RFR Swap TRTH Data",
+                "gvtInstrumentList": "RFR Government Bond TRTH Data",
+                "craInstrumentList": "RFR CRA TRTH Data",
+                "dkkInstrumentList": "RFR DKK Data"
+            }
+        },
+        "markit": {
+            "server": "sftp.markit.com",
+            "user": "tbc",
+            "password": "tbc",
+            "downloadPath": "tbc",
+	    "fingerprint": "tbc"
+        }
+    }
+}

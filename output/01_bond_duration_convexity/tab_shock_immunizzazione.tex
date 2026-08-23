@@ -1,0 +1,16 @@
+% GENERATO da R/01_bond_duration_convexity.R
+\begin{table}[H]\centering\small
+\caption{Il portafoglio immunizzato della Tabella~\ref{tab:immunizzazione} sottoposto a tre movimenti di ampiezza identica ($25$~bps), con prezzi ricalcolati in modo \emph{esatto} su una base di 100. Lo shift parallelo lascia il netto praticamente nullo (resta solo il divario di convexity); le due rotazioni no, pur muovendo i tassi della stessa quantit\`a.}
+\label{tab:shock-immunizzazione}\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lcccrrr}
+\toprule
+\textbf{Scenario} & \multicolumn{3}{c}{shock (bps)} & $\Delta$ attivo & $\Delta$ passivo & \textbf{netto}\\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+& 5 anni & 7 anni & 10 anni & & & \\
+\midrule
+\rowcolor{rowtint}Parallelo & +25 & +25 & +25 & -1.6621 & -1.6645 & \textbf{+0.0024}\\
+Irripidimento & -25 & 0 & +25 & -0.7098 & +0.0000 & \textbf{-0.7098}\\
+\rowcolor{rowtint}Appiattimento & +25 & 0 & -25 & +0.7470 & +0.0000 & \textbf{+0.7470}\\
+\bottomrule
+\end{tabular}
+\end{table}

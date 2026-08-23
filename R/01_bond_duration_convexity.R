@@ -12,8 +12,8 @@
 #  Convenzione: cedole ANNUE, tasso y a capitalizzazione annua composta
 #  (P(y) = sum CF_t (1+y)^-t) — la stessa convenzione della quotazione di
 #  mercato dei titoli, diversa dall'intensita' continua usata internamente
-#  dalla curva EIOPA (dispensa 3, Sez. 2): il passaggio dall'una all'altra
-#  e' proprio uno dei temi che la dispensa 3 riprendera'.
+#  dalla curva EIOPA (dispensa 02, Sez. 2): il passaggio dall'una all'altra
+#  e' proprio uno dei temi che la dispensa 02 riprendera'.
 # ==============================================================================
 
 rm(list = ls())
@@ -174,24 +174,106 @@ tab_taylor[, err_quadr   := 1e4 * (quadr   - esatto) / P0_A]
 # ------------------------------------------------------------------------------
 # 5. DURATION DI PORTAFOGLIO E IMMUNIZZAZIONE (Sez. 5)
 # ------------------------------------------------------------------------------
-# Passivita': un unico pagamento la cui "duration" (= scadenza, essendo un
-# flusso singolo) e' D_L = 7 anni. Si cercano i pesi w_A + w_B = 1 tali che
-# la duration del portafoglio {Bond A, Bond B} coincida con D_L.
-D_L <- 7
+# Passivita': un unico pagamento alla scadenza T_L = 7 anni (uno zero-coupon).
+#
+# NOTA sulla convenzione (importante): si allineano le duration MODIFICATE, non
+# le Macaulay. E' la modificata a governare il P&L -- dP/P ~ -D_mod * dy -- e le
+# due NON sono intercambiabili qui, perche' D_mod = D_mac/(1+y) e i due titoli
+# hanno rendimenti diversi (4.57% vs 3.48%): allineare le Macaulay lascerebbe
+# le modificate disallineate, e la verifica sullo shift parallelo (Sez. 6)
+# fallirebbe pur essendo il portafoglio "immunizzato".
+T_L <- 7
 
-w_A <- (D_L - Dmac_B) / (Dmac_A - Dmac_B)
+# Rendimento della passivita': interpolazione lineare fra y_A (5 anni) e y_B
+# (10 anni). E' gia' un micro-anticipo del problema centrale della dispensa 02:
+# il mercato quota alcune scadenze, le altre vanno ricostruite.
+y_L <- y_A + (T_L - bondA$Tmax) / (bondB$Tmax - bondA$Tmax) * (y_B - y_A)
+
+Dmac_L <- T_L                      # zero-coupon: baricentro = unica scadenza
+Dmod_L <- modified_duration(Dmac_L, y_L)
+Conv_L <- T_L * (T_L + 1) / (1 + y_L)^2
+
+cat(sprintf("Passivita': T = %d, y_L = %.6f%% (interpolato), D_mod = %.4f\n",
+            T_L, y_L * 100, Dmod_L))
+
+w_A <- (Dmod_L - Dmod_B) / (Dmod_A - Dmod_B)
 w_B <- 1 - w_A
 stopifnot(w_A >= 0 && w_A <= 1)
 
-Dport <- w_A * Dmac_A + w_B * Dmac_B
+Dport <- w_A * Dmod_A + w_B * Dmod_B
 Cport <- w_A * Conv_A + w_B * Conv_B
-cat(sprintf("Immunizzazione: w_A = %.4f, w_B = %.4f, D_portafoglio = %.4f (target %.1f)\n",
-            w_A, w_B, Dport, D_L))
-stopifnot(abs(Dport - D_L) < 1e-8)
+cat(sprintf("Immunizzazione: w_A = %.4f, w_B = %.4f, D_mod portafoglio = %.4f (target %.4f)\n",
+            w_A, w_B, Dport, Dmod_L))
+stopifnot(abs(Dport - Dmod_L) < 1e-8)
 
 # griglia di w_A per il grafico "duration di portafoglio vs peso"
 w_grid <- seq(0, 1, by = 0.01)
-port_dt <- data.table(w_A = w_grid, D = w_grid * Dmac_A + (1 - w_grid) * Dmac_B)
+port_dt <- data.table(w_A = w_grid, D = w_grid * Dmod_A + (1 - w_grid) * Dmod_B)
+
+# ------------------------------------------------------------------------------
+# 6. SHOCK NON PARALLELI: DOVE L'IMMUNIZZAZIONE PER DURATION FALLISCE (Sez. 7)
+# ------------------------------------------------------------------------------
+# L'immunizzazione di Sez. 5 allinea UNA sola grandezza (la duration modificata)
+# e protegge quindi da UNA sola direzione di movimento: quella in cui tutti i
+# rendimenti si spostano della stessa quantita' (shift parallelo). Qui la si
+# mette alla prova su tre scenari, ricalcolando i prezzi ESATTI (non
+# l'approssimazione di duration).
+#
+# La "curva" e' qui ridotta a tre punti -- (5, y_A), (7, y_L), (10, y_B) -- che
+# e' la caricatura minima sufficiente a distinguere un movimento parallelo da
+# una rotazione. Costruire la curva vera su tutte le scadenze e' il problema
+# della dispensa 02.
+
+delta <- 0.0025   # 25 bps
+
+# ogni scenario: spostamento applicato a (y_A @5a, y_L @7a, y_B @10a)
+scenari <- list(
+  list(nome = "Parallelo",     dA =  delta, dL = delta, dB =  delta),
+  list(nome = "Irripidimento", dA = -delta, dL = 0,     dB =  delta),
+  list(nome = "Appiattimento", dA =  delta, dL = 0,     dB = -delta)
+)
+
+# valori iniziali: il portafoglio e' finanziato esattamente quanto la passivita'
+V0     <- 100
+PV_L0  <- V0
+L_pay  <- PV_L0 * (1 + y_L)^T_L          # importo nominale dovuto in T_L
+P_A0   <- bond_price(y_A, bondA$cf, bondA$times)
+P_B0   <- bond_price(y_B, bondB$cf, bondB$times)
+n_A    <- w_A * V0 / P_A0                # quantita' detenute di ciascun titolo
+n_B    <- w_B * V0 / P_B0
+
+shock_dt <- rbindlist(lapply(scenari, function(s) {
+  P_A1  <- bond_price(y_A + s$dA, bondA$cf, bondA$times)
+  P_B1  <- bond_price(y_B + s$dB, bondB$cf, bondB$times)
+  PV_L1 <- L_pay / (1 + y_L + s$dL)^T_L
+
+  dV_att <- n_A * (P_A1 - P_A0) + n_B * (P_B1 - P_B0)
+  dV_pas <- PV_L1 - PV_L0
+
+  data.table(scenario = s$nome,
+             shock_5a = s$dA * 1e4, shock_7a = s$dL * 1e4, shock_10a = s$dB * 1e4,
+             d_attivo = dV_att, d_passivo = dV_pas, netto = dV_att - dV_pas)
+}))
+
+cat("\n--- Shock a 25 bps sul portafoglio immunizzato (valori su base 100) ---\n")
+print(shock_dt[, .(scenario, d_attivo = round(d_attivo, 4),
+                   d_passivo = round(d_passivo, 4), netto = round(netto, 4))])
+
+# Verifica del messaggio didattico: lo shift parallelo e' coperto (il residuo e'
+# solo il divario di convexity), la rotazione no.
+netto_par  <- shock_dt[scenario == "Parallelo",     netto]
+netto_stee <- shock_dt[scenario == "Irripidimento", netto]
+stopifnot(abs(netto_par) < 0.01)          # parallelo: praticamente immunizzato
+stopifnot(abs(netto_stee) > 20 * abs(netto_par))  # rotazione: ordini di grandezza peggio
+
+# curve dei tre scenari, per la figura (i tre nodi 5a / 7a / 10a)
+curve_shock <- rbindlist(lapply(scenari, function(s) {
+  data.table(scenario = s$nome,
+             T   = c(bondA$Tmax, T_L, bondB$Tmax),
+             y0  = c(y_A, y_L, y_B) * 100,
+             y1  = c(y_A + s$dA, y_L + s$dL, y_B + s$dB) * 100)
+}))
+curve_shock[, scenario := factor(scenario, levels = sapply(scenari, `[[`, "nome"))]
 
 # ==============================================================================
 # ==============================================================================
@@ -413,31 +495,83 @@ cat("=====================================================================\n\n")
 {
   pI <- ggplot(port_dt, aes(x = w_A, y = D)) +
     geom_line(linewidth = 1, color = col_a) +
-    geom_hline(yintercept = D_L, linetype = "dashed", color = col_target) +
-    geom_point(aes(x = w_A_pt, y = D_L), data = data.table(w_A_pt = w_A, D_L = D_L),
+    geom_hline(yintercept = Dmod_L, linetype = "dashed", color = col_target) +
+    geom_point(aes(x = w_A_pt, y = D_pt), data = data.table(w_A_pt = w_A, D_pt = Dmod_L),
                color = col_pt, size = 2.2) +
-    annotate("text", x = w_A + 0.12, y = D_L - 0.35,
+    annotate("text", x = w_A + 0.12, y = Dmod_L - 0.35,
              label = sprintf("w_A = %.3f", w_A), size = 3.5) +
-    labs(title = "Duration di portafoglio in funzione del peso w_A",
-         subtitle = sprintf("Portafoglio {Bond A, Bond B}: la retta w_A*D_A+(1-w_A)*D_B incrocia il target D_L=%d nel punto evidenziato", D_L),
-         x = expression(w[A]), y = "Duration di portafoglio") +
+    labs(title = "Duration modificata di portafoglio in funzione del peso w_A",
+         subtitle = sprintf("Portafoglio {Bond A, Bond B}: la retta w_A*D_A+(1-w_A)*D_B incrocia il target D_L=%.4f nel punto evidenziato", Dmod_L),
+         x = expression(w[A]), y = "Duration modificata di portafoglio") +
     theme_dispensa
   save_fig("fig_immunizzazione", pI)
 
   lines <- c("% GENERATO da R/01_bond_duration_convexity.R",
     "\\begin{table}[H]\\centering\\small",
-    paste0("\\caption{Immunizzazione di una passivita' di duration $D_L=", D_L,
-           "$ con il portafoglio $\\{$Bond A, Bond B$\\}$: pesi che risolvono il ",
-           "sistema~\\eqref{eq:immunizzazione} e duration/convexity risultanti.}"),
+    paste0("\\caption{Immunizzazione di una passivit\\`a zero-coupon a $T_L=", T_L,
+           "$ anni con il portafoglio $\\{$Bond A, Bond B$\\}$: pesi che risolvono il ",
+           "sistema~\\eqref{eq:immunizzazione} e grandezze risultanti. Si allineano le ",
+           "duration \\emph{modificate}, che sono quelle che governano il P\\&L.}"),
     "\\label{tab:immunizzazione}\\renewcommand{\\arraystretch}{1.15}",
     "\\begin{tabular}{lc}", "\\toprule",
-    sprintf("%speso Bond A, $w_A$ & %.4f\\\\", tint(1), w_A),
-    sprintf("%speso Bond B, $w_B=1-w_A$ & %.4f\\\\", tint(2), w_B),
-    sprintf("%sduration di portafoglio $D_{\\mathrm{port}}$ & %.4f\\\\", tint(3), Dport),
-    sprintf("%sconvexity di portafoglio $C_{\\mathrm{port}}$ & %.4f\\\\", tint(4), Cport),
-    sprintf("%starget $D_L$ & %.4f\\\\", tint(5), D_L),
+    sprintf("%srendimento della passivit\\`a $y_L$ (interpolato, \\%%) & %.4f\\\\", tint(1), y_L * 100),
+    sprintf("%starget $D_{\\mathrm{mod}}^{L} = T_L/(1+y_L)$ & %.4f\\\\", tint(2), Dmod_L),
+    sprintf("%speso Bond A, $w_A$ & %.4f\\\\", tint(3), w_A),
+    sprintf("%speso Bond B, $w_B=1-w_A$ & %.4f\\\\", tint(4), w_B),
+    sprintf("%sduration modificata di portafoglio & %.4f\\\\", tint(5), Dport),
+    sprintf("%sconvexity di portafoglio $C_{\\mathrm{port}}$ & %.4f\\\\", tint(6), Cport),
+    sprintf("%sconvexity della passivit\\`a $C_L$ & %.4f\\\\", tint(7), Conv_L),
     "\\bottomrule", "\\end{tabular}", "\\end{table}")
   save_tab("tab_immunizzazione", lines)
+}
+
+# ------------------------------------------------------------------------------
+# 8. FIGURA + TABELLA: shock non paralleli (Sez. 7)
+# ------------------------------------------------------------------------------
+{
+  df_sh <- rbind(
+    curve_shock[, .(scenario, T, y = y0, stato = "prima")],
+    curve_shock[, .(scenario, T, y = y1, stato = "dopo")]
+  )
+  df_sh[, stato := factor(stato, levels = c("prima", "dopo"))]
+
+  pS <- ggplot(df_sh, aes(x = T, y = y, color = stato, linetype = stato)) +
+    geom_line(linewidth = 0.9) +
+    geom_point(size = 2.2) +
+    facet_wrap(~ scenario, nrow = 1) +
+    scale_color_manual(values = c(prima = "gray45", dopo = col_b)) +
+    scale_linetype_manual(values = c(prima = "dashed", dopo = "solid")) +
+    scale_x_continuous(breaks = c(bondA$Tmax, T_L, bondB$Tmax)) +
+    labs(title = "Tre modi di muoversi della curva, a parita' di ampiezza (25 bps)",
+         subtitle = "Solo il primo e' uno spostamento parallelo: e' l'unico contro cui la duration protegge",
+         x = "Scadenza (anni)", y = "Rendimento (%)",
+         color = NULL, linetype = NULL) +
+    theme_dispensa
+  save_fig("fig_shock_non_paralleli", pS, w = 9, h = 4)
+
+  lines <- c("% GENERATO da R/01_bond_duration_convexity.R",
+    "\\begin{table}[H]\\centering\\small",
+    paste0("\\caption{Il portafoglio immunizzato della Tabella~\\ref{tab:immunizzazione} ",
+           "sottoposto a tre movimenti di ampiezza identica ($", round(delta * 1e4),
+           "$~bps), con prezzi ricalcolati in modo \\emph{esatto} su una base di 100. ",
+           "Lo shift parallelo lascia il netto praticamente nullo (resta solo il divario ",
+           "di convexity); le due rotazioni no, pur muovendo i tassi della stessa quantit\\`a.}"),
+    "\\label{tab:shock-immunizzazione}\\renewcommand{\\arraystretch}{1.25}",
+    "\\begin{tabular}{lcccrrr}", "\\toprule",
+    paste0("\\textbf{Scenario} & \\multicolumn{3}{c}{shock (bps)} & ",
+           "$\\Delta$ attivo & $\\Delta$ passivo & \\textbf{netto}\\\\"),
+    "\\cmidrule(lr){2-4}\\cmidrule(lr){5-7}",
+    "& 5 anni & 7 anni & 10 anni & & & \\\\", "\\midrule")
+  fmt_bps <- function(x) if (x == 0) "0" else sprintf("%+.0f", x)
+  for (i in seq_len(nrow(shock_dt))) {
+    lines <- c(lines, sprintf("%s%s & %s & %s & %s & %+.4f & %+.4f & \\textbf{%+.4f}\\\\",
+                              tint(i), shock_dt$scenario[i],
+                              fmt_bps(shock_dt$shock_5a[i]), fmt_bps(shock_dt$shock_7a[i]),
+                              fmt_bps(shock_dt$shock_10a[i]),
+                              shock_dt$d_attivo[i], shock_dt$d_passivo[i], shock_dt$netto[i]))
+  }
+  save_tab("tab_shock_immunizzazione",
+           c(lines, "\\bottomrule", "\\end{tabular}", "\\end{table}"))
 }
 
 cat("\n  Fatto. Output in ", dir_out, "\n\n")

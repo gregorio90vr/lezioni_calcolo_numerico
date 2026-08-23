@@ -6,8 +6,10 @@
 %  Prima lezione del corso: introduce, su un singolo titolo e un
 %  singolo rendimento, gli stessi ingredienti numerici che le
 %  dispense successive applicheranno a una curva intera —
-%  ricerca di zeri (dispensa 02, 03) e algebra lineare elementare
-%  (dispensa 04). Nessun dato esterno: i due titoli di esempio
+%  ricerca di zeri e algebra lineare elementare (dispensa 02,
+%  costruzione della curva RFR), troncamento ottimale e
+%  combinazioni lineari (dispensa 03, PCA sui movimenti della
+%  curva). Nessun dato esterno: i due titoli di esempio
 %  sono definiti direttamente in R/01_bond_duration_convexity.R.
 % ============================================================
 \documentclass[11pt,a4paper]{article}
@@ -143,21 +145,71 @@ dispense.
 Questa lezione lavora con un \textbf{singolo titolo} e un \textbf{singolo rendimento} $y$: è la
 situazione più semplice possibile, e permette di introdurre senza distrazioni gli strumenti
 numerici --- ricerca di zeri, sviluppo di Taylor, algebra lineare elementare --- che il resto
-del corso userà in contesti via via più ricchi:
+del corso userà in contesti via via più ricchi. Il percorso ha tre tappe:
 \begin{itemize}
-  \item \textbf{01} (questa dispensa): un titolo, un rendimento $y$ costante per tutte le
-        scadenze;
+  \item \textbf{01} (questa dispensa): \emph{un} titolo, \emph{un} rendimento $y$ costante per
+        tutte le scadenze. Quanto vale il titolo, quanto rende, quanto si muove il suo prezzo
+        se il rendimento cambia;
   \item \textbf{02}: il mercato quota rendimenti \emph{diversi} per scadenze diverse --- non
-        basta più un numero, serve una funzione $t\mapsto P(0,t)$. La \textbf{02} la costruisce
-        con un bootstrap (metodologia EIOPA corrente);
-  \item \textbf{03}: lo stesso problema, risolto con un metodo diverso --- Smith--Wilson,
-        minima energia, algebra lineare su matrici definite positive (metodologia EIOPA
-        storica);
-  \item \textbf{04}: infine, come si \emph{muove} nel tempo l'intera curva --- analisi delle
-        componenti principali (PCA) sulle sue variazioni storiche.
+        basta più un numero, serve un'intera funzione $t\mapsto P(0,t)$. La \textbf{02}
+        costruisce la curva risk-free ufficiale EIOPA con \emph{due} metodologie a confronto:
+        il bootstrap (in vigore dal 2027) e Smith--Wilson (storica, 2016--2026);
+  \item \textbf{03}: come si \emph{muove} nel tempo l'intera curva. Non più un solo $\Delta y$
+        ma un vettore di variazioni, che l'analisi delle componenti principali (PCA)
+        scompone in pochi movimenti elementari.
 \end{itemize}
-La Sezione~\ref{sec:verso-curva} chiude il cerchio, mostrando \emph{perché} un singolo
-rendimento non basta e apre esplicitamente alla dispensa~02.
+
+L'arco è quindi: \emph{un numero} $\to$ \emph{una curva} $\to$ \emph{i movimenti di una curva}.
+La Sezione~\ref{sec:verso-curva} chiude la prima transizione, mostrando perché un singolo
+rendimento non basta; la Sezione~\ref{sec:oltre-parallelo} chiude la seconda, mostrando perché
+non basta nemmeno un singolo $\Delta y$.
+
+\begin{osservazione}[Due curve diverse, lo stesso oggetto matematico]
+Le due dispense successive non lavorano sulla stessa curva, ed è bene saperlo subito. La
+\textbf{02} costruisce la curva \emph{regolamentare} EIOPA, ricavata da contratti swap e
+imposta per legge a tutte le imprese assicurative europee; la \textbf{03} analizza la curva
+\emph{di mercato} dei titoli di Stato dell'area euro con rating AAA, pubblicata dalla BCE.
+Cambiano l'emittente, gli strumenti sottostanti e lo scopo --- ma l'oggetto matematico è
+identico in entrambi i casi: una funzione che associa a ogni scadenza un fattore di sconto, e
+tutto ciò che diremo su di essa vale per l'una come per l'altra.
+\end{osservazione}
+
+\paragraph{Gli strumenti numerici, e dove tornano.}
+Per un corso di calcolo numerico conviene leggere il percorso anche in un secondo modo: non
+per oggetti finanziari, ma per tecniche. Ognuna di quelle introdotte qui riappare più avanti,
+sullo stesso schema ma su dati più grandi.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}p{3.0cm} p{3.1cm} p{4.4cm} p{3.2cm}@{}}
+\toprule
+\textbf{Strumento} & \textbf{01} (questa) & \textbf{02} (curva RFR) & \textbf{03} (PCA)\\
+\midrule
+\rowcolor{rowtint}
+Ricerca di zeri & $\YTM$: bisezione e Newton & forward nei gap (Newton); parametro $\alpha$ di
+Smith--Wilson (bisezione) & ---\\
+Sviluppo di Taylor & duration, convexity & --- & ---\\
+\rowcolor{rowtint}
+Sistemi lineari & immunizzazione $2\times2$ & triangolare per sostituzione in avanti
+(bootstrap); denso e definito positivo (Smith--Wilson) & ---\\
+Combinazioni lineari & duration di portafoglio & \textsc{llfr}: media pesata di forward &
+\emph{scores} sui loadings\\
+\rowcolor{rowtint}
+Fattorizzazioni & --- & Cholesky & SVD\\
+Troncamento ottimale & Taylor all'\textbf{ordine} $k$ & --- & SVD al \textbf{rango} $k$
+(Eckart--Young)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+L'ultima riga merita un'osservazione, perché è il filo meno ovvio e il più istruttivo. In
+questa dispensa tronchiamo uno sviluppo di Taylor al primo ordine (duration) o al secondo
+(convexity), e misuriamo l'errore che resta (Sezione~\ref{sec:bonta}). Nella \textbf{03} si
+tronca una decomposizione ai valori singolari, tenendo solo le prime $k$ componenti, e il
+teorema di Eckart--Young garantisce che quel troncamento è il \emph{migliore possibile} a
+parità di rango. Due volte la stessa idea --- tenere pochi termini e controllare quanto si
+perde --- una volta nell'ordine di uno sviluppo, una volta nel rango di una matrice.
 
 % ============================================================
 \section{Prezzo e rendimento di un titolo obbligazionario}
@@ -188,9 +240,53 @@ annua composta:
 \end{equation}
 \end{definizione}
 
-\`E la stessa capitalizzazione composta annua già incontrata (o che si incontrerà) parlando di
-tasso spot annuo nella dispensa~03: qui $y$ è un unico numero, non ancora una funzione della
-scadenza.
+\subsection{Il caso elementare: lo zero-coupon bond}
+\label{sec:zcb}
+
+Il caso più semplice della Definizione~\ref{def:prezzo-bond} è quello di un titolo con un
+\textbf{solo} flusso: nessuna cedola, solo il rimborso a scadenza. Merita un nome proprio
+perché è il mattone con cui è costruito tutto il resto del corso.
+
+\begin{definizione}[Zero-coupon bond e fattore di sconto]
+\label{def:zcb}
+Uno \textbf{zero-coupon bond} con scadenza $t$ paga un'unica unità di valuta al tempo $t$ e
+nulla prima. Il suo prezzo di oggi si indica con $P(0,t)$ e si chiama \textbf{fattore di
+sconto} per la scadenza $t$:
+\begin{equation}
+  P(0,t) = \frac{1}{(1+y_t)^{t}},
+  \label{eq:zcb}
+\end{equation}
+dove $y_t$ è il rendimento associato a quella singola scadenza.
+\end{definizione}
+
+Con questa notazione la~\eqref{eq:prezzo} si riscrive come combinazione lineare di fattori di
+sconto, $P = \sum_t CF_t\,P(0,t)$: prezzare un titolo qualsiasi significa conoscere i fattori
+di sconto delle sue scadenze. In questa dispensa facciamo l'ipotesi drastica che sia
+$y_t = y$ per ogni $t$ --- un solo rendimento per tutte le scadenze --- e infatti scriviamo
+$P(y)$ e non $P(0,t)$. La \textbf{dispensa 02} rimuove esattamente questa ipotesi: il suo
+oggetto è la funzione $t \mapsto P(0,t)$, e la \textbf{dispensa 03} studia come quella funzione
+si muove nel tempo. Lo zero-coupon bond è dunque, letteralmente, l'unità di misura di entrambe.
+
+\begin{keybox}[Le tre convenzioni di capitalizzazione]
+Lo stesso fattore di sconto si scrive in modi diversi a seconda della convenzione, e le tre
+dispense non usano tutte la stessa: conviene fissarle qui una volta per tutte.
+\[
+  \underbrace{P(0,t) = (1+y)^{-t}}_{\text{annua composta: questa dispensa}}
+  \qquad
+  \underbrace{P(0,t) = e^{-r^c t}}_{\text{continua: dispense 02 (interna) e 03}}
+\]
+Le due parametrizzazioni descrivono lo stesso prezzo e si convertono l'una nell'altra con
+\begin{equation}
+  1 + y = e^{r^c}, \qquad\text{cioè}\qquad r^c = \ln(1+y), \qquad y = e^{r^c}-1.
+  \label{eq:conversione-capitalizzazione}
+\end{equation}
+La convenzione annua composta è quella con cui il mercato quota i titoli, ed è la ragione per
+cui la usiamo qui; quella continua rende più pulite le formule di derivazione, ed è la ragione
+per cui la curva EIOPA la usa internamente. Vedremo in
+Sezione~\ref{sec:duration-modificata} che la scelta lascia una traccia visibile: il fattore
+$1/(1+y)$ che distingue la duration modificata da quella di Macaulay sparisce in
+capitalizzazione continua.
+\end{keybox}
 
 \subsection{Due titoli di esempio}
 \label{sec:due-titoli}
@@ -271,9 +367,10 @@ scadenza è l'unico punto in cui la curva incrocia il prezzo di mercato (linea t
 La Proposizione~\ref{prop:monotonia} garantisce che $\varphi(y)=P(y)-P_{\mathrm{mkt}}$ ha
 un'unica radice: resta da \textbf{calcolarla}. \`E il primo di una serie di problemi di ricerca
 di zeri che attraverserà tutto il corso --- lo stesso schema tornerà, identico nella sostanza,
-per i tenor non consecutivi del bootstrap (dispensa~02) e per la calibrazione del parametro
-$\alpha$ di Smith--Wilson (dispensa~03). Qui lo introduciamo nel caso più semplice: una sola
-equazione scalare, di cui conosciamo già segno e monotonia.
+nella dispensa~02: per i tenor non consecutivi del bootstrap (risolti con Newton) e per la
+calibrazione del parametro $\alpha$ di Smith--Wilson (risolta per bisezione). Qui lo
+introduciamo nel caso più semplice: una sola equazione scalare, di cui conosciamo già segno e
+monotonia.
 
 \subsection{Bisezione}
 
@@ -382,6 +479,7 @@ e quella del contributo $t\cdot$peso, la cui somma è $D_{\mathrm{Mac}}$.
 \input{../output/01_bond_duration_convexity/tab_flussi_bondA.tex}
 
 \subsection{Duration modificata}
+\label{sec:duration-modificata}
 
 \begin{definizione}[Duration modificata]
 \label{def:modified}
@@ -397,10 +495,10 @@ la capitalizzazione annua composta usata in questa dispensa,
   D_{\mathrm{mod}} = \frac{D_{\mathrm{Mac}}}{1+y^\ast}.
   \label{eq:mod-da-mac}
 \end{equation}
-Il fattore $1/(1+y^\ast)$ è il prezzo della convenzione discreta: se si lavorasse a
-capitalizzazione \emph{continua} (come farà internamente la curva EIOPA nella dispensa~03) le
-due duration coinciderebbero esattamente, perché $\frac{d}{dy}e^{-yt} = -t\,e^{-yt}$ senza
-alcun fattore correttivo.
+Il fattore $1/(1+y^\ast)$ è il prezzo della convenzione discreta, come anticipato nel riquadro
+di Sezione~\ref{sec:zcb}: se si lavorasse a capitalizzazione \emph{continua} (come fa
+internamente la curva EIOPA nella dispensa~02) le due duration coinciderebbero esattamente,
+perché $\frac{d}{dy}e^{-yt} = -t\,e^{-yt}$ senza alcun fattore correttivo.
 
 Con $D_{\mathrm{mod}}$ la~\eqref{eq:taylor-P} tronca al 1\textsuperscript{o} ordine si scrive
 in forma \textbf{relativa}, la forma in cui si trova quasi sempre nei testi:
@@ -444,6 +542,7 @@ titolo più lungo.
 \input{../output/01_bond_duration_convexity/tab_riepilogo_duration.tex}
 
 \subsection{Bontà dell'approssimazione}
+\label{sec:bonta}
 
 Quanto sono buone le approssimazioni~\eqref{eq:taylor-lineare}
 e~\eqref{eq:taylor-quadratica}? La Figura~\ref{fig:taylor-prezzo} sovrappone il prezzo esatto
@@ -499,7 +598,7 @@ perché il prezzo del portafoglio è la somma dei prezzi, e la derivata di una s
 delle derivate. \`E il primo uso, in questo corso, di una combinazione lineare per aggregare
 grandezze finanziarie di titoli diversi --- lo stesso principio, in forma via via più elaborata,
 tornerà nella media pesata dei forward della dispensa~02 e nella proiezione su
-componenti principali della dispensa~04.
+componenti principali della dispensa~03.
 
 \subsection{Immunizzazione}
 
@@ -508,8 +607,8 @@ assicurati) oltre che attività (il portafoglio obbligazionario che le finanzia)
 passivo hanno duration diverse, un movimento dei tassi li fa muovere in modo diverso e crea uno
 squilibrio patrimoniale. L'\textbf{immunizzazione} elementare consiste nello scegliere i pesi
 del portafoglio in modo che la sua duration coincida con quella della passività da coprire:
-dati due titoli con duration $D_A\neq D_B$ e una passività di duration target $D_L$, si
-risolve il sistema lineare $2\times 2$
+dati due titoli con duration modificata $D_A\neq D_B$ e una passività di duration modificata
+target $D_L$, si risolve il sistema lineare $2\times 2$
 \begin{equation}
   \begin{cases} w_A + w_B = 1\\[2pt] w_A D_A + w_B D_B = D_L \end{cases}
   \quad\Longrightarrow\quad
@@ -522,19 +621,35 @@ per tutte le imprese (Sezione~\ref{sec:verso-curva}).
 
 \subsection{Esempio numerico}
 
-Immunizziamo una passività unica (un solo pagamento futuro, quindi di duration pari alla
-propria scadenza) di $D_L=7$ anni con un portafoglio composto dai due titoli di
-Sezione~\ref{sec:due-titoli}. La Figura~\ref{fig:immunizzazione} mostra la duration del
-portafoglio al variare del peso $w_A$: una retta (per la linearità
-della~\eqref{eq:duration-portafoglio}) che incrocia il target $D_L$ in un unico punto, i cui
-pesi sono riportati in Tabella~\ref{tab:immunizzazione}.
+Immunizziamo una passività unica --- un solo pagamento futuro, cioè uno zero-coupon bond nel
+senso della Definizione~\ref{def:zcb} --- con scadenza $T_L=7$ anni, usando un portafoglio
+composto dai due titoli di Sezione~\ref{sec:due-titoli}.
+
+Restano due dettagli da fissare, entrambi istruttivi. Il primo: la passività scade a 7 anni,
+ma i titoli disponibili scadono a 5 e a 10. Che rendimento attribuirle? Non avendo (ancora)
+una curva, la ricaviamo per \textbf{interpolazione lineare} fra $y_A$ e $y_B$, ottenendo
+$y_L \approx 4{,}13\%$. È una scorciatoia, e il fatto stesso di doverla prendere è un primo
+sintomo del limite di questa lezione: ricostruire i rendimenti alle scadenze non quotate è
+precisamente il problema che la dispensa~02 affronta sul serio.
+
+Il secondo: quale duration allineare. La grandezza che governa il P\&L è la duration
+\textbf{modificata} --- è lei a comparire nella~\eqref{eq:taylor-lineare} --- e su quella
+imponiamo l'uguaglianza. Non è un cavillo: essendo $D_{\mathrm{mod}}=D_{\mathrm{Mac}}/(1+y)$ e
+avendo i due titoli rendimenti \emph{diversi} ($4{,}57\%$ e $3{,}48\%$), allineare le Macaulay
+lascerebbe le modificate disallineate, e il portafoglio non sarebbe immunizzato nemmeno contro
+lo spostamento parallelo.
+
+La Figura~\ref{fig:immunizzazione} mostra la duration modificata del portafoglio al variare del
+peso $w_A$: una retta (per la linearità della~\eqref{eq:duration-portafoglio}) che incrocia il
+target $D_{\mathrm{mod}}^{L}=T_L/(1+y_L)$ in un unico punto, i cui pesi sono riportati in
+Tabella~\ref{tab:immunizzazione}.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{fig_immunizzazione.pdf}
-\caption{Duration del portafoglio $\{$Bond A, Bond B$\}$ in funzione del peso $w_A$
+\caption{Duration modificata del portafoglio $\{$Bond A, Bond B$\}$ in funzione del peso $w_A$
 (eq.~\eqref{eq:duration-portafoglio}). Il punto evidenziato è la soluzione
-della~\eqref{eq:immunizzazione} per una passività di duration $D_L=7$.}
+della~\eqref{eq:immunizzazione} per la passività zero-coupon a $T_L=7$ anni.}
 \label{fig:immunizzazione}
 \end{figure}
 
@@ -543,10 +658,11 @@ della~\eqref{eq:immunizzazione} per una passività di duration $D_L=7$.}
 \begin{osservazione}
 L'immunizzazione per matching di duration protegge solo da spostamenti \emph{paralleli e
 piccoli} della curva dei tassi (coerentemente con l'approssimazione lineare
-della~\eqref{eq:taylor-lineare}, qui applicata titolo per titolo). Per una passività reale,
-distribuita su più scadenze, non basta un'unica duration bersaglio: serve un'intera curva di
-sconto $P(0,t)$ --- il problema delle dispense~02 e~03 --- e, per capire quali movimenti della
-curva sono storicamente più probabili, l'analisi statistica della dispensa~04.
+della~\eqref{eq:taylor-lineare}, qui applicata titolo per titolo). Le due restrizioni non sono
+equivalenti, e conviene tenerle distinte: quella su ``piccoli'' è un limite di \emph{ordine},
+già misurato in Sezione~\ref{sec:bonta} e correggibile con la convexity; quella su
+``paralleli'' è un limite di \emph{forma}, e non si corregge affinando lo sviluppo di Taylor.
+La Sezione~\ref{sec:oltre-parallelo} la mette alla prova con un esperimento numerico.
 \end{osservazione}
 
 % ============================================================
@@ -572,11 +688,102 @@ unico per tutte.
 \end{keybox}
 
 Costruire questa funzione a partire dai prezzi di mercato --- che tipicamente non coprono ogni
-scadenza possibile, esattamente come qui avevamo solo due titoli a 5 e 10 anni --- è il problema
-di cui si occupa la \textbf{dispensa~02} (bootstrap) e, con un metodo più raffinato, la
-\textbf{dispensa~03} (Smith--Wilson). Il vocabolario che introdurranno --- fattore di sconto,
-tasso spot, tasso forward --- è la naturale generalizzazione del rendimento $y$ di questa
-lezione al caso di una curva intera.
+scadenza possibile, esattamente come qui avevamo solo due titoli a 5 e 10 anni, e come si è
+visto interpolando a mano il rendimento a 7 anni della passività --- è il problema di cui si
+occupa la \textbf{dispensa~02}, che lo risolve con due metodologie messe a confronto: il
+bootstrap e Smith--Wilson. Il vocabolario che introdurrà --- fattore di sconto, tasso spot,
+tasso forward --- è la naturale generalizzazione del rendimento $y$ di questa lezione al caso
+di una curva intera.
+
+% ============================================================
+\section{Quando lo spostamento parallelo non basta}
+\label{sec:oltre-parallelo}
+% ============================================================
+
+C'è un secondo limite, indipendente dal primo, e si vede meglio \emph{dopo} aver ammesso che
+esiste una curva. Fin qui la domanda ``di quanto si muove il prezzo se i tassi cambiano'' aveva
+una risposta governata da un solo numero, $\Delta y$. Ma se a ogni scadenza corrisponde un
+rendimento diverso, allora anche il \emph{movimento} ha una scadenza per componente: non un
+numero ma un vettore
+\[
+  \Delta r = \bigl(\Delta r(T_1),\, \Delta r(T_2),\, \ldots,\, \Delta r(T_n)\bigr) \in \R^n .
+\]
+La duration risponde alla domanda solo nel caso particolare in cui tutte le componenti di
+$\Delta r$ sono \emph{uguali fra loro} --- il cosiddetto \textbf{spostamento parallelo}. Non è
+un'ipotesi innocua, ed è facile verificarlo.
+
+\subsection{Un esperimento: la stessa ampiezza, tre forme diverse}
+
+Prendiamo il portafoglio appena immunizzato e sottoponiamolo a tre movimenti di tassi, tutti
+della stessa ampiezza ($25$ bps), ma di \emph{forma} diversa. Poiché qui la ``curva'' consiste
+di soli tre punti --- le scadenze $5$, $7$ e $10$ anni, cioè i due titoli e la passività ---
+bastano tre numeri per descrivere ciascuno scenario (Figura~\ref{fig:shock-non-paralleli}):
+\begin{itemize}
+  \item \textbf{parallelo}: tutte e tre le scadenze salgono di $25$ bps;
+  \item \textbf{irripidimento}: la scadenza breve scende di $25$ bps, la lunga sale di $25$
+        bps, il punto a 7 anni resta fermo --- la curva ruota, diventando più inclinata;
+  \item \textbf{appiattimento}: la rotazione opposta.
+\end{itemize}
+Nessuno dei tre è più ``grande'' degli altri: cambia solo come l'ampiezza è distribuita fra le
+scadenze.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_shock_non_paralleli.pdf}
+\caption{I tre scenari sui tre nodi rilevanti ($5$, $7$ e $10$ anni). Tratteggiata la
+situazione di partenza, continua quella dopo lo shock. L'ampiezza dello spostamento è la stessa
+in tutti e tre i casi: cambia solo la forma.}
+\label{fig:shock-non-paralleli}
+\end{figure}
+
+I prezzi vengono ricalcolati in modo \textbf{esatto} con la~\eqref{eq:prezzo}, non con
+l'approssimazione di duration: quello che si misura è il vero profitto e perdita, non la sua
+stima lineare.
+
+\input{../output/01_bond_duration_convexity/tab_shock_immunizzazione.tex}
+
+Il risultato è netto. Nello scenario parallelo attivo e passivo perdono quasi esattamente lo
+stesso importo ($-1{,}66$ su una base di $100$) e il saldo resta a $+0{,}0024$: il portafoglio
+è immunizzato, come promesso. Nei due scenari di rotazione il passivo non si muove affatto ---
+il suo unico flusso sta a 7 anni, e il punto a 7 anni è il perno della rotazione --- mentre
+l'attivo sì, e il saldo salta a $-0{,}71$ e $+0{,}75$ rispettivamente: quasi \emph{trecento
+volte} il residuo del caso parallelo.
+
+\begin{keybox}[Che cosa ha fallito, esattamente]
+Non è un errore di calcolo né un problema di ordine di approssimazione: aggiungere la convexity
+non sistemerebbe nulla, perché lo scarto non nasce dall'ampiezza del movimento ma dalla sua
+\emph{forma}. Imponendo una sola uguaglianza (quella fra le duration modificate) abbiamo
+protetto il portafoglio lungo \emph{una sola direzione} nello spazio dei movimenti possibili.
+Il vettore $\Delta r$ vive in $\R^n$; la duration ne controlla una dimensione sola.
+\end{keybox}
+
+\subsection{Quante direzioni servono davvero}
+
+La domanda diventa allora: quante e quali direzioni contano? Se ne servissero $n$ (una per
+scadenza) il problema sarebbe intrattabile. Il fatto notevole --- osservato per la prima volta
+da Litterman e Scheinkman~\cite{litterman1991} e verificato su tutti i mercati obbligazionari
+da allora --- è che ne bastano pochissime, e che hanno una forma riconoscibile e stabile:
+\begin{itemize}
+  \item \textbf{livello}: tutte le scadenze si muovono insieme, nella stessa direzione. È
+        esattamente lo spostamento parallelo di cui sopra --- l'unico che la duration cattura;
+  \item \textbf{pendenza}: brevi e lunghe si muovono in direzioni opposte. Sono i due scenari
+        di rotazione che hanno fatto fallire l'immunizzazione;
+  \item \textbf{curvatura}: il centro della curva si muove in senso opposto ai due estremi.
+\end{itemize}
+Sulla curva dei tassi dell'area euro degli ultimi vent'anni questi tre movimenti spiegano
+rispettivamente circa l'$89{,}7\%$, l'$8{,}4\%$ e l'$1{,}4\%$ della variabilità osservata: il
+$99{,}5\%$ del totale con tre soli numeri al posto di venti.
+
+La duration copre dunque il primo --- di gran lunga il più importante, ed è la ragione per cui
+è comunque la prima misura di rischio che si guarda --- e ignora gli altri due, che insieme
+valgono circa il $10\%$ dei movimenti. Il portafoglio della Tabella~\ref{tab:immunizzazione}
+è protetto contro il $90\%$ di ciò che può accadere, e scoperto sul restante $10\%$: quanto
+basta, come si è visto, per perdere $0{,}71$ su $100$ in uno scenario tutt'altro che estremo.
+
+Come si trovino quelle tre direzioni --- e come si dimostri che sono le \emph{migliori} tre
+possibili, non semplicemente tre ragionevoli --- è l'oggetto della \textbf{dispensa~03}: la
+risposta passa dalla decomposizione ai valori singolari e dal teorema di Eckart--Young, cioè
+dallo stesso principio di troncamento ottimale già incontrato qui con lo sviluppo di Taylor.
 
 % ============================================================
 \section{Conclusioni}
@@ -584,11 +791,12 @@ lezione al caso di una curva intera.
 
 \begin{itemize}
   \item Il \textbf{prezzo} di un'obbligazione è il valore attuale dei suoi flussi di cassa a un
-        rendimento $y$; il \textbf{rendimento a scadenza} è il valore di $y$ che riprezza
-        esattamente il titolo quotato sul mercato --- un problema di \textbf{ricerca di zeri}
-        (bisezione, robusta ma lineare; Newton-Raphson, quadratico ma bisognoso della
-        derivata), risolto qui per la prima volta e ritrovato, nella stessa forma, nelle
-        dispense~02 e~03.
+        rendimento $y$; il caso elementare con un solo flusso definisce il \textbf{fattore di
+        sconto} $P(0,t)$, l'unità di misura di tutto il corso. Il \textbf{rendimento a
+        scadenza} è il valore di $y$ che riprezza esattamente il titolo quotato sul mercato ---
+        un problema di \textbf{ricerca di zeri} (bisezione, robusta ma lineare; Newton-Raphson,
+        quadratico ma bisognoso della derivata), risolto qui per la prima volta e ritrovato,
+        nella stessa forma, nella dispensa~02.
   \item La \textbf{duration di Macaulay} è il baricentro temporale dei flussi; la
         \textbf{duration modificata} e la \textbf{convexity} sono il 1\textsuperscript{o} e il
         2\textsuperscript{o} termine dello sviluppo di \textbf{Taylor} del prezzo rispetto al
@@ -599,9 +807,14 @@ lezione al caso di una curva intera.
         aggregare grandezze finanziarie --- e sta alla base dell'\textbf{immunizzazione} di una
         passività, la motivazione pratica per cui la gestione del rischio di tasso richiede una
         curva dei tassi comune e condivisa.
-  \item Un singolo rendimento $y$ non è sufficiente a descrivere titoli di scadenze diverse:
-        serve una \textbf{curva dei tassi} $P(0,t)$, oggetto delle dispense~02 (bootstrap),~03
-        (Smith--Wilson) e, per la sua dinamica storica,~04 (PCA).
+  \item Il modello di questa lezione ha \textbf{due limiti}, che aprono le due dispense
+        successive. Un singolo rendimento $y$ non descrive titoli di scadenze diverse: serve
+        una \textbf{curva} $t\mapsto P(0,t)$, ed è la dispensa~02 a costruirla (bootstrap e
+        Smith--Wilson a confronto). E una singola duration non descrive tutti i modi in cui
+        quella curva può muoversi: serve \textbf{decomporne i movimenti}, ed è la dispensa~03 a
+        farlo (PCA e SVD). L'esperimento della Sezione~\ref{sec:oltre-parallelo} mostra
+        quantitativamente il secondo limite: un portafoglio immunizzato regge lo spostamento
+        parallelo e cede a una rotazione della stessa ampiezza.
 \end{itemize}
 
 % ============================================================
@@ -618,6 +831,12 @@ lezione al caso di una curva intera.
   \textbf{Fabozzi, F.J.} (2012).
   \textit{Bond Markets, Analysis, and Strategies}, 8th ed. Pearson.
   Riferimento classico su duration, convexity e immunizzazione di portafoglio.
+
+\bibitem{litterman1991}
+  \textbf{Litterman, R., Scheinkman, J.} (1991).
+  \textit{Common Factors Affecting Bond Returns}, Journal of Fixed Income, 1(1), 54--61.
+  Il lavoro che ha identificato livello, pendenza e curvatura come i tre movimenti
+  fondamentali della curva dei tassi; è il punto di partenza della dispensa~03.
 
 \bibitem{burden2016}
   \textbf{Burden, R.L., Faires, J.D.} (2016).

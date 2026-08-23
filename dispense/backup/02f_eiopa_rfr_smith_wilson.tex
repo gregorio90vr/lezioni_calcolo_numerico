@@ -1,0 +1,621 @@
+% ============================================================
+%  Dispensa 02f: Curva EIOPA Risk-Free — Metodo Smith-Wilson
+%               Approccio variazionale (struttura stile PCA)
+%  Corso di Calcolo Numerico — Laboratorio
+%  Università degli Studi di Verona — A.A. 2026–2027
+%
+%  NOTA di approfondimento, non variante di lezione: isola e
+%  sviluppa con molti più passaggi un solo argomento già
+%  presente in forma compressa in 02c Sez. 4.2 (righe 789-919)
+%  e in 02e Appendice A — il paragrafo "Semipositività: la
+%  forma quadratica è un quadrato più l'integrale di un
+%  quadrato". Nessuna sezione economica, nessuna calibrazione:
+%  solo definizioni essenziali (richiamate, non dimostrate) +
+%  la dimostrazione per esteso, con verifiche numeriche.
+%  Nessuno script R né cartella output propri (nota solo
+%  testuale/matematica).
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{titlesec}
+
+\graphicspath{{}}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.55em}{}[{\vspace{1pt}\titlerule[0.4pt]}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.55em}{}
+\titleformat{\subsubsection}{\small\bfseries\itshape}{\thesubsubsection.}{0.5em}{}
+
+%--- ambienti teorema (solo enunciati, niente dimostrazioni)
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[section]
+\newtheorem{proposizione}[teorema]{Proposizione}
+\theoremstyle{definition}
+\newtheorem{definizione}[teorema]{Definizione}
+\newtheorem{esempio}[teorema]{Esempio}
+\theoremstyle{remark}
+\newtheorem*{osservazione}{Osservazione}
+\newtheorem*{attenzione}{Nota numerica}
+
+%--- macro acronimi (funzionano dentro e fuori math mode)
+\newcommand{\UFR}{\ensuremath{\mathrm{UFR}}}
+\newcommand{\LLP}{\ensuremath{\mathrm{LLP}}}
+\newcommand{\CP}{\ensuremath{\mathrm{CP}}}
+\newcommand{\CRA}{\ensuremath{\mathrm{CRA}}}
+\newcommand{\Qmat}{\mathbf{Q}}
+\newcommand{\Hmat}{\mathbf{H}}
+\newcommand{\transp}{^{\!\top}}
+
+%--- colore righe tabella
+\definecolor{rowtint}{RGB}{243,247,253}
+
+%--- box colorati
+\tcbset{
+  mybase/.style={
+    colback=gray!5, colframe=gray!40,
+    boxrule=0.4pt, arc=2pt,
+    left=7pt, right=7pt, top=5pt, bottom=5pt,
+    fonttitle=\small\bfseries
+  }
+}
+\newtcolorbox{keybox}[1][Concetto chiave]{mybase,
+  colframe=blue!40!black, colback=blue!4, title={#1}}
+\newtcolorbox{algobox}[1][Algoritmo]{mybase,
+  colframe=teal!50!black, colback=teal!4, title={#1}}
+\newtcolorbox{warningbox}{mybase,
+  colframe=orange!70!black, colback=orange!5}
+\newtcolorbox{codebox}[1][Codice R]{mybase,
+  colframe=green!40!black, colback=green!3, title={#1}}
+
+% ============================================================
+\title{%
+  \textbf{Costruzione della Curva EIOPA Risk-Free}\\[6pt]
+  \large Il metodo Smith--Wilson: un approccio variazionale\\[4pt]
+  \normalsize La matrice di Wilson è definita positiva: un quadrato più l'integrale di un quadrato\\[2pt]
+}
+\author{Laboratorio di Calcolo Numerico --- Laurea Triennale in Matematica Applicata\\
+  Universit\`a degli Studi di Verona\\[2pt]
+  Anno Accademico 2026--2027}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\noindent
+Questa nota isola e sviluppa \textbf{un solo passaggio} della dispensa 02c (Sez.~4.2): la
+dimostrazione che la matrice di Wilson $\Hmat$ è simmetrica definita positiva, ottenuta
+riscrivendo la forma quadratica $\zeta\transp\Hmat\zeta$ come \textbf{un quadrato puntuale più
+l'integrale di un quadrato}. Il contenuto matematico è identico a quello già presente in 02c
+(righe 789--919) e riprodotto verbatim in 02e (Appendice A): qui però ogni passaggio è reso
+esplicito --- gli integrali sono calcolati termine a termine, il passaggio dalla somma doppia
+al quadrato è tracciato con un esempio a $m=2$ e uno a $m=3$, e ogni identità algebrica è
+verificata anche numericamente. Le definizioni necessarie sono richiamate (non dimostrate) in
+Sez.~\ref{sec:richiami}: per il contesto economico completo (perché si costruisce $\Hmat$, cosa
+rappresenta $\zeta$) si rimanda a 02c, Sez.~2--4.1.
+
+% ============================================================
+\section{Richiami: nucleo di Wilson e forma quadratica}
+\label{sec:richiami}
+% ============================================================
+
+Fissiamo qui, senza dimostrarle, le definizioni sulle quali poggia l'intera nota; sono le
+stesse di 02c (Sez.~4.1--4.2), a cui si rimanda per la motivazione economica.
+
+\begin{definizione}[Nucleo di Wilson, \cite{eiopa2025} sez.~9.7]
+Per $\alpha>0$ fissato, il \textbf{nucleo di Wilson} è la funzione simmetrica
+\[
+  H(t,u) = \alpha\,\min(t,u) - e^{-\alpha\,\max(t,u)}\,\sinh\!\bigl(\alpha\,\min(t,u)\bigr),
+  \qquad H(t,u)=H(u,t).
+\]
+\end{definizione}
+
+\begin{definizione}[Curva di sconto Smith--Wilson]
+Dati $m$ nodi di pagamento $0<u_1<\cdots<u_m$ e coefficienti $\zeta=(\zeta_1,\ldots,\zeta_m)\transp
+\in\mathbb{R}^m$, la curva di sconto si scrive
+\[
+  P(t) = e^{-\omega t}\Bigl(1 + \sum_{j=1}^m \zeta_j\, H(t,u_j)\Bigr),
+  \qquad \omega=\ln(1+\UFR).
+\]
+\end{definizione}
+
+\begin{definizione}[Matrice di Wilson e forma quadratica]
+La \textbf{matrice di Wilson} è $\Hmat = [H(u_i,u_j)]_{i,j=1}^m$; la sua \textbf{forma
+quadratica associata} (l'\emph{energia} della curva) è
+\[
+  E(\zeta) = \zeta\transp\Hmat\,\zeta = \sum_{i=1}^m\sum_{j=1}^m \zeta_i\,\zeta_j\,H(u_i,u_j).
+\]
+\end{definizione}
+
+\begin{keybox}[Perché conta]
+Se $E(\zeta)=\zeta\transp\Hmat\zeta>0$ per ogni $\zeta\neq 0$, allora $\Hmat$ è simmetrica
+definita positiva (SPD): il sistema lineare di calibrazione (02c, Sez.~4.3) ammette
+un'\textbf{unica} soluzione, risolvibile con Cholesky, ed $E$ induce un vero prodotto scalare
+$\langle x,y\rangle_\Hmat = x\transp\Hmat y$ su $\mathbb{R}^m$. Tutto il resto della dispensa 02c
+--- convessità stretta del problema di minima energia, unicità della curva --- dipende da
+questo unico fatto.
+\end{keybox}
+
+L'obiettivo di questa nota è dimostrare che $\Hmat$ è SPD usando \textbf{solo calcolo di
+integrali}, tramite una rappresentazione ad hoc di $H$ come "prodotto scalare di funzioni".
+
+% ============================================================
+\section{Rappresentazione integrale del nucleo}
+\label{sec:rappresentazione}
+% ============================================================
+
+\begin{definizione}[Le funzioni ausiliarie $\varphi_t$]
+Per ogni $t>0$ si definisca
+\[
+  \varphi_t(x) =
+  \begin{cases}
+    1-e^{-\alpha(t-x)} & 0\le x\le t,\\[2pt]
+    0 & x>t .
+  \end{cases}
+\]
+Si osservi che $\varphi_t(0)=1-e^{-\alpha t}\in(0,1)$, che $\varphi_t$ è \textbf{continua} su
+$[0,+\infty)$ (in $x=t$ entrambi i rami valgono $0$, senza salto), che $\varphi_t$ è
+\textbf{crescente} su $[0,t]$ (derivata $\alpha e^{-\alpha(t-x)}>0$), e che il suo
+\textbf{supporto} è esattamente $[0,t]$: fuori da quell'intervallo $\varphi_t\equiv 0$. Questa
+proprietà di supporto compatto sarà l'ingrediente decisivo nella Sez.~\ref{sec:stretta}.
+\end{definizione}
+
+\begin{proposizione}[Rappresentazione integrale del nucleo di Wilson]
+\label{prop:H-int}
+Per ogni $s,t>0$ vale l'identità
+\begin{equation}
+  H(s,t) \;=\; \varphi_s(0)\,\varphi_t(0)
+  \;+\; \alpha\!\int_0^{+\infty}\!\varphi_s(x)\,\varphi_t(x)\,dx .
+  \label{eq:H-int}
+\end{equation}
+\end{proposizione}
+
+Dimostriamo la~\eqref{eq:H-int} con tutti i passaggi intermedi. Per la simmetria di ambo i
+membri in $s,t$, non è restrittivo assumere $s\le t$.
+
+\paragraph{Passo 0: dove vive l'integrale.} Il prodotto $\varphi_s(x)\varphi_t(x)$ è nullo non
+appena $x>s$ (perché $\varphi_s(x)=0$ lì, essendo $s\le t$), quindi
+\[
+  \int_0^{+\infty}\varphi_s(x)\varphi_t(x)\,dx = \int_0^{s}\varphi_s(x)\varphi_t(x)\,dx ,
+\]
+un integrale su un intervallo \textbf{limitato} di una funzione \textbf{continua} (prodotto di
+continue): nessun problema di convergenza.
+
+\paragraph{Passo 1: il prodotto $\varphi_s(x)\varphi_t(x)$ sull'intervallo $[0,s]$.} Su questo
+intervallo $x\le s\le t$, quindi \emph{entrambi} i rami "interni" delle definizioni si
+applicano: $\varphi_s(x)=1-e^{-\alpha(s-x)}$ e $\varphi_t(x)=1-e^{-\alpha(t-x)}$. Svolgendo il
+prodotto di questi due binomi,
+\[
+  \varphi_s(x)\varphi_t(x)
+  = \bigl(1-e^{-\alpha(s-x)}\bigr)\bigl(1-e^{-\alpha(t-x)}\bigr)
+  = 1 - e^{-\alpha(s-x)} - e^{-\alpha(t-x)} + e^{-\alpha(s-x)}e^{-\alpha(t-x)} ,
+\]
+e osservando che $e^{-\alpha(s-x)}e^{-\alpha(t-x)}=e^{-\alpha(s+t-2x)}$,
+\begin{equation}
+  \varphi_s(x)\,\varphi_t(x) = 1 - e^{-\alpha(s-x)} - e^{-\alpha(t-x)} + e^{-\alpha(s+t-2x)},
+  \qquad x\in[0,s].
+  \label{eq:prodotto-espanso}
+\end{equation}
+Quattro addendi: una costante e tre esponenziali in $x$. Li integriamo separatamente.
+
+\paragraph{Passo 2: i quattro integrali, uno alla volta.} Su $[0,s]$:
+\begin{align}
+  \int_0^s 1\,dx &= s, \label{eq:int1}\\[4pt]
+  \int_0^s e^{-\alpha(s-x)}\,dx
+  &= \Bigl[\tfrac{1}{\alpha}e^{-\alpha(s-x)}\Bigr]_0^s
+   = \tfrac{1}{\alpha}\bigl(1-e^{-\alpha s}\bigr), \label{eq:int2}\\[4pt]
+  \int_0^s e^{-\alpha(t-x)}\,dx
+  &= \Bigl[\tfrac{1}{\alpha}e^{-\alpha(t-x)}\Bigr]_0^s
+   = \tfrac{1}{\alpha}\bigl(e^{-\alpha(t-s)}-e^{-\alpha t}\bigr), \label{eq:int3}\\[4pt]
+  \int_0^s e^{-\alpha(s+t-2x)}\,dx
+  &= \Bigl[\tfrac{1}{2\alpha}e^{-\alpha(s+t-2x)}\Bigr]_0^s
+   = \tfrac{1}{2\alpha}\bigl(e^{-\alpha(t-s)}-e^{-\alpha(s+t)}\bigr). \label{eq:int4}
+\end{align}
+In~\eqref{eq:int2}--\eqref{eq:int4} si è usato $\frac{d}{dx}e^{\pm\beta x}=\pm\beta\,e^{\pm\beta x}$
+con $\beta=\alpha>0$ (in~\eqref{eq:int4}, $\beta=2\alpha$): ogni primitiva è verificabile per
+derivazione diretta. Si noti in~\eqref{eq:int3} che l'esponente $-\alpha(t-x)$, valutato in
+$x=s$, dà $-\alpha(t-s)$ e \emph{non} $-\alpha(s-t)$: $t-s\ge 0$ perché $s\le t$, quindi
+$e^{-\alpha(t-s)}\in(0,1]$ come deve essere.
+
+\paragraph{Passo 3: assemblare l'integrale, moltiplicare per $\alpha$.} Sommando
+\eqref{eq:int1}--\eqref{eq:int4} con i segni di~\eqref{eq:prodotto-espanso}
+($+,-,-,+$) e moltiplicando per $\alpha$ (i fattori $\tfrac1\alpha$ e $\tfrac1{2\alpha}$ si
+semplificano):
+\begin{equation}
+  \alpha\!\int_0^{s}\!\varphi_s(x)\varphi_t(x)\,dx
+  = \underbrace{\alpha s}_{\text{da }\eqref{eq:int1}}
+    \;\underbrace{-\bigl(1-e^{-\alpha s}\bigr)}_{\text{da }\eqref{eq:int2}}
+    \;\underbrace{-\bigl(e^{-\alpha(t-s)}-e^{-\alpha t}\bigr)}_{\text{da }\eqref{eq:int3}}
+    \;\underbrace{+\tfrac12\bigl(e^{-\alpha(t-s)}-e^{-\alpha(s+t)}\bigr)}_{\text{da }\eqref{eq:int4}} .
+  \label{eq:somma-integrale}
+\end{equation}
+
+\paragraph{Passo 4: il termine puntuale.} Il primo addendo di~\eqref{eq:H-int} si calcola in
+un colpo solo (nessun integrale, solo prodotto di due valori):
+\begin{equation}
+  \varphi_s(0)\,\varphi_t(0)
+  = \bigl(1-e^{-\alpha s}\bigr)\bigl(1-e^{-\alpha t}\bigr)
+  = 1 - e^{-\alpha s} - e^{-\alpha t} + e^{-\alpha(s+t)} .
+  \label{eq:punto}
+\end{equation}
+
+\paragraph{Passo 5: cancellazione termine a termine.} Sommiamo~\eqref{eq:somma-integrale} e
+\eqref{eq:punto}. Per non lasciare nulla all'"si verifica che", raccogliamo \emph{ogni} tipo
+di termine in una riga a sé:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Origine} & $\alpha s$ & $1$ & $e^{-\alpha s}$ & $e^{-\alpha t}$
+  & $e^{-\alpha(t-s)}$ & $e^{-\alpha(s+t)}$ \\
+\midrule
+da $\eqref{eq:int1}$, coeff. $+$ & $+1$ & & & & & \\
+da $\eqref{eq:int2}$, coeff. $-$ & & $-1$ & $+1$ & & & \\
+da $\eqref{eq:int3}$, coeff. $-$ & & & & $+1$ & $-1$ & \\
+da $\eqref{eq:int4}$, coeff. $+\tfrac12$ & & & & & $+\tfrac12$ & $-\tfrac12$ \\
+da $\eqref{eq:punto}$ & & $+1$ & $-1$ & $-1$ & & $+1$ \\
+\midrule
+\textbf{somma delle colonne} & $\mathbf{+1}$ & $0$ & $0$ & $0$
+  & $\mathbf{-\tfrac12}$ & $\mathbf{+\tfrac12}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Le colonne "$1$", "$e^{-\alpha s}$" ed "$e^{-\alpha t}$" si annullano \textbf{esattamente}:
+sopravvivono solo $\alpha s$, $-\tfrac12 e^{-\alpha(t-s)}$ e $+\tfrac12 e^{-\alpha(s+t)}$. Quindi
+\begin{equation}
+  H(s,t) \;\overset{?}{=}\; \varphi_s(0)\varphi_t(0)+\alpha\!\int_0^{+\infty}\!\varphi_s\varphi_t\,dx
+  \;=\; \alpha s - \tfrac12 e^{-\alpha(t-s)} + \tfrac12 e^{-\alpha(s+t)} .
+  \label{eq:dopo-cancellazione}
+\end{equation}
+
+\paragraph{Passo 6: riconoscere il seno iperbolico.} Resta da mostrare che il membro destro di
+\eqref{eq:dopo-cancellazione} coincide con la definizione di $H(s,t)$. Raccogliamo
+$e^{-\alpha t}$ dagli ultimi due termini:
+\[
+  -\tfrac12 e^{-\alpha(t-s)} + \tfrac12 e^{-\alpha(s+t)}
+  = -\tfrac12 e^{-\alpha t}e^{\alpha s} + \tfrac12 e^{-\alpha t}e^{-\alpha s}
+  = -e^{-\alpha t}\cdot\frac{e^{\alpha s}-e^{-\alpha s}}{2}
+  = -e^{-\alpha t}\,\sinh(\alpha s),
+\]
+usando la definizione $\sinh(z)=\tfrac12(e^{z}-e^{-z})$. Sostituendo in~\eqref{eq:dopo-cancellazione},
+\begin{align*}
+  \varphi_s(0)\varphi_t(0)+\alpha\!\int_0^{+\infty}\!\varphi_s\varphi_t\,dx
+  &= \alpha s - e^{-\alpha t}\sinh(\alpha s)\\
+  &= \alpha\min(s,t) - e^{-\alpha\max(s,t)}\sinh\!\bigl(\alpha\min(s,t)\bigr) \;=\; H(s,t),
+\end{align*}
+dove l'ultimo passaggio usa $s\le t$, cioè $s=\min(s,t)$ e $t=\max(s,t)$. Questo dimostra
+\eqref{eq:H-int}. $\blacksquare$
+
+\begin{osservazione}[Per approfondire]
+La rappresentazione~\eqref{eq:H-int} è un caso particolare di una tecnica generale per
+costruire nuclei definiti positivi come funzioni di Green di un operatore differenziale: si
+veda Wahba~\cite{wahba1990}, cap.~1, per la costruzione analoga (con un operatore del
+second'ordine) alla base delle spline cubiche di lisciamento.
+\end{osservazione}
+
+\begin{attenzione}
+Verifichiamo~\eqref{eq:H-int} con numeri, per $\alpha=0.0736$ (valore ufficiale calibrato su
+dicembre 2025, 02c Sez.~5.3) e $s=1,\,t=5$. Termine puntuale:
+$\varphi_1(0)\varphi_5(0) = (1-e^{-0.0736})(1-e^{-0.368}) = 0.070957\times 0.307883 = 0.021846$.
+Termine integrale (calcolato numericamente su $[0,1]$, dove il prodotto è supportato):
+$\alpha\int_0^{1}\varphi_1(x)\varphi_5(x)\,dx = 0.000768$. Somma: $0.021846+0.000768=0.022614$.
+Dalla formula chiusa, $H(1,5)=\alpha\cdot 1 - e^{-\alpha\cdot 5}\sinh(\alpha\cdot 1)
+= 0.0736 - 0.692117\times 0.073666 = 0.022614$: i due membri di~\eqref{eq:H-int} coincidono
+(la differenza è dell'ordine di $10^{-17}$, puro arrotondamento in doppia precisione). Il
+punto pedagogico è che l'identità va verificata con un calcolo, non presa per fede.
+\end{attenzione}
+
+% ============================================================
+\section{Semipositività: un quadrato più l'integrale di un quadrato}
+\label{sec:semipositivita}
+% ============================================================
+
+\begin{proposizione}[La matrice di Wilson è semidefinita positiva]
+\label{prop:H-spd}
+Per ogni scelta di nodi $0<u_1<\cdots<u_m$ e per ogni $\zeta\in\mathbb{R}^m$,
+$\zeta\transp\Hmat\zeta\ge 0$.
+\end{proposizione}
+
+\paragraph{Passo 1: sostituire la rappresentazione integrale in ogni entrata.} Per definizione,
+\[
+  \zeta\transp\Hmat\zeta = \sum_{i=1}^m\sum_{j=1}^m \zeta_i\,\zeta_j\,H(u_i,u_j).
+\]
+Sostituendo~\eqref{eq:H-int} in \emph{ciascuno} degli $m^2$ addendi $H(u_i,u_j)$,
+\[
+  \zeta\transp\Hmat\zeta
+  = \sum_{i=1}^m\sum_{j=1}^m \zeta_i\zeta_j
+    \Bigl[\varphi_{u_i}(0)\varphi_{u_j}(0) + \alpha\!\int_0^{+\infty}\!\varphi_{u_i}(x)\varphi_{u_j}(x)\,dx\Bigr] .
+\]
+
+\paragraph{Passo 2: distribuire la somma doppia sulle due parti.} La somma doppia ha
+\textbf{esattamente} $m^2$ addendi (un numero finito): possiamo quindi spezzarla nella somma
+delle due parti (puntuale e integrale) senza nessuna ipotesi di convergenza o di scambio
+somma/integrale in senso analitico --- non serve altro che l'additività di una somma finita:
+\[
+  \zeta\transp\Hmat\zeta
+  = \underbrace{\sum_{i,j}\zeta_i\zeta_j\,\varphi_{u_i}(0)\varphi_{u_j}(0)}_{=:A}
+  \;+\; \alpha\underbrace{\sum_{i,j}\zeta_i\zeta_j\!\int_0^{+\infty}\!\varphi_{u_i}(x)\varphi_{u_j}(x)\,dx}_{=:B(x)\text{, poi integrato}} .
+\]
+Nel secondo blocco, per lo stesso motivo (somma finita di $m^2$ integrali), possiamo portare
+$\sum_{i,j}$ \textbf{dentro} l'integrale:
+\[
+  \alpha\sum_{i,j}\zeta_i\zeta_j\!\int_0^{+\infty}\!\varphi_{u_i}(x)\varphi_{u_j}(x)\,dx
+  = \alpha\!\int_0^{+\infty}\!\Bigl(\sum_{i,j}\zeta_i\zeta_j\,\varphi_{u_i}(x)\varphi_{u_j}(x)\Bigr)dx .
+\]
+
+\paragraph{Passo 3: il quadrato di una somma, prima a $m=2$ poi in generale.} Poniamo
+$h(x):=\sum_{k=1}^m \zeta_k\,\varphi_{u_k}(x)$ (per $x=0$: $h(0)=\sum_k\zeta_k\varphi_{u_k}(0)$).
+L'identità chiave, per qualunque scelta di $m$ numeri reali $a_1,\ldots,a_m$, è
+\[
+  \Bigl(\sum_{k=1}^m a_k\Bigr)^{\!2} = \sum_{i=1}^m\sum_{j=1}^m a_i a_j .
+\]
+Verifichiamola prima nel caso più piccolo non banale, $m=2$: sviluppando il quadrato di un
+binomio, $(a_1+a_2)^2 = a_1^2+2a_1a_2+a_2^2$; d'altra parte la somma doppia con $i,j\in\{1,2\}$
+ha \textbf{quattro} addendi (non due),
+\[
+  \sum_{i=1}^2\sum_{j=1}^2 a_ia_j = a_1a_1+a_1a_2+a_2a_1+a_2a_2 = a_1^2+2a_1a_2+a_2^2,
+\]
+perché $a_1a_2$ e $a_2a_1$ sono lo \textbf{stesso numero} e vengono entrambi contati (la somma
+doppia scorre su \emph{coppie ordinate}): la loro somma ricostruisce il doppio prodotto
+$2a_1a_2$. I due membri coincidono. Il caso generale è identico, solo con più addendi: ogni
+coppia non ordinata $\{i,j\}$ con $i\neq j$ compare due volte in $\sum_{i,j}a_ia_j$ (come
+$(i,j)$ e come $(j,i)$), producendo $2a_ia_j$, mentre ogni $i=j$ compare una volta sola,
+producendo $a_i^2$ --- esattamente lo sviluppo del quadrato della somma.
+
+Applicando questa identità con $a_k=\zeta_k\varphi_{u_k}(0)$ al blocco $A$ del Passo 2, e con
+$a_k=\zeta_k\varphi_{u_k}(x)$ (per $x$ fissato) al blocco sotto integrale:
+\[
+  A = \sum_{i,j}\zeta_i\zeta_j\varphi_{u_i}(0)\varphi_{u_j}(0)
+    = \Bigl(\sum_k \zeta_k\varphi_{u_k}(0)\Bigr)^{\!2} = h(0)^2,
+  \qquad
+  \sum_{i,j}\zeta_i\zeta_j\varphi_{u_i}(x)\varphi_{u_j}(x) = h(x)^2 .
+\]
+
+\paragraph{Passo 4: conclusione.} Sostituendo nel Passo 2,
+\begin{equation}
+  \zeta\transp\Hmat\,\zeta = h(0)^2 + \alpha\!\int_0^{+\infty}\! h(x)^2\,dx .
+  \label{eq:energia-int}
+\end{equation}
+Il membro destro è la somma di \textbf{due quantità non negative} ($h(0)^2\ge 0$ perché è un
+quadrato; $\alpha\int h^2\ge 0$ perché $\alpha>0$ e l'integrale di una funzione non negativa è
+non negativo): dunque $\zeta\transp\Hmat\zeta\ge 0$ per ogni $\zeta$, cioè $\Hmat$ è semidefinita
+positiva. $\blacksquare$
+
+\begin{osservazione}[I termini misti $i\neq j$ non spariscono]
+Un errore frequente è pensare che il passaggio "somma doppia $\to$ quadrato" scarti i prodotti
+incrociati $\zeta_i\zeta_j$ con $i\neq j$. È il contrario: come mostrato nel Passo~3,
+$\bigl(\sum_k a_k\bigr)^2$ \emph{contiene già tutti} i termini $a_ia_j$, compresi quelli misti
+(con molteplicità 2 ciascuno). La~\eqref{eq:energia-int} è un'\textbf{identità esatta}, non
+un'approssimazione che ignora le correlazioni fra nodi diversi.
+\end{osservazione}
+
+\begin{attenzione}[Verifica numerica completa di~\eqref{eq:energia-int}]
+Prendiamo $m=3$ nodi $u=(1,5,10)$, $\alpha=0.0736$ (valore ufficiale, 02c Sez.~5.3) e un vettore
+\textbf{arbitrario} $\zeta=(2,-1,0.5)\transp$ (nessun significato finanziario: serve solo a
+verificare l'identità con numeri concreti, non è legato all'esempio della Sez.~\ref{sec:stretta}).
+Dalla formula chiusa di $H$:
+\[
+  \Hmat = \begin{pmatrix}
+    0.005161 & 0.022614 & 0.038312\\
+    0.022614 & 0.107513 & 0.187713\\
+    0.038312 & 0.187713 & 0.350733
+  \end{pmatrix},
+  \qquad
+  \zeta\transp\Hmat\zeta = 0.0142935 .
+\]
+Dall'altro lato, $h(0)=\sum_k\zeta_k\varphi_{u_k}(0) = 2(0.070957)+(-1)(0.307883)+0.5(0.520974)
+= 0.094518$, quindi $h(0)^2=0.0089336$. Integrando numericamente $h(x)^2$ su $[0,10]$ (oltre
+$x=10$, $h\equiv 0$ perché tutti e tre i $\varphi_{u_k}$ sono fuori supporto) con una griglia
+fine si ottiene $\int_0^{10}h(x)^2\,dx = 0.0728245$, dunque $\alpha\int h^2 = 0.0053599$. Somma:
+$0.0089336+0.0053599=0.0142935$, che coincide con $\zeta\transp\Hmat\zeta$ calcolato sopra fino
+alla settima cifra significativa (la differenza residua, $\sim\!10^{-15}$, è arrotondamento
+numerico dell'integrazione, non un errore dell'identità).
+\end{attenzione}
+
+% ============================================================
+\section{Positività stretta: induzione discendente}
+\label{sec:stretta}
+% ============================================================
+
+La Proposizione~\ref{prop:H-spd} dà $\zeta\transp\Hmat\zeta\ge 0$: per concludere che $\Hmat$ è
+\textbf{definita} (non solo semidefinita) positiva serve mostrare che l'uguaglianza a zero
+forza $\zeta=0$.
+
+\begin{proposizione}[La matrice di Wilson è SPD]
+\label{prop:H-spd-stretta}
+Se i nodi $0<u_1<\cdots<u_m$ sono \textbf{distinti}, allora $\zeta\transp\Hmat\zeta=0$ implica
+$\zeta=0$. Insieme alla Proposizione~\ref{prop:H-spd}, $\Hmat$ è simmetrica definita positiva.
+\end{proposizione}
+
+\paragraph{Passo 1: dalla somma nulla ai due addendi nulli separatamente.} Supponiamo
+$\zeta\transp\Hmat\zeta=0$. Per~\eqref{eq:energia-int} questo significa
+$h(0)^2+\alpha\int_0^{+\infty}h(x)^2\,dx=0$, somma di \textbf{due} termini non negativi. Una
+somma di numeri non negativi è zero se e solo se \emph{ciascun} termine è zero (se uno dei due
+fosse strettamente positivo, la somma lo sarebbe anch'essa): dunque
+\[
+  h(0)^2=0 \quad\Longrightarrow\quad h(0)=0,
+  \qquad\qquad
+  \int_0^{+\infty}h(x)^2\,dx = 0 .
+\]
+
+\paragraph{Passo 2: dall'integrale nullo a $h\equiv 0$.} Ogni $\varphi_{u_k}$ è continua (Sez.~
+\ref{sec:rappresentazione}), quindi $h=\sum_k\zeta_k\varphi_{u_k}$, somma finita di funzioni
+continue, è continua. Una funzione continua e non negativa ($h^2\ge 0$) il cui integrale su
+$[0,+\infty)$ è nullo deve essere identicamente nulla: se fosse $h(x_0)^2=\varepsilon>0$ in un
+punto $x_0$, per continuità $h^2>\varepsilon/2$ su un intorno di $x_0$ di lunghezza positiva
+$\delta$, e allora $\int h^2 \ge (\varepsilon/2)\delta>0$, contraddizione. Dunque
+\begin{equation}
+  h(x) = \sum_{k=1}^m \zeta_k\,\varphi_{u_k}(x) = 0 \qquad \text{per \emph{ogni} } x\ge 0.
+  \label{eq:h-zero}
+\end{equation}
+
+\paragraph{Passo 3: da $h\equiv 0$ a $\zeta=0$, isolando un coefficiente alla volta.} Qui entra
+in gioco l'unica proprietà di $\varphi_{u_k}$ non ancora usata: il \textbf{supporto compatto}
+$[0,u_k]$. Poniamo $u_0:=0$ e procediamo per \textbf{induzione discendente} su
+$k=m,m-1,\ldots,1$, mostrando $\zeta_k=0$ un nodo alla volta, dal più lontano al più vicino.
+
+\emph{Caso base $k=m$.} Fissiamo $x$ nell'intervallo \textbf{aperto} $(u_{m-1},u_m)$. Per ogni
+$j<m$ si ha $u_j\le u_{m-1}<x$, cioè $x$ è fuori dal supporto $[0,u_j]$ di $\varphi_{u_j}$:
+$\varphi_{u_j}(x)=0$. Nella somma~\eqref{eq:h-zero} sopravvive quindi solo il termine $j=m$:
+\[
+  0 = h(x) = \zeta_m\,\varphi_{u_m}(x) \qquad \forall\, x\in(u_{m-1},u_m).
+\]
+La funzione $\varphi_{u_m}(x)=1-e^{-\alpha(u_m-x)}$ si annulla \emph{solo} in $x=u_m$, punto
+\textbf{escluso} dall'intervallo aperto; ad esempio nel punto medio
+$\bar x=(u_{m-1}+u_m)/2$ vale $\varphi_{u_m}(\bar x)=1-e^{-\alpha(u_m-\bar x)}\neq 0$ (è
+strettamente positiva, essendo $\varphi_{u_m}$ crescente da $0$ a $\varphi_{u_m}(u_m^-)$ sul suo
+supporto). Da $\zeta_m\,\varphi_{u_m}(\bar x)=0$ con $\varphi_{u_m}(\bar x)\neq 0$ segue
+$\zeta_m=0$.
+
+\emph{Ipotesi induttiva.} Sia $1\le k<m$ e supponiamo già dimostrato $\zeta_{k+1}=\cdots=\zeta_m=0$.
+
+\emph{Passo induttivo.} Fissiamo $x\in(u_{k-1},u_k)$ (con $u_0=0$ se $k=1$). Per $j<k$, come nel
+caso base, $u_j\le u_{k-1}<x$ dà $\varphi_{u_j}(x)=0$. Per $j>k$, invece, il coefficiente
+$\zeta_j$ è \textbf{già nullo per ipotesi induttiva}: il termine $\zeta_j\varphi_{u_j}(x)$ si
+annulla per via del coefficiente, \emph{indipendentemente} dal fatto che $\varphi_{u_j}(x)$
+possa essere non nulla in quel punto (il nodo $u_j$ è ancora "avanti" rispetto a $x$, quindi
+$x$ è dentro il suo supporto). Resta un solo termine:
+\[
+  0 = h(x) = \zeta_k\,\varphi_{u_k}(x) \qquad \forall\, x\in(u_{k-1},u_k),
+\]
+e lo stesso argomento del caso base (applicato ora al nodo $u_k$: $\varphi_{u_k}$ non è
+identicamente nulla sull'intervallo aperto $(u_{k-1},u_k)$) dà $\zeta_k=0$.
+
+Per induzione, $\zeta_k=0$ per ogni $k=m,m-1,\ldots,1$, cioè $\zeta=0$. $\blacksquare$
+
+\begin{osservazione}[Perché servono nodi distinti]
+L'ipotesi $u_1<\cdots<u_m$ (nodi \textbf{distinti}, non solo $\le$) è ciò che rende ogni
+intervallo $(u_{k-1},u_k)$ non vuoto: se due nodi coincidessero, l'intervallo corrispondente
+degenererebbe a un punto (o sparirebbe) e il Passo~3 non avrebbe più un punto interno $\bar x$
+su cui valutare $h$ e isolare $\zeta_k$.
+\end{osservazione}
+
+\begin{osservazione}[Per approfondire: una dimostrazione probabilistica alternativa]
+Una via del tutto diversa per la stessa Proposizione~\ref{prop:H-spd-stretta}, per via
+probabilistica (total positivity del nucleo di un processo di Ornstein--Uhlenbeck e formula di
+Cauchy--Binet), si trova in Lager\aa s e Lindholm~\cite{lageras2016}, sez.~3 e~5; qui non la
+sviluppiamo, perché l'obiettivo di questa nota è restare autosufficienti con i soli integrali
+già introdotti in Sez.~\ref{sec:rappresentazione}.
+\end{osservazione}
+
+\paragraph{Esempio: l'induzione con $m=3$ nodi.} Rendiamo concreto il Passo~3 con
+$u=(u_1,u_2,u_3)=(1,5,10)$ e $\alpha=0.0736$. \textbf{Attenzione}: qui $\zeta$ non è più il
+vettore arbitrario $(2,-1,0.5)$ della Sez.~\ref{sec:semipositivita} (che serviva solo a
+verificare l'identità~\eqref{eq:energia-int}); l'ipotesi di questa sezione è invece
+$h\equiv 0$, cioè esattamente la situazione (puramente ipotetica, usata per dimostrare
+l'implicazione) in cui si vuole mostrare che l'\emph{unico} $\zeta$ compatibile è $\zeta=0$.
+La tabella elenca, intervallo per intervallo, quali funzioni ausiliarie sono dentro il proprio
+supporto e quale coefficiente l'argomento isola:
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.35}
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{lccclc}
+\toprule
+\textbf{Intervallo} & $\varphi_{u_1}$ & $\varphi_{u_2}$ & $\varphi_{u_3}$
+  & \textbf{$h(x)$ si riduce a} & \textbf{concl.}\\
+\midrule
+$(5,10)$ & fuori supp. & fuori supp. & in supp.
+  & $\zeta_3\,\varphi_{u_3}(x)$ & $\zeta_3=0$\\
+$(1,5)$ & fuori supp. & in supp. & $\zeta_3=0$ già noto
+  & $\zeta_2\,\varphi_{u_2}(x)$ & $\zeta_2=0$\\
+$(0,1)$ & in supp. & $\zeta_2=0$ già noto & $\zeta_3=0$ già noto
+  & $\zeta_1\,\varphi_{u_1}(x)$ & $\zeta_1=0$\\
+\bottomrule
+\end{tabular}
+
+\smallskip
+{\footnotesize supp.\ $=$ supporto: $\varphi_{u_1}$ su $[0,1]$, $\varphi_{u_2}$ su $[0,5]$,
+$\varphi_{u_3}$ su $[0,10]$.}
+\end{center}
+
+Come testimone concreto che $\varphi_{u_3}$ non è identicamente nulla su $(5,10)$: nel punto
+medio $\bar x=7.5$, $\varphi_{u_3}(7.5)=1-e^{-0.0736\times 2.5}=1-e^{-0.184}=0.1681\neq 0$ ---
+il valore usato implicitamente nel caso base della dimostrazione generale. L'ordine
+"dal nodo più lontano al più vicino" non è arbitrario: è ciò che garantisce che, quando si
+esamina l'intervallo $(u_{k-1},u_k)$, tutti i coefficienti $\zeta_j$ con $j>k$ siano \emph{già}
+stati azzerati dal passo precedente.
+
+% ============================================================
+\section{Confronto e chiusura}
+\label{sec:confronto}
+% ============================================================
+
+Questa nota espande, senza modificarlo nella sostanza, il paragrafo "Semipositività: la forma
+quadratica è un quadrato più l'integrale di un quadrato" già presente in 02c (Sez.~4.2, righe
+841--863) e riprodotto verbatim in 02e (Appendice A, righe 1668--1692). La dimostrazione resta
+\textbf{la stessa} nelle sue tre proposizioni cardine (rappresentazione integrale, quadrato più
+integrale di un quadrato, induzione discendente): qui ogni passaggio algebrico che in 02c/02e è
+compresso in una o due righe è stato scomposto in passi numerati e ogni identità è stata
+verificata anche con numeri concreti ($\alpha=0.0736$, i nodi $u=(1,5,10)$).
+
+\begin{osservazione}[Relazione con 02c e 02e]
+02c dimostra la positiva definitezza di $\Hmat$ con \emph{esattamente} questo argomento (funzioni
+ausiliarie $\varphi_t$ più induzione), in forma compatta, all'interno della trattazione
+economica completa del metodo Smith--Wilson. 02e ottiene lo stesso risultato per una via
+alternativa --- il funzionale di energia che Smith e Wilson minimizzano davvero induce un
+prodotto scalare di cui $W(t,u)$ è il rappresentante della valutazione puntuale, rendendo
+$[W(u_i,u_j)]$ letteralmente una matrice di Gram --- e conserva la dimostrazione elementare qui
+approfondita nella propria Appendice A, per chi preferisce un argomento che non richiede
+l'apparato del funzionale di energia. Questa nota non introduce una terza dimostrazione: è una
+lente di ingrandimento sulla prima.
+\end{osservazione}
+
+% ============================================================
+\renewcommand{\refname}{Riferimenti bibliografici}
+\begin{thebibliography}{9}
+
+\bibitem{eiopa2025}
+  \textbf{EIOPA} (2025).
+  \textit{Technical documentation of the methodology to derive EIOPA's risk-free interest rate
+  term structures}, EIOPA-BoS-25-599.
+  Sezione~9 (Extrapolation and interpolation) per il metodo Smith--Wilson.
+
+\bibitem{fasshauer2007}
+  \textbf{Fasshauer, G.E.} (2007).
+  \textit{Meshfree Approximation Methods with MATLAB}. World Scientific.
+  Interpolazione con kernel definiti positivi: l'interpolante è combinazione lineare delle
+  sezioni del kernel e i coefficienti risolvono il sistema con la matrice di Gram SPD.
+
+\bibitem{lageras2016}
+  \textbf{Lager\aa s, A., Lindholm, M.} (2016).
+  Issues with the Smith--Wilson method.
+  \textit{Insurance: Mathematics and Economics}, 68, 32--41.
+  Dimostrazione alternativa della positiva definitezza del nucleo via total positivity e
+  formula di Cauchy--Binet (sez.~3 e~5).
+
+\bibitem{wahba1990}
+  \textbf{Wahba, G.} (1990).
+  \textit{Spline Models for Observational Data}.
+  CBMS-NSF Regional Conference Series in Applied Mathematics, Vol.~59. SIAM.
+  Cap.~1: costruzione di nuclei definiti positivi come funzioni di Green di un operatore
+  differenziale --- la tecnica generale di cui la Proposizione~\ref{prop:H-int} è un caso
+  particolare.
+
+\end{thebibliography}
+
+\end{document}

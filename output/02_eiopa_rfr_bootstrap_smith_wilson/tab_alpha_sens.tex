@@ -1,0 +1,23 @@
+% GENERATO da R/02_eiopa_rfr_bootstrap.R
+\begin{table}[H]\centering\small
+\caption{Sensitivit\`a al parametro di convergenza $\alpha$: confronto tra il valore di regime ($\alpha=11\%$) e quello di phasing-in ($\alpha=20\%$). Le ultime due colonne misurano la \emph{velocit\`a di convergenza} come distanza residua del forward dall'$\UFR^c$: un $\alpha$ maggiore la chiude pi\`u in fretta. All'$\FSP$ le due curve coincidono per costruzione.}
+\label{tab:alpha-sens}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{rccccc}
+\toprule
+& \multicolumn{3}{c}{zero rate $r_t$} & \multicolumn{2}{c}{$|f^c_t-\UFR^c|$ (bps)}\\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+$t$ (anni) & $\alpha=11\%$ & $\alpha=20\%$ & $\Delta$ (bps) & $\alpha=11\%$ & $\alpha=20\%$\\
+\midrule
+\rowcolor{rowtint}\textbf{20} & 3.2091 & 3.2091 & +0.00 & 20.77 & 20.77\\
+25 & 3.2238 & 3.2244 & +0.06 & 1.68 & 1.38\\
+\rowcolor{rowtint}30 & 3.2348 & 3.2361 & +0.13 & 1.32 & 0.94\\
+40 & 3.2500 & 3.2518 & +0.18 & 0.88 & 0.54\\
+\rowcolor{rowtint}50 & 3.2597 & 3.2614 & +0.17 & 0.64 & 0.36\\
+60 & 3.2663 & 3.2678 & +0.15 & 0.49 & 0.27\\
+\rowcolor{rowtint}80 & 3.2747 & 3.2759 & +0.11 & 0.33 & 0.18\\
+100 & 3.2798 & 3.2807 & +0.09 & 0.25 & 0.14\\
+\rowcolor{rowtint}120 & 3.2831 & 3.2839 & +0.08 & 0.20 & 0.11\\
+150 & 3.2865 & 3.2871 & +0.06 & 0.15 & 0.08\\
+\bottomrule
+\end{tabular}
+\end{table}
