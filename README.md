@@ -2,9 +2,12 @@
 
 Materiale didattico: dispense in `dispense/`, script R in `R/`, dati in `dati/`, output
 (figure/tabelle PDF) in `output/`. Ogni lezione usa il prefisso `NN_topic` condiviso da
-dispensa, script e cartella di output (dettagli in `CLAUDE.md`). Le vecchie trattazioni
+dispensa, script e cartella di output (dettagli in `CLAUDE.md`). `dispense/` contiene solo le
+lezioni principali (01, 02, 03); le varianti/note di approfondimento — valide e mantenute, ma
+non il percorso di riferimento — vivono in `dispense/approfondimenti/`. Le vecchie trattazioni
 separate del metodo EIOPA e della famiglia PCA, superate dal riordino descritto sotto, restano
-disponibili come backup in `dispense/backup/`. Sintesi per blocchi:
+invece disponibili come backup **congelato** in `dispense/backup/` (concetto diverso: lì è
+metodologia sostituita, non più mantenuta). Sintesi per blocchi:
 
 ## 01 — Titoli obbligazionari: prezzo, rendimento, duration, convexity
 
@@ -49,15 +52,18 @@ metodologia.
 Analisi in componenti principali (PCA/SVD) sulle variazioni mensili di una curva dei tassi,
 per capire quante e quali direzioni (livello, pendenza, curvatura) spiegano la maggior parte
 della variabilità storica. 03, 03b, 03c sono varianti della stessa metodologia, non lezioni
-indipendenti.
+indipendenti: 03 è la lezione di riferimento e resta in `dispense/`, mentre 03b e 03c —
+varianti parallele di approfondimento — vivono in `dispense/approfondimenti/` (gli script R
+e le cartelle di output non si spostano).
 
 - **03** (`dispense/03_pca_ecb.tex`) — versione canonica/finale, curva **ECB**, schema
   **calibrazione/validazione**: loadings stimati sui dati fino al 31/12/2025, poi validati
   fuori campione su marzo e giugno 2026.
-- **03b** (`dispense/03b_pca_ecb.tex`) — variante **full-sample** su curva ECB: nessuno split
-  train/test, PCA e ricostruzione sull'intero campione fino al 30/06/2026.
-- **03c** (`dispense/03c_pca_eiopa.tex`) — stessa metodologia della 03b applicata alla curva
-  **EIOPA** (spot, senza volatility adjustment) anziché ECB.
+- **03b** (`dispense/approfondimenti/03b_pca_ecb.tex`) — variante **full-sample** su curva
+  ECB: nessuno split train/test, PCA e ricostruzione sull'intero campione fino al
+  30/06/2026.
+- **03c** (`dispense/approfondimenti/03c_pca_eiopa.tex`) — stessa metodologia della 03b
+  applicata alla curva **EIOPA** (spot, senza volatility adjustment) anziché ECB.
 
 *(`R/03d_analisi_periodi.R` è uno script di supporto interno, senza dispensa propria: verifica
 a mano gli score e gli eventi macro citati nel testo della 03.)*

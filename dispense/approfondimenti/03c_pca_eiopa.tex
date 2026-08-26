@@ -585,7 +585,7 @@ Tabella~\ref{tab:parametri}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/03c_pca_eiopa/step1_curve_livelli_m.pdf}
+\includegraphics[width=0.92\textwidth]{../../output/03c_pca_eiopa/step1_curve_livelli_m.pdf}
 \caption{Curve EIOPA in tre mesi rappresentativi del campione. L'asse $x$
 indica la scadenza in anni, l'asse $y$ il tasso in \%. Si noti che nel mese
 centrale la curva \`e \textbf{negativa} su buona parte delle scadenze: l'ultimo
@@ -655,7 +655,7 @@ $\Delta R$ che stiamo per decomporre.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{../output/03c_pca_eiopa/step1_delta_mensili_m.pdf}
+\includegraphics[width=0.95\textwidth]{../../output/03c_pca_eiopa/step1_delta_mensili_m.pdf}
 \caption{\textbf{Distribuzione delle variazioni mensili} $\Delta R(T_j)$
 per ciascuna scadenza, espressa in punti base (1~pb $= 0.01\%$). La
 variabilit\`a \`e maggiore alle scadenze brevi e intermedie, dove si
@@ -668,11 +668,11 @@ concentrano i movimenti di pendenza e curvatura.}
 \centering
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=\textwidth]{../output/03c_pca_eiopa/step1_heatmap_correlazioni_m.pdf}
+\includegraphics[width=\textwidth]{../../output/03c_pca_eiopa/step1_heatmap_correlazioni_m.pdf}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=\textwidth]{../output/03c_pca_eiopa/step1_correlazioni_3d_barre_m.pdf}
+\includegraphics[width=\textwidth]{../../output/03c_pca_eiopa/step1_correlazioni_3d_barre_m.pdf}
 \end{minipage}
 \caption{Correlazione tra variazioni mensili visualizzata in due modi complementari:
 heatmap (sinistra) e superficie a barre 3D (destra). Si osservi in particolare
@@ -703,13 +703,13 @@ k_star    <- which(cum_var >= 0.95)[1]  # componenti per 95%
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/03c_pca_eiopa/step2_varianza_spiegata_m.pdf}
+\includegraphics[width=0.92\textwidth]{../../output/03c_pca_eiopa/step2_varianza_spiegata_m.pdf}
 \caption{Varianza per componente e varianza cumulata. Barre blu: varianza individuale per componente;
 linea rossa: varianza cumulata; tratteggio grigio: soglia 95\%.}
 \end{figure}
 
 \begin{keybox}[Risultati numerici (generati da \texttt{R/03c\_pca\_eiopa.R})]
-\input{../output/03c_pca_eiopa/pca_summary_for_tex_m.tex}
+\input{../../output/03c_pca_eiopa/pca_summary_for_tex_m.tex}
 \end{keybox}
 
 \noindent Nel seguito, in linea con la prassi consolidata in letteratura
@@ -730,7 +730,7 @@ mensile dei tassi di interesse.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/03c_pca_eiopa/step3_loadings_pc1_pc3_m.pdf}
+\includegraphics[width=0.92\textwidth]{../../output/03c_pca_eiopa/step3_loadings_pc1_pc3_m.pdf}
 \caption{Loadings delle prime tre componenti in funzione della scadenza (anni).
 PC1 piatta (livello), PC2 monotona (pendenza), PC3 a gobba (curvatura).}
 \end{figure}
@@ -774,7 +774,7 @@ il fattore era inattivo.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.97\textwidth]{../output/03c_pca_eiopa/step3_scores_mensili_m.pdf}
+\includegraphics[width=0.97\textwidth]{../../output/03c_pca_eiopa/step3_scores_mensili_m.pdf}
 \caption{Scores mensili PC1, PC2, PC3 con marcatura degli eventi macroeconomici
 principali (linee tratteggiate grigie).}
 \label{fig:scores_mensili}
@@ -821,7 +821,7 @@ campione --- per verificare la qualità della ricostruzione su periodi diversi.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{../output/03c_pca_eiopa/step3_confronto_ricostruzione_m.pdf}
+\includegraphics[width=0.8\textwidth]{../../output/03c_pca_eiopa/step3_confronto_ricostruzione_m.pdf}
 \caption{Variazione mensile reale vs.\ ricostruita con $k=3$ componenti
 nei tre mesi selezionati (primo, centrale, ultimo). L'asse $y$ è in punti base.}
 \label{fig:confronto_ric}
@@ -841,7 +841,7 @@ dallo script ed \`e riportato nel riquadro dei risultati numerici.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.97\textwidth]{../output/03c_pca_eiopa/step3_ricostruzione_progressiva_m.pdf}
+\includegraphics[width=0.97\textwidth]{../../output/03c_pca_eiopa/step3_ricostruzione_progressiva_m.pdf}
 \caption{Ricostruzione progressiva della variazione mensile della curva EIOPA
 nel mese di movimento massimo, aggiungendo una componente alla volta. La curva
 nera è la variazione reale osservata (in punti base).}
@@ -1047,7 +1047,7 @@ Grafico~C (Figura~\ref{fig:sez5_errore_tenor}) lo scompone
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{../output/03c_pca_eiopa/sez5_curva_ricostruzione.pdf}
+  \includegraphics[width=0.88\textwidth]{../../output/03c_pca_eiopa/sez5_curva_ricostruzione.pdf}
   \caption{\textbf{Grafico A — Ricostruzione della curva dei livelli.}
     Curva nera con punti: originale (BCE, 31/12/2025). Curva arancio
     tratteggiata: ricostruzione con $k = 3$ componenti. Curva verde
@@ -1057,7 +1057,7 @@ Grafico~C (Figura~\ref{fig:sez5_errore_tenor}) lo scompone
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{../output/03c_pca_eiopa/sez5_convergenza_errore.pdf}
+  \includegraphics[width=0.88\textwidth]{../../output/03c_pca_eiopa/sez5_convergenza_errore.pdf}
   \caption{\textbf{Grafico B — Convergenza dell'errore (scala logaritmica).}
     Errore $\varepsilon_k = \|\hat{\mathbf{y}}^{(k)} - \mathbf{y}\|_2$ in punti
     base per $k = 1, \ldots, 19$. I punti rossi annotati indicano l'errore
@@ -1067,7 +1067,7 @@ Grafico~C (Figura~\ref{fig:sez5_errore_tenor}) lo scompone
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{../output/03c_pca_eiopa/sez5_errore_per_tenor.pdf}
+  \includegraphics[width=0.88\textwidth]{../../output/03c_pca_eiopa/sez5_errore_per_tenor.pdf}
   \caption{\textbf{Grafico C — Errore di ricostruzione per singola scadenza.}
     Differenza (ricostruita $-$ originale) in punti base per ciascuna
     scadenza da 1 a 20 anni, con $k=3$ (arancio) e $k=10$ (viola)

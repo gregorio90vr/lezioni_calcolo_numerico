@@ -19,10 +19,35 @@ Each lesson uses the prefix `NN_topic` consistently across **three** files:
 | 01 | `dispense/01_bond_duration_convexity.tex` | `R/01_bond_duration_convexity.R` | `output/01_bond_duration_convexity/` |
 | 02 | `dispense/02_eiopa_rfr_bootstrap_smith_wilson.tex` | `R/02_eiopa_rfr_bootstrap.R` + `R/02_eiopa_rfr_smith_wilson.R` (**due** script, in quest'ordine) | `output/02_eiopa_rfr_bootstrap_smith_wilson/` (condivisa) |
 | 03 | `dispense/03_pca_ecb.tex` | `R/03_pca_ecb.R` | `output/03_pca_ecb/` |
-| 03b | `dispense/03b_pca_ecb.tex` | `R/03b_pca_ecb.R` | `output/03b_pca_ecb/` |
-| 03c | `dispense/03c_pca_eiopa.tex` | `R/03c_pca_eiopa.R` | `output/03c_pca_eiopa/` |
+| 03b | `dispense/approfondimenti/03b_pca_ecb.tex` | `R/03b_pca_ecb.R` | `output/03b_pca_ecb/` |
+| 03c | `dispense/approfondimenti/03c_pca_eiopa.tex` | `R/03c_pca_eiopa.R` | `output/03c_pca_eiopa/` |
 
 Adding a new lesson: create `NN_topic.tex`, `NN_topic.R`, `output/NN_topic/`.
+
+**Tre sottocartelle di `dispense/`, tre significati diversi (da non confondere):**
+`dispense/` (root) contiene solo le lezioni **principali**, il percorso che lo studente segue
+(01, 02, 03). `dispense/approfondimenti/` contiene varianti/note **parallele e valide**, tenute
+aggiornate ma non parte del percorso principale — oggi 03b, 03c e `note_H_spd.tex` (v. sotto).
+`dispense/backup/` contiene metodologia **superata e congelata** (non più mantenuta) — v. sotto.
+`dispense/old/` è il cimitero dei draft abbandonati. In tutti e tre i casi (root esclusa) i file
+`.tex` vivono un livello sotto `dispense/`, quindi ogni `\includegraphics{}`/`\input{}` verso
+`output/` richiede `../../` invece di `../` — a differenza di `dispense/backup/` (congelato,
+path relativi non aggiornati di proposito, v. sotto), i file in `dispense/approfondimenti/`
+**hanno** i path corretti perché è contenuto attivo.
+
+- **03b** (`dispense/approfondimenti/03b_pca_ecb.tex`) e **03c**
+  (`dispense/approfondimenti/03c_pca_eiopa.tex`) sono varianti della stessa lezione PCA (03),
+  non lezioni indipendenti — per questo sono in `approfondimenti/` e non in `dispense/` insieme
+  alla 03. Script R (`R/03b_pca_ecb.R`, `R/03c_pca_eiopa.R`) e cartelle di output
+  (`output/03b_pca_ecb/`, `output/03c_pca_eiopa/`) **non si sono spostati** — solo le dispense
+  `.tex` sono sotto `approfondimenti/`, script e output restano dov'erano.
+- **`note_H_spd.tex`** (`dispense/approfondimenti/note_H_spd.tex`) è una nota standalone
+  (nessuno script/output proprio) che dimostra che la matrice di Gram di Wilson $H$ è SPD via
+  il **Teorema di Mercer** — una **terza** via rispetto alle due già in `dispense/backup/`:
+  02e (variazionale, rappresentante di Riesz) e 02f/02g (elementare, induzione discendente sui
+  nodi). Era orfana (header che rimandava a un nome file — `03_eiopa_rfr_smith_wilson.tex` —
+  non più esistente da quando quel contenuto è diventato `dispense/backup/02c_...tex`); il
+  riferimento è stato corretto in occasione dello spostamento in `approfondimenti/`.
 
 **Backup della famiglia "curva RFR EIOPA" (`dispense/backup/`):** prima che la dispensa 02
 diventasse il documento unificato, i due metodi avevano trattazioni separate. Quelle vecchie
@@ -292,13 +317,19 @@ dal riordino EIOPA-RFR):** 03, 03b e 03c sono tre varianti della stessa lezione 
 variazioni mensili di una curva dei tassi), non lezioni indipendenti — da qui la numerazione
 con lettera anziché un numero progressivo separato:
 
-- **03** (ex "04") è la versione **canonica/finale** (schema calibrazione/validazione
-  su curva ECB — loadings stimati fino al 31/12/2025, poi validati su
-  marzo/giugno 2026).
-- **03b** (ex "04b") è la versione **full-sample** su curva ECB (nessuno split
-  train/test, PCA e ricostruzione sull'intero campione fino al 30/06/2026).
-- **03c** (ex "04c") è la stessa metodologia applicata alla curva **EIOPA** anziché
-  ECB (mirror strutturale della 03b).
+- **03** (ex "04", `dispense/03_pca_ecb.tex`) è la versione **canonica/finale** (schema
+  calibrazione/validazione su curva ECB — loadings stimati fino al 31/12/2025, poi
+  validati su marzo/giugno 2026). Resta in `dispense/` (lezione di riferimento).
+- **03b** (ex "04b", `dispense/approfondimenti/03b_pca_ecb.tex`) è la versione
+  **full-sample** su curva ECB (nessuno split train/test, PCA e ricostruzione
+  sull'intero campione fino al 30/06/2026).
+- **03c** (ex "04c", `dispense/approfondimenti/03c_pca_eiopa.tex`) è la stessa
+  metodologia applicata alla curva **EIOPA** anziché ECB (mirror strutturale della 03b).
+
+03b e 03c sono in `dispense/approfondimenti/` (varianti parallele, non il percorso
+principale) dalla riorganizzazione della struttura di `dispense/`; script R e cartelle
+`output/` non sono stati toccati da quello spostamento — restano dove il resto di questa
+sezione li descrive.
 
 Due script di supporto non seguono la tabella sopra perché non sono
 abbinati a una propria dispensa:

@@ -94,7 +94,7 @@ inflazione e fattori macroeconomici.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{../output/03b_pca_ecb/step0_esempio_curva_tassi.pdf}
+\includegraphics[width=0.7\textwidth]{../../output/03b_pca_ecb/step0_esempio_curva_tassi.pdf}
 \caption{Esempio di curva dei tassi di interesse. In ascissa la \textbf{scadenza}
 (o \emph{tenor}/\emph{maturity}) $T$, espressa in anni; in ordinata il
 \textbf{tasso di interesse} (\%) che si riceve investendo fino a quella scadenza un'unità di denaro. Ogni punto della curva è quindi un tasso diverso, uno per ciascuna maturity considerata.}
@@ -232,7 +232,7 @@ Si può infatti decomporre $A$ come l'azione di tre trasformazioni:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/03_pca_ecb/svd_geometria_esempio.pdf}
+\includegraphics[width=0.92\textwidth]{../../output/03_pca_ecb/svd_geometria_esempio.pdf}
 \caption{Interpretazione geometrica della SVD}
 \label{fig:svd_geometria}
 \end{figure}
@@ -564,7 +564,7 @@ chiude il mese e sul quale si calcolano i P\&L mensili dei portafogli obbligazio
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/03b_pca_ecb/step1_curve_livelli_m.pdf}
+\includegraphics[width=0.92\textwidth]{../../output/03b_pca_ecb/step1_curve_livelli_m.pdf}
 \caption{Curve dei tassi ECB in tre mesi all'interno del campione. L'asse $x$
 indica la scadenza in anni, l'asse $y$ il tasso in \%. }
 \end{figure}
@@ -611,7 +611,7 @@ Questo ordine di grandezza le rende direttamente interpretabili e confrontabili
 con le decisioni di politica monetaria BCE (ad es.\ rialzo di 75~pb a ottobre 2022).
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{../output/03b_pca_ecb/step1_delta_mensili.pdf}
+\includegraphics[width=0.95\textwidth]{../../output/03b_pca_ecb/step1_delta_mensili.pdf}
 \caption{\textbf{Distribuzione delle variazioni mensili} $\Delta R^{\text{mens}}(T_j)$
 per ciascuna scadenza, espressa in punti base (1~pb $= 0.01\%$). Le distribuzioni sono nettamente più informative: le mediane
 si discostano visibilmente da zero nei periodi di trend come per esempio politiche della banca centrale di rialzo dei tassi, gli IQR
@@ -627,11 +627,11 @@ principalmente sul tratto 2--10 anni.}
 \centering
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=\textwidth]{../output/03b_pca_ecb/step1_heatmap_correlazioni_m.pdf}
+\includegraphics[width=\textwidth]{../../output/03b_pca_ecb/step1_heatmap_correlazioni_m.pdf}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.49\textwidth}
 \centering
-\includegraphics[width=\textwidth]{../output/03b_pca_ecb/step1_correlazioni_3d_barre_m.pdf}
+\includegraphics[width=\textwidth]{../../output/03b_pca_ecb/step1_correlazioni_3d_barre_m.pdf}
 \end{minipage}
 \caption{Correlazione tra variazioni mensili visualizzata in due modi complementari:
 heatmap (sinistra) e superficie a barre 3D (destra). %La struttura \`e simile a quella giornaliera ma le correlazioni sono lievemente pi\`u basse perché le variazioni mensili contengono meno correlazione ``di persistenza'' artificiale:il segnale economico \`e pi\`u netto e i movimenti idiosincratici di breve periodo vengono mediati.
@@ -684,7 +684,7 @@ cum_var  <- cumsum(expl_var)
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/03b_pca_ecb/step2_varianza_spiegata_m.pdf}
+\includegraphics[width=0.92\textwidth]{../../output/03b_pca_ecb/step2_varianza_spiegata_m.pdf}
 \caption{Varianza per componente e varianza cumulata. Barre blu: varianza individuale per
 componente; linea rossa: varianza cumulata, con etichette per le prime tre componenti.}
 \end{figure}
@@ -717,7 +717,7 @@ I loadings $\mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3 \in \mathbb{R}^n$ rappresen
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{../output/03b_pca_ecb/step3_loadings_pc1_pc3_m.pdf}
+\includegraphics[width=0.92\textwidth]{../../output/03b_pca_ecb/step3_loadings_pc1_pc3_m.pdf}
 \caption{Loadings delle prime tre componenti in funzione della scadenza (anni).PC1 piatta
 (livello), PC2 monotona (pendenza), PC3 a gobba (curvatura).}
 \end{figure}
@@ -762,7 +762,7 @@ filtra le oscillazioni di breve periodo e rende più leggibile l'andamento gener
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.97\textwidth]{../output/03b_pca_ecb/step3_scores_mensili_ma_m.pdf}
+\includegraphics[width=0.97\textwidth]{../../output/03b_pca_ecb/step3_scores_mensili_ma_m.pdf}
 \caption{Scores mensili PC1, PC2, PC3: serie grezza (linea chiara) e media mobile a
 6 mesi (linea blu scura), con marcatura degli eventi macroeconomici principali (linee
 tratteggiate grigie).}
@@ -854,7 +854,7 @@ su periodi diversi del campione.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{../output/03b_pca_ecb/step3_confronto_ricostruzione_m.pdf}
+\includegraphics[width=0.8\textwidth]{../../output/03b_pca_ecb/step3_confronto_ricostruzione_m.pdf}
 \caption{Variazione mensile reale vs.\ ricostruita con $k=3$ componenti
 nei tre mesi selezionati (primo, centrale, ultimo). L'asse $y$ è in punti base.}
 \label{fig:confronto_ric}
@@ -872,7 +872,7 @@ base sugli stessi tre mesi.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{../output/03b_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf}
+\includegraphics[width=0.8\textwidth]{../../output/03b_pca_ecb/step3_errore_ricostruzione_tenor_m.pdf}
 \caption{Errore di ricostruzione (ricostruita $-$ osservata, $k=3$) per singola
 scadenza, nei tre mesi selezionati (primo, centrale, ultimo). L'asse $y$ è in
 punti base.}
@@ -886,7 +886,7 @@ apprezzabile oltre al consueto shift parallelo.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.97\textwidth]{../output/03b_pca_ecb/step3_ricostruzione_progressiva_m.pdf}
+\includegraphics[width=0.97\textwidth]{../../output/03b_pca_ecb/step3_ricostruzione_progressiva_m.pdf}
 \caption{Ricostruzione progressiva della variazione mensile della curva BCE per
 giugno 2026, aggiungendo una componente alla volta. La curva nera è la variazione
 reale osservata (in punti base).}
@@ -1113,7 +1113,7 @@ fatto che la curva proiettata sia o meno dello stesso tipo di oggetto
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{../output/03b_pca_ecb/sez5_curva_ricostruzione.pdf}
+  \includegraphics[width=0.88\textwidth]{../../output/03b_pca_ecb/sez5_curva_ricostruzione.pdf}
   \caption{Ricostruzione della curva ECB (30/07/2026). Curva nera con punti:
     originale. Verde tratteggiata: ricostruzione con $k=3$ componenti.
     Arancio puntinata: ricostruzione con $k=20$ (base completa), che
@@ -1123,7 +1123,7 @@ fatto che la curva proiettata sia o meno dello stesso tipo di oggetto
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{../output/03b_pca_ecb/sez5_errore_per_tenor.pdf}
+  \includegraphics[width=0.88\textwidth]{../../output/03b_pca_ecb/sez5_errore_per_tenor.pdf}
   \caption{Errore di ricostruzione per singola scadenza, $k=3$. Differenza
     (ricostruita $-$ originale) in punti base per ciascuna scadenza da 1 a
     20 anni.}
@@ -1132,7 +1132,7 @@ fatto che la curva proiettata sia o meno dello stesso tipo di oggetto
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{../output/03b_pca_ecb/sez5_convergenza_errore.pdf}
+  \includegraphics[width=0.88\textwidth]{../../output/03b_pca_ecb/sez5_convergenza_errore.pdf}
   \caption{Convergenza dell'errore di ricostruzione (scala lineare). Errore
     $\varepsilon_k = \|\hat{\mathbf{y}}^{(k)} - \mathbf{y}\|_2$ in punti base
     per $k = 1, \ldots, 20$. Il punto rosso annotato evidenzia il crollo
@@ -1145,8 +1145,8 @@ scadenza la curva ECB originale, la ricostruzione con $k=3$ e l'errore.
 
 \begin{table}[H]
 \centering
-\IfFileExists{../output/03b_pca_ecb/sez5_tabella_k3.tex}{%
-\input{../output/03b_pca_ecb/sez5_tabella_k3.tex}%
+\IfFileExists{../../output/03b_pca_ecb/sez5_tabella_k3.tex}{%
+\input{../../output/03b_pca_ecb/sez5_tabella_k3.tex}%
 }{%
 \begin{warningbox}
 Eseguire prima lo script \texttt{R/03b\_pca\_ecb.R} per generare il file
